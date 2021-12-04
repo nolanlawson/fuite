@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+</head>
+<body>
+<a href="./" data-navigo>Home</a>
+<a href="./about" data-navigo>About</a>
+<a href="./info" data-navigo>Info</a>
+<a href="./contact" data-navigo>Contact</a>
+<div id="home" style="display:none">Home!</div>
+<div id="about" style="display:none">About!</div>
+<div id="info" style="display:none">Info!</div>
+<div id="contact" style="display:none">Contact!</div>
+<script src="../../node_modules/navigo/lib/navigo.js"></script>
+<script type="module">
+  const router = new Navigo('/test/basic')
+
+  const routes = ['', 'about', 'info', 'contact']
+
+  const show = currentRoute => {
+    for (const route of routes) {
+      document.getElementById(route || 'home').style.display = route === currentRoute ? '' : 'none'
+    }
+  }
+
+  for (const route of routes) {
+    for (const routeFormat of [`/./${route}`, `/${route}`]) {
+      router.on(routeFormat, () => {
+        show(route)
+      })
+    }
+  }
+
+  router.resolve()
+</script>
+</body>
+</html>

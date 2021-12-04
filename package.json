@@ -1,0 +1,38 @@
+{
+  "name": "fuite",
+  "version": "1.0.0",
+  "description": "Memory leak detector for websites",
+  "main": "index.js",
+  "scripts": {
+    "test": "serve"
+  },
+  "dependencies": {
+    "commander": "^8.3.0",
+    "puppeteer": "^12.0.1"
+  },
+  "devDependencies": {
+    "navigo": "^8.11.1",
+    "npm-run-all": "^4.1.5",
+    "serve": "^13.0.2",
+    "standard": "^16.0.4"
+  },
+  "keywords": [
+    "memory",
+    "leak",
+    "detector"
+  ],
+  "author": "Nolan Lawson <nolan@nolanlawson.com>",
+  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nolanlawson/fuite.git"
+  },
+  "bugs": {
+    "url": "https://github.com/nolanlawson/fuite/issues"
+  },
+  "homepage": "https://github.com/nolanlawson/fuite#readme",
+  "volta": {
+    "node": "16.13.1",
+    "yarn": "1.22.17"
+  }
+}
