@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+</head>
+<body>
+<script src="../../../node_modules/navigo/lib/navigo.js"></script>
+<script src="../basicRouter.js"></script>
+<script>
+  class SomeBigObject {
+    data = new ArrayBuffer(1000000)
+  }
+
+  const objects = []
+
+  router.addAfterHook('/about', () => {
+    objects.push(new SomeBigObject())
+  })
+</script>
+</body>
+</html>
