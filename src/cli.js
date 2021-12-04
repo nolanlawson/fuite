@@ -25,9 +25,20 @@ async function getInternalLinks(pageUrl) {
   }
 }
 
+async function takeThrowawaySnapshot(page) {
+  const cdpSession = await page.target().createCDPSession();
+  await cdpSession.send('HeapProfiler.collectGarbage');
+  await cdpSession.send('HeapProfiler.takeHeapSnapshot', {
+    reportProgress: false,
+  });
+  await cdpSession.detach();
+}
+
 async function takeHeapSnapshot(page) {
   const cdpSession = await page.target().createCDPSession();
 
+  await cdpSession.send('HeapProfiler.enable')
+  await cdpSession.send('HeapProfiler.collectGarbage')
   let loader
   const loaderPromise = new Promise(resolve => {
     loader = new HeapSnapshotWorker.HeapSnapshotLoader.HeapSnapshotLoader({
@@ -56,9 +67,6 @@ async function main() {
   const pageUrl = 'http://localhost:3000/test/www/basic/'
   const internalLinks = await getInternalLinks(pageUrl)
 
-  internalLinks.pop()
-  internalLinks.pop()
-
   const leakingLinks = await Promise.all(internalLinks.map(async url => {
     const browser = await puppeteer.launch();
     const page = await browser.newPage()
@@ -79,7 +87,6 @@ async function main() {
       }
     }
 
-    await takeHeapSnapshot(page)
     const startSnapshot = await takeHeapSnapshot(page)
     const startSize = startSnapshot.statistics.total
     for (let i = 0; i < ITERATIONS; i++) {
@@ -89,7 +96,6 @@ async function main() {
       await page.goBack()
       await page.waitForNetworkIdle()
     }
-    await takeHeapSnapshot(page)
     const endSnapshot = await takeHeapSnapshot(page)
     const endSize = endSnapshot.statistics.total
 
