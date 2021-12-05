@@ -4,6 +4,8 @@ import { DEFAULT_ITERATIONS, findLeaks } from './index.js'
 import { Command } from 'commander'
 import { createRequire } from 'module'
 import path from 'path'
+import { formatResults } from './format.js'
+import chalk from 'chalk'
 
 const require = createRequire(import.meta.url)
 const { version } = require('../package.json')
@@ -32,6 +34,13 @@ async function main () {
   if (options.scenario) {
     scenario = await import(path.join(process.cwd(), options.scenario))
   }
+
+  console.log(`
+${chalk.blue('URL')}       : ${options.url}
+${chalk.blue('Scenario')}  : ${options.scenario || 'Default'}
+${chalk.blue('Iterations')}: ${options.iterations} ${options.iterations === DEFAULT_ITERATIONS ? '(Default)' : ''}
+  `.trim() + '\n')
+
   const results = await findLeaks(options.url, {
     debug: options.debug,
     iterations: parseInt(options.iterations, 10),
@@ -39,6 +48,7 @@ async function main () {
     signal
   })
   controller = undefined
+  console.log(formatResults(results))
 }
 
 main().catch(err => {

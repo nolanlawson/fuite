@@ -1,19 +1,11 @@
 import path from 'path'
-import tempDirectory from 'temp-dir'
+import tempDir from 'temp-dir'
 import cryptoRandomString from 'crypto-random-string'
-import { mkdir } from 'fs/promises'
 import { createReadStream, createWriteStream } from 'fs'
 import * as HeapSnapshotWorker from './thirdparty/devtools/heap_snapshot_worker/heap_snapshot_worker.js'
 
-let tempDir
-
 async function writeSnapshot (page) {
-  if (!tempDir) {
-    tempDir = path.join(tempDirectory, `fuite-${cryptoRandomString({ length: 16 })}`)
-    await mkdir(tempDir)
-  }
-  const tmpFile = path.join(tempDir, `heapsnap-${cryptoRandomString({ length: 16 })}.json`)
-  console.log('tmpFile', tmpFile)
+  const tmpFile = path.join(tempDir, `fuite-${cryptoRandomString({ length: 8, type: 'alphanumeric' })}.heapsnapshot`)
   const cdpSession = await page.target().createCDPSession()
   let writeStream
   const writeStreamPromise = new Promise((resolve, reject) => {

@@ -50,7 +50,7 @@ export async function findLeaks (pageUrl, options = {}) {
     const results = []
     for (const test of tests) {
       results.push(await runOnPage(browser, pageUrl, beforeStep, async page => {
-        await scenario.iteration(page, test) // one throwaway iteration to avoid measuring one-time setup costs
+        await scenario.iteration(page, test.data) // one throwaway iteration to avoid measuring one-time setup costs
         const { snapshot: startSnapshot, filename: startFilename } = await takeHeapSnapshot(page)
         if (options.debug) {
           // "before" point in time
@@ -58,7 +58,7 @@ export async function findLeaks (pageUrl, options = {}) {
         }
         const startSize = startSnapshot.statistics.total
         for (let i = 0; i < numIterations; i++) {
-          await scenario.iteration(page, test)
+          await scenario.iteration(page, test.data)
         }
         const { snapshot: endSnapshot, filename: endFilename } = await takeHeapSnapshot(page)
         if (options.debug) {
@@ -79,26 +79,35 @@ export async function findLeaks (pageUrl, options = {}) {
         const leakingObjects = suspiciousObjects.map(([name, diff]) => {
           const startAggregatesForThisClass = startAggregates[name]
           const endAggregatesForThisClass = endAggregates[name]
+          const retainedSizeDelta = endAggregatesForThisClass.maxRet - startAggregatesForThisClass.maxRet
+          const retainedSizeDeltaPerIteration = Math.round(retainedSizeDelta / numIterations)
+          const countDelta = diff.countDelta
+          const countDeltaPerIteration = countDelta / numIterations
           return {
             name,
-            numIterations,
             diff: { ...diff },
             aggregates: {
               before: { ...startAggregatesForThisClass },
               after: { ...endAggregatesForThisClass }
             },
-            retainedSizeDelta: endAggregatesForThisClass.maxRet - startAggregatesForThisClass.maxRet,
-            snapshots: {
-              before: startFilename,
-              after: endFilename
-            }
+            retainedSizeDelta,
+            retainedSizeDeltaPerIteration,
+            countDelta,
+            countDeltaPerIteration,
+            numIterations
           }
         })
         const result = {
           delta: endSize - startSize,
+          deltaPerIteration: Math.round((endSize - startSize) / numIterations),
           before: { statistics: { ...startSnapshot.statistics } },
           after: { statistics: { ...endSnapshot.statistics } },
-          leakingObjects
+          numIterations,
+          leakingObjects,
+          snapshots: {
+            before: startFilename,
+            after: endFilename
+          }
         }
 
         return {

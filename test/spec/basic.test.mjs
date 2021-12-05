@@ -7,7 +7,7 @@ describe('basic test suite', () => {
 
     console.log(results)
     expect(results.length).to.equal(3)
-    expect(results.map(_ => _.test)).to.deep.equal([
+    expect(results.map(_ => _.test.data)).to.deep.equal([
       { href: 'http://localhost:3000/test/www/basic/about' },
       { href: 'http://localhost:3000/test/www/basic/info' },
       { href: 'http://localhost:3000/test/www/basic/contact' }
