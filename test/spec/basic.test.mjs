@@ -1,9 +1,9 @@
-import { main } from '../../src/cli.js'
+import { findLeaks } from '../../src/index.js'
 import { expect } from 'chai'
 
 describe('basic test suite', () => {
   it('can detect a simple leak', async () => {
-    const results = await main('http://localhost:3000/test/www/basic/')
+    const results = await findLeaks('http://localhost:3000/test/www/basic/')
 
     debugger
     console.log(results)

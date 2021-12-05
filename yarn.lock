@@ -855,6 +855,11 @@ execa@^1.0.0:
     signal-exit "^3.0.0"
     strip-eof "^1.0.0"
 
+exit-hook@^3.0.0:
+  version "3.0.0"
+  resolved "https://registry.yarnpkg.com/exit-hook/-/exit-hook-3.0.0.tgz#367d132735a24b96569327806cfbf0eb081af7b5"
+  integrity sha512-ElRvnoj3dvOc5WjnQx0CF66rS0xehV6eZdcmqZX17uOLPy3me43frl8UD73Frkx5Aq5kgziMDECjDJR2X1oBFQ==
+
 extract-zip@2.0.1:
   version "2.0.1"
   resolved "https://registry.yarnpkg.com/extract-zip/-/extract-zip-2.0.1.tgz#663dca56fe46df890d5f131ef4a06d22bb8ba13a"
