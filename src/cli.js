@@ -81,7 +81,8 @@ async function readSnapshot (tmpFile) {
 
 async function takeHeapSnapshot (page) {
   const filename = await writeSnapshot(page)
-  return (await readSnapshot(filename))
+  const snapshot = await readSnapshot(filename)
+  return { filename, snapshot }
 }
 
 async function runOnPage (browser, pageUrl, runnable) {
@@ -107,24 +108,24 @@ export async function main (pageUrl) {
     const results = await Promise.all(tests.map(async test => {
       return runOnPage(browser, pageUrl, async page => {
         await iteration(page, test) // one throwaway iteration to avoid measuring one-time setup costs
-        const startSnapshot = await takeHeapSnapshot(page)
+        const { snapshot: startSnapshot, filename: startFilename } = await takeHeapSnapshot(page)
         const startSize = startSnapshot.statistics.total
         for (let i = 0; i < ITERATIONS; i++) {
           await iteration(page, test)
         }
-        const endSnapshot = await takeHeapSnapshot(page)
+        const { snapshot: endSnapshot, filename: endFilename } = await takeHeapSnapshot(page)
         const endSize = endSnapshot.statistics.total
 
         const aggregatesForDiff = await startSnapshot.aggregatesForDiff();
         const diffByClassName = await endSnapshot.calculateSnapshotDiff(startSnapshot.uid, aggregatesForDiff);
         const suspiciousObjects = Object.entries(diffByClassName).filter(([name, diff]) => {
-          // class added <iteration> times and not 0 times
+          // look for objects added <iteration> times and not 0 times
           return diff.countDelta % ITERATIONS === 0 && diff.countDelta !== 0
         })
         const startAggregates = startSnapshot.aggregatesWithFilter(new HeapSnapshotModel.HeapSnapshotModel.NodeFilter())
         const endAggregates = endSnapshot.aggregatesWithFilter(new HeapSnapshotModel.HeapSnapshotModel.NodeFilter())
 
-        const leakingClasses = suspiciousObjects.map(([name, diff]) => {
+        const leakingObjects = suspiciousObjects.map(([name, diff]) => {
           const startAggregatesForThisClass = startAggregates[name]
           const endAggregatesForThisClass = endAggregates[name]
           return {
@@ -134,14 +135,18 @@ export async function main (pageUrl) {
               before: {...startAggregatesForThisClass},
               after: {...endAggregatesForThisClass}
             },
-            retainedSizeDelta: endAggregatesForThisClass.maxRet - startAggregatesForThisClass.maxRet
+            retainedSizeDelta: endAggregatesForThisClass.maxRet - startAggregatesForThisClass.maxRet,
+            snapshots: {
+              before: startFilename,
+              after: endFilename
+            }
           }
         })
         const result = {
           delta: endSize - startSize,
           before: { statistics: { ...startSnapshot.statistics } },
           after: { statistics: { ...endSnapshot.statistics } },
-          leakingClasses
+          leakingObjects
         }
 
         return {

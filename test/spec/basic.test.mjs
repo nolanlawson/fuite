@@ -23,5 +23,9 @@ describe('basic test suite', () => {
 
     expect(deltas[2]).to.be.above(0)
     expect(deltas[2]).to.be.below(100000)
+
+    const leak = results[0].result.leakingObjects.find(_ => _.name === 'SomeBigObject')
+    expect (leak.retainedSizeDelta).to.be.above(7000000)
+    expect (leak.retainedSizeDelta).to.be.below(8000000)
   })
 })
