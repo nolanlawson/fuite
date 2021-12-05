@@ -1,3 +1,4 @@
 {
-  "timeout": 1200000
+  "timeout": 1200000,
+  "setup": "./test/spec/setup.mjs"
 }

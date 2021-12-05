@@ -2,80 +2,85 @@ import puppeteer from 'puppeteer'
 import esMain from 'es-main'
 import * as HeapSnapshotWorker from './thirdparty/devtools/heap_snapshot_worker/heap_snapshot_worker.js'
 import { createTests, iteration } from './basicScenario.js'
-import tempy from 'tempy';
-import fs from 'fs'
-import fsPromises from 'fs/promises'
+import { createReadStream, createWriteStream } from 'fs'
+import path from 'path'
+import tempDirectory from 'temp-dir'
+import cryptoRandomString from 'crypto-random-string'
+import { mkdir } from 'fs/promises'
 
 const ITERATIONS = 7
 
-async function takeHeapSnapshot(page) {
-  const tmpFile = tempy.file()
+let tempDir
+
+async function writeSnapshot (page) {
+  if (!tempDir) {
+    tempDir = path.join(tempDirectory, `fuite-${cryptoRandomString({ length: 16 })}`)
+    await mkdir(tempDir)
+  }
+  const tmpFile = path.join(tempDir, `heapsnap-${cryptoRandomString({ length: 16 })}.json`)
   console.log('tmpFile', tmpFile)
-
-  const writeSnapshot = async () => {
-    const cdpSession = await page.target().createCDPSession();
-    let writeStream
-    const writeStreamPromise = new Promise((resolve, reject) => {
-      writeStream = fs.createWriteStream(tmpFile, { encoding: 'utf8' })
-      writeStream.on('error', reject)
-      writeStream.on('finish', () => resolve())
+  const cdpSession = await page.target().createCDPSession();
+  let writeStream
+  const writeStreamPromise = new Promise((resolve, reject) => {
+    writeStream = createWriteStream(tmpFile, { encoding: 'utf8' })
+    writeStream.on('error', reject)
+    writeStream.on('finish', () => resolve())
+  })
+  const heapProfilerPromise = new Promise(resolve => {
+    cdpSession.on('HeapProfiler.reportHeapSnapshotProgress', ({ finished }) => {
+      if (finished) {
+        resolve()
+      }
     })
-    const heapProfilerPromise = new Promise(resolve => {
-      cdpSession.on('HeapProfiler.reportHeapSnapshotProgress', ({ finished }) => {
-        if (finished) {
-          resolve()
+  })
+  await cdpSession.send('HeapProfiler.enable')
+  await cdpSession.send('HeapProfiler.collectGarbage')
+  cdpSession.on('HeapProfiler.addHeapSnapshotChunk', ({ chunk }) => {
+    writeStream.write(chunk)
+  });
+  await cdpSession.send('HeapProfiler.takeHeapSnapshot', {
+    reportProgress: true
+  });
+
+  await heapProfilerPromise
+  await cdpSession.detach();
+  writeStream.close()
+  await writeStreamPromise
+  return tmpFile
+}
+
+async function readSnapshot(tmpFile) {
+  let loader
+  const loaderPromise = new Promise(resolve => {
+    loader = new HeapSnapshotWorker.HeapSnapshotLoader.HeapSnapshotLoader({
+      sendEvent(type, message) {
+        if (message === 'Parsing strings…') {
+          // queue microtask to wait for data to truly be written
+          Promise.resolve().then(resolve)
         }
-      })
+      }
     })
-    await cdpSession.send('HeapProfiler.enable')
-    await cdpSession.send('HeapProfiler.collectGarbage')
-    cdpSession.on('HeapProfiler.addHeapSnapshotChunk', ({ chunk }) => {
-      writeStream.write(chunk)
-    });
-    await cdpSession.send('HeapProfiler.takeHeapSnapshot', {
-      reportProgress: true
-    });
-
-    await heapProfilerPromise
-    await cdpSession.detach();
-    writeStream.close()
-    await writeStreamPromise
-  }
-
-  const readSnapshot = async () => {
-    let loader
-    const loaderPromise = new Promise(resolve => {
-      loader = new HeapSnapshotWorker.HeapSnapshotLoader.HeapSnapshotLoader({
-        sendEvent(type, message) {
-          // console.log(type, message)
-          if (message === 'Parsing strings…') {
-            Promise.resolve().then(resolve)
-          }
-        }
-      })
+  })
+  let readStream
+  const readStreamPromise = new Promise((resolve, reject) => {
+    readStream = createReadStream(tmpFile, { encoding: 'utf8'})
+    readStream.on('error', reject)
+    readStream.on('end', () => resolve())
+    readStream.on('data', chunk => {
+      loader.write(chunk)
     })
-    let readStream
-    const readStreamPromise = new Promise((resolve, reject) => {
-      readStream = fs.createReadStream(tmpFile, { encoding: 'utf8'})
-      readStream.on('error', reject)
-      readStream.on('end', () => resolve())
-      readStream.on('data', chunk => {
-        loader.write(chunk)
-      })
-    })
-    await readStreamPromise
+  })
+  await readStreamPromise
 
-    loader.close()
-    await loaderPromise
+  loader.close()
+  await loaderPromise
 
-    const snapshot = await loader.buildSnapshot()
-    return snapshot
-  }
+  return (await loader.buildSnapshot())
+}
 
-  await writeSnapshot()
-  const snapshot = await readSnapshot()
-  await fsPromises.rm(tmpFile)
-  return snapshot
+async function takeHeapSnapshot(page) {
+  const filename = await writeSnapshot(page)
+  return (await readSnapshot(filename))
 }
 
 async function runOnPage(browser, pageUrl, runnable) {
