@@ -22,6 +22,7 @@
     "es-main": "^1.0.2",
     "exit-hook": "^3.0.0",
     "markdown-table": "^3.0.2",
+    "ora": "^6.0.1",
     "pretty-bytes": "^5.6.0",
     "puppeteer": "^12.0.1",
     "temp-dir": "^2.0.0"

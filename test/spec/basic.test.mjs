@@ -5,7 +5,6 @@ describe('basic test suite', () => {
   it('can detect a simple leak', async () => {
     const results = await findLeaks('http://localhost:3000/test/www/basic/')
 
-    console.log(results)
     expect(results.length).to.equal(3)
     expect(results.map(_ => _.test.data)).to.deep.equal([
       { href: 'http://localhost:3000/test/www/basic/about' },
