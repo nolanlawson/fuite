@@ -7,7 +7,8 @@
   "scripts": {
     "test": "run-p --race test:serve test:mocha",
     "test:serve": "serve",
-    "test:mocha": "mocha ./test/spec/"
+    "test:mocha": "mocha ./test/spec/",
+    "lint": "standard"
   },
   "dependencies": {
     "commander": "^8.3.0",
@@ -43,5 +44,18 @@
   "volta": {
     "node": "16.13.1",
     "yarn": "1.22.17"
+  },
+  "standard": {
+    "ignore": [
+      "thirdparty"
+    ],
+    "global": [
+      "before",
+      "beforeEach",
+      "after",
+      "afterEach",
+      "describe",
+      "it"
+    ]
   }
 }

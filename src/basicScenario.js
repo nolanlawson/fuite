@@ -1,5 +1,3 @@
-let internalLinks
-
 const getAnchor = async (page, href) => {
   const anchors = await page.$$('a[href]')
   for (const anchor of anchors) {

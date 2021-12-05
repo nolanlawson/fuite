@@ -1,3 +1,4 @@
+/* global Navigo */
 (() => {
   const router = new Navigo(window.location.pathname)
   const routes = ['', 'about', 'info', 'contact']

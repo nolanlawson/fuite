@@ -19,7 +19,7 @@ async function writeSnapshot (page) {
   }
   const tmpFile = path.join(tempDir, `heapsnap-${cryptoRandomString({ length: 16 })}.json`)
   console.log('tmpFile', tmpFile)
-  const cdpSession = await page.target().createCDPSession();
+  const cdpSession = await page.target().createCDPSession()
   let writeStream
   const writeStreamPromise = new Promise((resolve, reject) => {
     writeStream = createWriteStream(tmpFile, { encoding: 'utf8' })
@@ -37,23 +37,23 @@ async function writeSnapshot (page) {
   await cdpSession.send('HeapProfiler.collectGarbage')
   cdpSession.on('HeapProfiler.addHeapSnapshotChunk', ({ chunk }) => {
     writeStream.write(chunk)
-  });
+  })
   await cdpSession.send('HeapProfiler.takeHeapSnapshot', {
     reportProgress: true
-  });
+  })
 
   await heapProfilerPromise
-  await cdpSession.detach();
+  await cdpSession.detach()
   writeStream.close()
   await writeStreamPromise
   return tmpFile
 }
 
-async function readSnapshot(tmpFile) {
+async function readSnapshot (tmpFile) {
   let loader
   const loaderPromise = new Promise(resolve => {
     loader = new HeapSnapshotWorker.HeapSnapshotLoader.HeapSnapshotLoader({
-      sendEvent(type, message) {
+      sendEvent (type, message) {
         if (message === 'Parsing strings…') {
           // queue microtask to wait for data to truly be written
           Promise.resolve().then(resolve)
@@ -63,7 +63,7 @@ async function readSnapshot(tmpFile) {
   })
   let readStream
   const readStreamPromise = new Promise((resolve, reject) => {
-    readStream = createReadStream(tmpFile, { encoding: 'utf8'})
+    readStream = createReadStream(tmpFile, { encoding: 'utf8' })
     readStream.on('error', reject)
     readStream.on('end', () => resolve())
     readStream.on('data', chunk => {
@@ -78,12 +78,12 @@ async function readSnapshot(tmpFile) {
   return (await loader.buildSnapshot())
 }
 
-async function takeHeapSnapshot(page) {
+async function takeHeapSnapshot (page) {
   const filename = await writeSnapshot(page)
   return (await readSnapshot(filename))
 }
 
-async function runOnPage(browser, pageUrl, runnable) {
+async function runOnPage (browser, pageUrl, runnable) {
   const page = await browser.newPage()
   await page.goto(pageUrl)
   await page.waitForNetworkIdle()
@@ -95,8 +95,8 @@ async function runOnPage(browser, pageUrl, runnable) {
   }
 }
 
-export async function main(pageUrl) {
-  const browser = await puppeteer.launch();
+export async function main (pageUrl) {
+  const browser = await puppeteer.launch()
 
   const tests = await runOnPage(browser, pageUrl, async page => {
     return createTests(page)
@@ -115,8 +115,8 @@ export async function main(pageUrl) {
 
         const result = {
           memorySizeDelta: endSize - startSize,
-          beforeStatistics: {...startSnapshot.statistics},
-          afterStatistics: {...endSnapshot.statistics}
+          beforeStatistics: { ...startSnapshot.statistics },
+          afterStatistics: { ...endSnapshot.statistics }
         }
 
         return {
@@ -127,7 +127,7 @@ export async function main(pageUrl) {
     }))
     return results
   } finally {
-    await browser.close();
+    await browser.close()
   }
 }
 
