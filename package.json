@@ -2,8 +2,13 @@
   "name": "fuite",
   "version": "1.0.0",
   "description": "A tool for fining memory leaks in web apps",
-  "main": "index.js",
   "type": "module",
+  "main": "./src/index.js",
+  "module": "./src/index.js",
+  "bin": "./src/cli.js",
+  "exports": {
+    ".": "./src/index.js"
+  },
   "scripts": {
     "test": "run-p --race test:serve test:mocha",
     "test:serve": "serve",
