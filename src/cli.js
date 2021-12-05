@@ -1,6 +1,7 @@
 import puppeteer from 'puppeteer'
 import esMain from 'es-main'
 import * as HeapSnapshotWorker from './thirdparty/devtools/heap_snapshot_worker/heap_snapshot_worker.js'
+import * as HeapSnapshotModel from './thirdparty/devtools/heap_snapshot_worker/heap_snapshot_model.js'
 import { createTests, iteration } from './basicScenario.js'
 import { createReadStream, createWriteStream } from 'fs'
 import path from 'path'
@@ -114,10 +115,33 @@ export async function main (pageUrl) {
         const endSnapshot = await takeHeapSnapshot(page)
         const endSize = endSnapshot.statistics.total
 
+        const aggregatesForDiff = await startSnapshot.aggregatesForDiff();
+        const diffByClassName = await endSnapshot.calculateSnapshotDiff(startSnapshot.uid, aggregatesForDiff);
+        const suspiciousObjects = Object.entries(diffByClassName).filter(([name, diff]) => {
+          // class added <iteration> times and not 0 times
+          return diff.countDelta % ITERATIONS === 0 && diff.countDelta !== 0
+        })
+        const startAggregates = startSnapshot.aggregatesWithFilter(new HeapSnapshotModel.HeapSnapshotModel.NodeFilter())
+        const endAggregates = endSnapshot.aggregatesWithFilter(new HeapSnapshotModel.HeapSnapshotModel.NodeFilter())
+
+        const leakingClasses = suspiciousObjects.map(([name, diff]) => {
+          const startAggregatesForThisClass = startAggregates[name]
+          const endAggregatesForThisClass = endAggregates[name]
+          return {
+            name,
+            diff: {...diff},
+            aggregates: {
+              before: {...startAggregatesForThisClass},
+              after: {...endAggregatesForThisClass}
+            },
+            retainedSizeDelta: endAggregatesForThisClass.maxRet - startAggregatesForThisClass.maxRet
+          }
+        })
         const result = {
-          memorySizeDelta: endSize - startSize,
-          beforeStatistics: { ...startSnapshot.statistics },
-          afterStatistics: { ...endSnapshot.statistics }
+          delta: endSize - startSize,
+          before: { statistics: { ...startSnapshot.statistics } },
+          after: { statistics: { ...endSnapshot.statistics } },
+          leakingClasses
         }
 
         return {

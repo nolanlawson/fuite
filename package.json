@@ -1,7 +1,7 @@
 {
   "name": "fuite",
   "version": "1.0.0",
-  "description": "Memory leak detector for websites",
+  "description": "A tool for fining memory leaks in web apps",
   "main": "index.js",
   "type": "module",
   "scripts": {
