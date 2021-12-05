@@ -135,5 +135,3 @@ if (esMain(import.meta)) {
   // TODO
   console.log('run as main')
 }
-
-process.on
