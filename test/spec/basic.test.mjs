@@ -5,7 +5,6 @@ describe('basic test suite', () => {
   it('can detect a simple leak', async () => {
     const results = await findLeaks('http://localhost:3000/test/www/basic/')
 
-    debugger
     console.log(results)
     expect(results.length).to.equal(3)
     expect(results.map(_ => _.test)).to.deep.equal([
@@ -25,7 +24,7 @@ describe('basic test suite', () => {
     expect(deltas[2]).to.be.below(100000)
 
     const leak = results[0].result.leakingObjects.find(_ => _.name === 'SomeBigObject')
-    expect (leak.retainedSizeDelta).to.be.above(7000000)
-    expect (leak.retainedSizeDelta).to.be.below(8000000)
+    expect(leak.retainedSizeDelta).to.be.above(7000000)
+    expect(leak.retainedSizeDelta).to.be.below(8000000)
   })
 })

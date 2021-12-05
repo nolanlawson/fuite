@@ -47,8 +47,8 @@
     "url": "https://github.com/nolanlawson/fuite/issues"
   },
   "homepage": "https://github.com/nolanlawson/fuite#readme",
+  "//": "Require ES modules: https://git.io/JMbBG",
   "engines": {
-    "//": "Require ES modules: https://git.io/JMbBG",
     "node": "^12.20.0 || ^14.13.1 || >=16.0.0"
   },
   "volta": {
@@ -65,7 +65,8 @@
       "after",
       "afterEach",
       "describe",
-      "it"
+      "it",
+      "AbortController"
     ]
   }
 }
