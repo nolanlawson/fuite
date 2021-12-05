@@ -105,6 +105,7 @@ export async function main (pageUrl) {
   try {
     const results = await Promise.all(tests.map(async test => {
       return runOnPage(browser, pageUrl, async page => {
+        await iteration(page, test) // one throwaway iteration to avoid measuring one-time setup costs
         const startSnapshot = await takeHeapSnapshot(page)
         const startSize = startSnapshot.statistics.total
         for (let i = 0; i < ITERATIONS; i++) {
