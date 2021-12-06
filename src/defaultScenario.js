@@ -1,42 +1,35 @@
 import { waitForPageIdle } from './puppeteerUtil.js'
 
-const getAnchor = async (page, href) => {
-  const anchors = await page.$$('a[href]')
-  for (const anchor of anchors) {
-    const isTargetAnchor = await anchor.evaluate(
-      (el, targetHref) => new URL(el.getAttribute('href'), window.location.href).href === targetHref,
-      href
-    )
-    if (isTargetAnchor) {
-      return anchor
-    }
-  }
-}
-
 export async function createTests (page) {
   const location = await page.evaluate('window.location.href')
   const baseUrl = new URL(location)
-  const links = await page.$$eval('a[href]', elements => elements.map(el => el.getAttribute('href')))
+  const hrefs = await page.$$eval('a[href]', elements => elements.map(el => el.getAttribute('href')))
 
-  const uniqueLinks = [...new Set(links.map(_ => new URL(_, location)).filter(url => {
+  // Find unique links, dedup based on full url
+  const fullLinksToLinks = new Map()
+  for (const href of hrefs) {
+    const url = new URL(href, location)
     // origin may be the same for blob: URLs, but the protocol is different
     // https://developer.mozilla.org/en-US/docs/Web/API/URL/origin
-    return url.origin === baseUrl.origin && url.protocol === baseUrl.protocol &&
+    const isInternalLink = url.origin === baseUrl.origin &&
+      url.protocol === baseUrl.protocol &&
       url.href !== baseUrl.href // ignore links to this very page
-  }).map(url => url.href))]
+    if (isInternalLink && !fullLinksToLinks.has(url.href)) {
+      fullLinksToLinks.set(url.href, href)
+    }
+  }
 
-  return uniqueLinks.map(href => {
-    const url = new URL(href)
+  return [...fullLinksToLinks.entries()].map(([fullHref, originalHref]) => {
+    const url = new URL(fullHref)
     return {
-      data: { href: url.href },
+      data: { href: originalHref },
       description: `Go to ${url.pathname + url.search + url.hash} and back`
     }
   })
 }
 
 export async function iteration (page, { href }) {
-  const anchor = await getAnchor(page, href)
-  await anchor.click()
+  await page.click(`a[href=${JSON.stringify(href)}]`)
   await waitForPageIdle(page)
   await page.goBack()
   await waitForPageIdle(page)
