@@ -2,6 +2,8 @@ import puppeteer from 'puppeteer'
 import * as HeapSnapshotModel from './thirdparty/devtools/heap_snapshot_worker/heap_snapshot_model.js'
 import * as defaultScenario from './defaultScenario.js'
 import { takeHeapSnapshot } from './heapsnapshots.js'
+import { noop, sortBy } from './util.js'
+import { waitForPageIdle } from './puppeteerUtil.js'
 
 export const DEFAULT_ITERATIONS = 7
 
@@ -10,10 +12,11 @@ async function runOnPage (browser, pageUrl, beforeStep, runnable) {
 
   try {
     await page.goto(pageUrl)
-    await page.waitForNetworkIdle()
+    await waitForPageIdle(page)
+
     if (beforeStep) {
       await beforeStep(page)
-      await page.waitForNetworkIdle()
+      await waitForPageIdle(page)
     }
     return (await runnable(page))
   } finally {
@@ -40,17 +43,25 @@ export async function findLeaks (pageUrl, options = {}) {
 
   const numIterations = typeof options.iterations === 'number' ? options.iterations : DEFAULT_ITERATIONS
 
+  const onProgress = options.onProgress || noop
+
   const beforeStep = scenario.before
 
+  onProgress('Gathering tests...')
   const tests = await runOnPage(browser, pageUrl, beforeStep, async page => {
     return scenario.createTests(page)
   })
 
   try {
     const results = []
-    for (const test of tests) {
+
+    for (let i = 0; i < tests.length; i++) {
+      const test = tests[i]
+      const messagePrefix = `Test ${i + 1}/${tests.length} - ${test.description} -`
+      onProgress(`${messagePrefix} Setup...`)
       results.push(await runOnPage(browser, pageUrl, beforeStep, async page => {
         await scenario.iteration(page, test.data) // one throwaway iteration to avoid measuring one-time setup costs
+        onProgress(`${messagePrefix} Taking start snapshot...`)
         const { snapshot: startSnapshot, filename: startFilename } = await takeHeapSnapshot(page)
         if (options.debug) {
           // "before" point in time
@@ -58,8 +69,10 @@ export async function findLeaks (pageUrl, options = {}) {
         }
         const startSize = startSnapshot.statistics.total
         for (let i = 0; i < numIterations; i++) {
+          onProgress(`${messagePrefix} Iteration ${i + 1}/${numIterations}...`)
           await scenario.iteration(page, test.data)
         }
+        onProgress(`${messagePrefix} Taking end snapshot...`)
         const { snapshot: endSnapshot, filename: endFilename } = await takeHeapSnapshot(page)
         if (options.debug) {
           // "after" point in time
@@ -67,6 +80,7 @@ export async function findLeaks (pageUrl, options = {}) {
         }
         const endSize = endSnapshot.statistics.total
 
+        onProgress(`${messagePrefix} Comparing snapshots...`)
         const aggregatesForDiff = await startSnapshot.aggregatesForDiff()
         const diffByClassName = await endSnapshot.calculateSnapshotDiff(startSnapshot.uid, aggregatesForDiff)
         const suspiciousObjects = Object.entries(diffByClassName).filter(([name, diff]) => {
@@ -76,7 +90,7 @@ export async function findLeaks (pageUrl, options = {}) {
         const startAggregates = startSnapshot.aggregatesWithFilter(new HeapSnapshotModel.HeapSnapshotModel.NodeFilter())
         const endAggregates = endSnapshot.aggregatesWithFilter(new HeapSnapshotModel.HeapSnapshotModel.NodeFilter())
 
-        const leakingObjects = suspiciousObjects.map(([name, diff]) => {
+        let leakingObjects = suspiciousObjects.map(([name, diff]) => {
           const startAggregatesForThisClass = startAggregates[name]
           const endAggregatesForThisClass = endAggregates[name]
           const retainedSizeDelta = endAggregatesForThisClass.maxRet - startAggregatesForThisClass.maxRet
@@ -97,6 +111,7 @@ export async function findLeaks (pageUrl, options = {}) {
             numIterations
           }
         })
+        leakingObjects = sortBy(leakingObjects, ['-retainedSizeDelta', 'name'])
         const result = {
           delta: endSize - startSize,
           deltaPerIteration: Math.round((endSize - startSize) / numIterations),

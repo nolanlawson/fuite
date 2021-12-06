@@ -1,3 +1,5 @@
+import { waitForPageIdle } from './puppeteerUtil.js'
+
 const getAnchor = async (page, href) => {
   const anchors = await page.$$('a[href]')
   for (const anchor of anchors) {
@@ -27,7 +29,7 @@ export async function createTests (page) {
     const url = new URL(href)
     return {
       data: { href: url.href },
-      description: `Go to ${url.pathname + url.search + url.hash} and go back`
+      description: `Go to ${url.pathname + url.search + url.hash} and back`
     }
   })
 }
@@ -35,7 +37,7 @@ export async function createTests (page) {
 export async function iteration (page, { href }) {
   const anchor = await getAnchor(page, href)
   await anchor.click()
-  await page.waitForNetworkIdle()
+  await waitForPageIdle(page)
   await page.goBack()
-  await page.waitForNetworkIdle()
+  await waitForPageIdle(page)
 }

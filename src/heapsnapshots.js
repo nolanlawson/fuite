@@ -70,3 +70,22 @@ export async function takeHeapSnapshot (page) {
   const snapshot = await readSnapshot(filename)
   return { filename, snapshot }
 }
+
+export async function takeThrowawayHeapSnapshot (page) {
+  const cdpSession = await page.target().createCDPSession()
+  const heapProfilerPromise = new Promise(resolve => {
+    cdpSession.on('HeapProfiler.reportHeapSnapshotProgress', ({ finished }) => {
+      if (finished) {
+        resolve()
+      }
+    })
+  })
+  await cdpSession.send('HeapProfiler.enable')
+  await cdpSession.send('HeapProfiler.collectGarbage')
+  await cdpSession.send('HeapProfiler.takeHeapSnapshot', {
+    reportProgress: true
+  })
+
+  await heapProfilerPromise
+  await cdpSession.detach()
+}

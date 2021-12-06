@@ -6,7 +6,7 @@ import { createRequire } from 'module'
 import path from 'path'
 import { formatResults } from './format.js'
 import chalk from 'chalk'
-import ora from 'ora';
+import ora from 'ora'
 
 const require = createRequire(import.meta.url)
 const { version } = require('../package.json')
@@ -42,12 +42,15 @@ ${chalk.blue('Scenario')}  : ${options.scenario || 'Default'}
 ${chalk.blue('Iterations')}: ${options.iterations} ${options.iterations === DEFAULT_ITERATIONS ? '(Default)' : ''}
   `.trim() + '\n')
 
-  const spinner = ora('Analyzing...').start()
+  const spinner = ora('Starting...').start()
   const results = await findLeaks(options.url, {
     debug: options.debug,
     iterations: parseInt(options.iterations, 10),
     scenario,
-    signal
+    signal,
+    onProgress (message) {
+      spinner.text = message
+    }
   })
   spinner.stop()
   controller = undefined
