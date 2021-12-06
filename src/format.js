@@ -30,9 +30,8 @@ Leaking objects:
 
 ${table}
 
-Before    : ${result.snapshots.before} (${chalk.blue(prettyBytes(result.before.statistics.total))})
-After     : ${result.snapshots.after} (${chalk.red(prettyBytes(result.after.statistics.total))})
-Iterations: ${result.numIterations}
+Before: ${result.snapshots.before} (${chalk.blue(prettyBytes(result.before.statistics.total))})
+After : ${result.snapshots.after} (${chalk.red(prettyBytes(result.after.statistics.total))}) (${result.numIterations} iterations)
     `.trim() + '\n'
   })
   return str

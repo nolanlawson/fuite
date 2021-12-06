@@ -51,7 +51,7 @@ ${chalk.blue('Iterations')}: ${options.iterations} ${options.iterations === DEFA
   })
   spinner.stop()
   controller = undefined
-  console.log(chalk.blue('\n----- TEST RESULTS -----\n'))
+  console.log(chalk.blue('TEST RESULTS'))
   console.log(formatResults(results))
 }
 

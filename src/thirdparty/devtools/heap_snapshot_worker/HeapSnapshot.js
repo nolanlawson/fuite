@@ -1337,7 +1337,7 @@ var HeapSnapshot = /** @class */ (function () {
         if (this.nodeDetachednessOffset === -1) {
             return;
         }
-        console.time('propagateDOMState');
+        // console.time('propagateDOMState');
         var visited = new Uint8Array(this.nodeCount);
         var attached = [];
         var detached = [];
@@ -1412,7 +1412,7 @@ var HeapSnapshot = /** @class */ (function () {
             }
             propagateState(this, nodeOrdinal, 2 /* Detached */);
         }
-        console.timeEnd('propagateDOMState');
+        // console.timeEnd('propagateDOMState');
     };
     HeapSnapshot.prototype.buildSamples = function () {
         var samples = this.rawSamples;
