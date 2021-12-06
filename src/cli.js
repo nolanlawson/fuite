@@ -7,6 +7,7 @@ import path from 'path'
 import { formatResults } from './format.js'
 import chalk from 'chalk'
 import ora from 'ora'
+import fs from 'fs/promises'
 
 const require = createRequire(import.meta.url)
 const { version } = require('../package.json')
@@ -21,6 +22,8 @@ program
   .requiredOption('-u, --url <url>', 'URL to load in the browser')
   .option('-s, --scenario <scenario>', 'Scenario file to run')
   .option('-i, --iterations <number>', 'Number of iterations', DEFAULT_ITERATIONS)
+  .option('-o, --output <file>', 'Write JSON output to a file')
+  .option('-H, --heapsnapshot', 'Save heapsnapshot files')
   .option('-d, --debug', 'Run in debug mode')
   .version(version)
 program.parse(process.argv)
@@ -40,11 +43,21 @@ async function main () {
 ${chalk.blue('URL')}       : ${options.url}
 ${chalk.blue('Scenario')}  : ${options.scenario || 'Default'}
 ${chalk.blue('Iterations')}: ${options.iterations} ${options.iterations === DEFAULT_ITERATIONS ? '(Default)' : ''}
-  `.trim() + '\n')
+  `.trim())
+
+  let outputFilename
+  if (options.output) {
+    outputFilename = path.resolve(process.cwd(), options.output)
+    console.log(`
+${chalk.blue('Output')}    : ${outputFilename}
+    `.trim())
+  }
+  console.log()
 
   const spinner = ora('Starting...').start()
   const results = await findLeaks(options.url, {
     debug: options.debug,
+    heapsnapshot: options.heapsnapshot,
     iterations: parseInt(options.iterations, 10),
     scenario,
     signal,
@@ -54,6 +67,11 @@ ${chalk.blue('Iterations')}: ${options.iterations} ${options.iterations === DEFA
   })
   spinner.stop()
   controller = undefined
+
+  if (outputFilename) {
+    await fs.writeFile(outputFilename, JSON.stringify(results, null, 2), 'utf8')
+  }
+
   console.log(chalk.blue('TEST RESULTS'))
   console.log(formatResults(results))
 }

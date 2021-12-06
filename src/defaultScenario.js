@@ -22,7 +22,10 @@ export async function createTests (page) {
   return [...fullLinksToLinks.entries()].map(([fullHref, originalHref]) => {
     const url = new URL(fullHref)
     return {
-      data: { href: originalHref },
+      data: {
+        href: originalHref,
+        fullHref: fullHref
+      },
       description: `Go to ${url.pathname + url.search + url.hash} and back`
     }
   })

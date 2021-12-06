@@ -4,6 +4,7 @@ import * as defaultScenario from './defaultScenario.js'
 import { takeHeapSnapshot } from './heapsnapshots.js'
 import { noop, sortBy } from './util.js'
 import { waitForPageIdle } from './puppeteerUtil.js'
+import fs from 'fs/promises'
 
 export const DEFAULT_ITERATIONS = 7
 
@@ -118,11 +119,19 @@ export async function findLeaks (pageUrl, options = {}) {
           before: { statistics: { ...startSnapshot.statistics } },
           after: { statistics: { ...endSnapshot.statistics } },
           numIterations,
-          leakingObjects,
-          snapshots: {
+          leakingObjects
+        }
+
+        if (options.heapsnapshot) {
+          result.snapshots = {
             before: startFilename,
             after: endFilename
           }
+        } else {
+          await Promise.all([
+            fs.rm(startFilename),
+            fs.rm(endFilename)
+          ])
         }
 
         return {

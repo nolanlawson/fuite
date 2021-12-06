@@ -22,6 +22,14 @@ export function formatResults (results) {
 
     const table = result.leakingObjects.length ? markdownTable(tableData) : ''
 
+    let snapshots = ''
+    if (result.snapshots) {
+      snapshots = '\n' + `
+Before: ${result.snapshots.before} (${chalk.blue(prettyBytes(result.before.statistics.total))})
+After : ${result.snapshots.after} (${chalk.red(prettyBytes(result.after.statistics.total))}) (${result.numIterations} iterations)
+      `.trim()
+    }
+
     str += '\n' + `
 Test: ${chalk.blue(test.description)}
 Leak: ${(result.deltaPerIteration > 0 ? chalk.red : chalk.green)(prettyBytes(result.deltaPerIteration))}
@@ -29,9 +37,7 @@ Leak: ${(result.deltaPerIteration > 0 ? chalk.red : chalk.green)(prettyBytes(res
 Leaking objects:
 
 ${table}
-
-Before: ${result.snapshots.before} (${chalk.blue(prettyBytes(result.before.statistics.total))})
-After : ${result.snapshots.after} (${chalk.red(prettyBytes(result.after.statistics.total))}) (${result.numIterations} iterations)
+${snapshots}
     `.trim() + '\n'
   })
   return str
