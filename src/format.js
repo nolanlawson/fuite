@@ -9,7 +9,7 @@ export function formatResults (results) {
     const tableData = [[
       'Object',
       '# added',
-      'Retained size'
+      'Retained size increase'
     ]]
 
     for (const { name, retainedSizeDeltaPerIteration, countDeltaPerIteration } of result.leakingObjects) {
@@ -33,6 +33,7 @@ After : ${result.snapshots.after} (${chalk.red(prettyBytes(result.after.statisti
     str += '\n' + `
 Test: ${chalk.blue(test.description)}
 Leak: ${(result.deltaPerIteration > 0 ? chalk.red : chalk.green)(prettyBytes(result.deltaPerIteration))}
+Probably not leaking: ${result.probablyNotLeaking}
 
 Leaking objects:
 

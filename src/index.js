@@ -2,7 +2,7 @@ import puppeteer from 'puppeteer'
 import * as HeapSnapshotModel from './thirdparty/devtools/heap_snapshot_worker/heap_snapshot_model.js'
 import * as defaultScenario from './defaultScenario.js'
 import { takeHeapSnapshot } from './heapsnapshots.js'
-import { noop, sortBy } from './util.js'
+import { noop, sortBy, sum } from './util.js'
 import { waitForPageIdle } from './puppeteerUtil.js'
 import fs from 'fs/promises'
 
@@ -80,6 +80,8 @@ export async function findLeaks (pageUrl, options = {}) {
           debugger // eslint-disable-line no-debugger
         }
         const endSize = endSnapshot.statistics.total
+        const delta = endSize - startSize
+        const deltaPerIteration = Math.round((endSize - startSize) / numIterations)
 
         onProgress(`${messagePrefix} Comparing snapshots...`)
         const aggregatesForDiff = await startSnapshot.aggregatesForDiff()
@@ -91,7 +93,12 @@ export async function findLeaks (pageUrl, options = {}) {
         const startAggregates = startSnapshot.aggregatesWithFilter(new HeapSnapshotModel.HeapSnapshotModel.NodeFilter())
         const endAggregates = endSnapshot.aggregatesWithFilter(new HeapSnapshotModel.HeapSnapshotModel.NodeFilter())
 
-        let leakingObjects = suspiciousObjects.map(([name, diff]) => {
+        let leakingObjects = suspiciousObjects.filter(([name]) => {
+          // Skip any objects that, for whatever reason, aren't in the aggregate collection.
+          // We can't do anything with these
+          return name in startAggregates && name in endAggregates
+        })
+        leakingObjects = leakingObjects.map(([name, diff]) => {
           const startAggregatesForThisClass = startAggregates[name]
           const endAggregatesForThisClass = endAggregates[name]
           const retainedSizeDelta = endAggregatesForThisClass.maxRet - startAggregatesForThisClass.maxRet
@@ -113,13 +120,45 @@ export async function findLeaks (pageUrl, options = {}) {
           }
         })
         leakingObjects = sortBy(leakingObjects, ['-retainedSizeDelta', 'name'])
+
+        const chromeInternals = [
+          '(array)',
+          '(closure)',
+          '(compiled code)',
+          '(concatenated string)',
+          '(number)',
+          '(regexp)',
+          '(sliced string)',
+          '(string)',
+          '(system)',
+          'LayoutShift',
+          'LayoutShiftAttribution'
+        ]
+
+        const isProbablyNotLeaking = () => {
+          const leakingObjectsWithoutChromeInternals = leakingObjects.filter(_ => !chromeInternals.includes(_.name))
+          if (leakingObjectsWithoutChromeInternals.length) {
+            return false
+          }
+          const deltaDueToChromeInternals = sum([...chromeInternals.map(name => {
+            if (!(name in startAggregates && name in endAggregates)) {
+              return 0
+            }
+            return endAggregates[name].maxRet - startAggregates[name].maxRet
+          })])
+          const deltaDueToChromeInternalsPerIteration = deltaDueToChromeInternals / numIterations
+
+          return deltaPerIteration < deltaDueToChromeInternalsPerIteration
+        }
+
         const result = {
-          delta: endSize - startSize,
-          deltaPerIteration: Math.round((endSize - startSize) / numIterations),
+          delta,
+          deltaPerIteration,
           before: { statistics: { ...startSnapshot.statistics } },
           after: { statistics: { ...endSnapshot.statistics } },
           numIterations,
-          leakingObjects
+          leakingObjects,
+          probablyNotLeaking: isProbablyNotLeaking()
         }
 
         if (options.heapsnapshot) {
