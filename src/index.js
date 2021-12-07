@@ -27,7 +27,8 @@ async function runOnPage (browser, pageUrl, beforeStep, runnable) {
 
 export async function findLeaks (pageUrl, options = {}) {
   const browser = await puppeteer.launch({
-    headless: !options.debug
+    headless: !options.debug,
+    defaultViewport: {width: 1280, height: 800}
   })
 
   if (options.signal) {
@@ -53,131 +54,148 @@ export async function findLeaks (pageUrl, options = {}) {
     return scenario.createTests(page)
   })
 
+  async function runIteration(test, i) {
+    const messagePrefix = `Test ${i + 1}/${tests.length} - ${test.description} -`
+    onProgress(`${messagePrefix} Setup...`)
+    return runOnPage(browser, pageUrl, beforeStep, async page => {
+      await scenario.iteration(page, test.data) // one throwaway iteration to avoid measuring one-time setup costs
+      onProgress(`${messagePrefix} Taking start snapshot...`)
+      const { snapshot: startSnapshot, filename: startFilename } = await takeHeapSnapshot(page)
+      if (options.debug) {
+        // "before" point in time
+        debugger // eslint-disable-line no-debugger
+      }
+      const startSize = startSnapshot.statistics.total
+      for (let i = 0; i < numIterations; i++) {
+        onProgress(`${messagePrefix} Iteration ${i + 1}/${numIterations}...`)
+        await scenario.iteration(page, test.data)
+      }
+      onProgress(`${messagePrefix} Taking end snapshot...`)
+      const { snapshot: endSnapshot, filename: endFilename } = await takeHeapSnapshot(page)
+      if (options.debug) {
+        // "after" point in time
+        debugger // eslint-disable-line no-debugger
+      }
+      const endSize = endSnapshot.statistics.total
+      const delta = endSize - startSize
+      const deltaPerIteration = Math.round((endSize - startSize) / numIterations)
+
+      onProgress(`${messagePrefix} Comparing snapshots...`)
+      const aggregatesForDiff = await startSnapshot.aggregatesForDiff()
+      const diffByClassName = await endSnapshot.calculateSnapshotDiff(startSnapshot.uid, aggregatesForDiff)
+      const suspiciousObjects = Object.entries(diffByClassName).filter(([name, diff]) => {
+        // look for objects added <iteration> times and not 0 times
+        return diff.countDelta % numIterations === 0 && diff.countDelta !== 0
+      })
+      const startAggregates = startSnapshot.aggregatesWithFilter(new HeapSnapshotModel.HeapSnapshotModel.NodeFilter())
+      const endAggregates = endSnapshot.aggregatesWithFilter(new HeapSnapshotModel.HeapSnapshotModel.NodeFilter())
+
+      let leakingObjects = suspiciousObjects.filter(([name]) => {
+        // Skip any objects that, for whatever reason, aren't in the aggregate collection.
+        // We can't do anything with these
+        return name in startAggregates && name in endAggregates
+      })
+      leakingObjects = leakingObjects.map(([name, diff]) => {
+        const startAggregatesForThisClass = startAggregates[name]
+        const endAggregatesForThisClass = endAggregates[name]
+        const retainedSizeDelta = endAggregatesForThisClass.maxRet - startAggregatesForThisClass.maxRet
+        const retainedSizeDeltaPerIteration = Math.round(retainedSizeDelta / numIterations)
+        const countDelta = diff.countDelta
+        const countDeltaPerIteration = countDelta / numIterations
+        return {
+          name,
+          diff: { ...diff },
+          aggregates: {
+            before: { ...startAggregatesForThisClass },
+            after: { ...endAggregatesForThisClass }
+          },
+          retainedSizeDelta,
+          retainedSizeDeltaPerIteration,
+          countDelta,
+          countDeltaPerIteration,
+          numIterations
+        }
+      })
+      leakingObjects = sortBy(leakingObjects, ['-retainedSizeDelta', 'name'])
+
+      const chromeInternals = [
+        '(array)',
+        '(closure)',
+        '(compiled code)',
+        '(concatenated string)',
+        '(number)',
+        '(regexp)',
+        '(sliced string)',
+        '(string)',
+        '(system)',
+        'PerformanceLongTaskTiming',
+        'LayoutShift',
+        'LayoutShiftAttribution',
+        'TaskAttributionTiming'
+      ]
+
+      const isProbablyNotLeaking = () => {
+        const leakingObjectsWithoutChromeInternals = leakingObjects.filter(_ => !chromeInternals.includes(_.name))
+        if (leakingObjectsWithoutChromeInternals.length) {
+          return false
+        }
+        const deltaDueToChromeInternals = sum([...chromeInternals.map(name => {
+          if (!(name in startAggregates && name in endAggregates)) {
+            return 0
+          }
+          return endAggregates[name].maxRet - startAggregates[name].maxRet
+        })])
+        const deltaDueToChromeInternalsPerIteration = deltaDueToChromeInternals / numIterations
+
+        return deltaPerIteration < deltaDueToChromeInternalsPerIteration
+      }
+
+      const result = {
+        delta,
+        deltaPerIteration,
+        before: { statistics: { ...startSnapshot.statistics } },
+        after: { statistics: { ...endSnapshot.statistics } },
+        numIterations,
+        leakingObjects,
+        probablyNotLeaking: isProbablyNotLeaking()
+      }
+
+      if (options.heapsnapshot) {
+        result.snapshots = {
+          before: startFilename,
+          after: endFilename
+        }
+      } else {
+        await Promise.all([
+          fs.rm(startFilename),
+          fs.rm(endFilename)
+        ])
+      }
+
+      return {
+        test,
+        result
+      }
+    })
+  }
+
   try {
     const results = []
 
     for (let i = 0; i < tests.length; i++) {
       const test = tests[i]
-      const messagePrefix = `Test ${i + 1}/${tests.length} - ${test.description} -`
-      onProgress(`${messagePrefix} Setup...`)
-      results.push(await runOnPage(browser, pageUrl, beforeStep, async page => {
-        await scenario.iteration(page, test.data) // one throwaway iteration to avoid measuring one-time setup costs
-        onProgress(`${messagePrefix} Taking start snapshot...`)
-        const { snapshot: startSnapshot, filename: startFilename } = await takeHeapSnapshot(page)
-        if (options.debug) {
-          // "before" point in time
-          debugger // eslint-disable-line no-debugger
-        }
-        const startSize = startSnapshot.statistics.total
-        for (let i = 0; i < numIterations; i++) {
-          onProgress(`${messagePrefix} Iteration ${i + 1}/${numIterations}...`)
-          await scenario.iteration(page, test.data)
-        }
-        onProgress(`${messagePrefix} Taking end snapshot...`)
-        const { snapshot: endSnapshot, filename: endFilename } = await takeHeapSnapshot(page)
-        if (options.debug) {
-          // "after" point in time
-          debugger // eslint-disable-line no-debugger
-        }
-        const endSize = endSnapshot.statistics.total
-        const delta = endSize - startSize
-        const deltaPerIteration = Math.round((endSize - startSize) / numIterations)
-
-        onProgress(`${messagePrefix} Comparing snapshots...`)
-        const aggregatesForDiff = await startSnapshot.aggregatesForDiff()
-        const diffByClassName = await endSnapshot.calculateSnapshotDiff(startSnapshot.uid, aggregatesForDiff)
-        const suspiciousObjects = Object.entries(diffByClassName).filter(([name, diff]) => {
-          // look for objects added <iteration> times and not 0 times
-          return diff.countDelta % numIterations === 0 && diff.countDelta !== 0
-        })
-        const startAggregates = startSnapshot.aggregatesWithFilter(new HeapSnapshotModel.HeapSnapshotModel.NodeFilter())
-        const endAggregates = endSnapshot.aggregatesWithFilter(new HeapSnapshotModel.HeapSnapshotModel.NodeFilter())
-
-        let leakingObjects = suspiciousObjects.filter(([name]) => {
-          // Skip any objects that, for whatever reason, aren't in the aggregate collection.
-          // We can't do anything with these
-          return name in startAggregates && name in endAggregates
-        })
-        leakingObjects = leakingObjects.map(([name, diff]) => {
-          const startAggregatesForThisClass = startAggregates[name]
-          const endAggregatesForThisClass = endAggregates[name]
-          const retainedSizeDelta = endAggregatesForThisClass.maxRet - startAggregatesForThisClass.maxRet
-          const retainedSizeDeltaPerIteration = Math.round(retainedSizeDelta / numIterations)
-          const countDelta = diff.countDelta
-          const countDeltaPerIteration = countDelta / numIterations
-          return {
-            name,
-            diff: { ...diff },
-            aggregates: {
-              before: { ...startAggregatesForThisClass },
-              after: { ...endAggregatesForThisClass }
-            },
-            retainedSizeDelta,
-            retainedSizeDeltaPerIteration,
-            countDelta,
-            countDeltaPerIteration,
-            numIterations
-          }
-        })
-        leakingObjects = sortBy(leakingObjects, ['-retainedSizeDelta', 'name'])
-
-        const chromeInternals = [
-          '(array)',
-          '(closure)',
-          '(compiled code)',
-          '(concatenated string)',
-          '(number)',
-          '(regexp)',
-          '(sliced string)',
-          '(string)',
-          '(system)',
-          'LayoutShift',
-          'LayoutShiftAttribution'
-        ]
-
-        const isProbablyNotLeaking = () => {
-          const leakingObjectsWithoutChromeInternals = leakingObjects.filter(_ => !chromeInternals.includes(_.name))
-          if (leakingObjectsWithoutChromeInternals.length) {
-            return false
-          }
-          const deltaDueToChromeInternals = sum([...chromeInternals.map(name => {
-            if (!(name in startAggregates && name in endAggregates)) {
-              return 0
-            }
-            return endAggregates[name].maxRet - startAggregates[name].maxRet
-          })])
-          const deltaDueToChromeInternalsPerIteration = deltaDueToChromeInternals / numIterations
-
-          return deltaPerIteration < deltaDueToChromeInternalsPerIteration
-        }
-
-        const result = {
-          delta,
-          deltaPerIteration,
-          before: { statistics: { ...startSnapshot.statistics } },
-          after: { statistics: { ...endSnapshot.statistics } },
-          numIterations,
-          leakingObjects,
-          probablyNotLeaking: isProbablyNotLeaking()
-        }
-
-        if (options.heapsnapshot) {
-          result.snapshots = {
-            before: startFilename,
-            after: endFilename
-          }
-        } else {
-          await Promise.all([
-            fs.rm(startFilename),
-            fs.rm(endFilename)
-          ])
-        }
-
-        return {
+      try {
+        const result = await runIteration(test, i)
+        results.push(result)
+      } catch (error) {
+        results.push({
           test,
-          result
-        }
-      }))
+          result: {
+            failed: true,
+            error
+          }
+        })
+      }
     }
     return results
   } finally {

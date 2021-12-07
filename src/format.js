@@ -4,8 +4,16 @@ import { markdownTable } from 'markdown-table'
 
 export function formatResults (results) {
   let str = ''
-  results.forEach(({ test, result }) => {
+  for (const { test, result } of results) {
     str += '\n' + '-'.repeat(20) + '\n'
+
+    str += `\nTest: ${chalk.blue(test.description)}\n`
+
+    if (result.failed) {
+      str += `Failed: ${result.error.message}\n${result.error.stack}\n`
+      continue
+    }
+
     const tableData = [[
       'Object',
       '# added',
@@ -30,8 +38,7 @@ After : ${result.snapshots.after} (${chalk.red(prettyBytes(result.after.statisti
       `.trim()
     }
 
-    str += '\n' + `
-Test: ${chalk.blue(test.description)}
+    str += `
 Leak: ${(result.deltaPerIteration > 0 ? chalk.red : chalk.green)(prettyBytes(result.deltaPerIteration))}
 Probably not leaking: ${result.probablyNotLeaking}
 
@@ -40,6 +47,6 @@ Leaking objects:
 ${table}
 ${snapshots}
     `.trim() + '\n'
-  })
+  }
   return str
 }
