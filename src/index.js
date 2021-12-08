@@ -25,6 +25,22 @@ async function runOnPage (browser, pageUrl, beforeStep, runnable) {
   }
 }
 
+const ignoredClasses = [
+  // '(array)',
+  // '(closure)',
+  '(compiled code)',
+  // '(concatenated string)',
+  // '(number)',
+  // '(regexp)',
+  // '(sliced string)',
+  // '(string)',
+  '(system)',
+  'PerformanceLongTaskTiming',
+  'LayoutShift',
+  'LayoutShiftAttribution',
+  'TaskAttributionTiming'
+]
+
 export async function findLeaks (pageUrl, options = {}) {
   const browser = await puppeteer.launch({
     headless: !options.debug,
@@ -85,7 +101,7 @@ export async function findLeaks (pageUrl, options = {}) {
       const diffByClassName = await endSnapshot.calculateSnapshotDiff(startSnapshot.uid, aggregatesForDiff)
       const suspiciousObjects = Object.entries(diffByClassName).filter(([name, diff]) => {
         // look for objects added <iteration> times and not 0 times
-        return diff.countDelta % numIterations === 0 && diff.countDelta !== 0
+        return diff.countDelta % numIterations === 0 && diff.countDelta > 0
       })
       const startAggregates = startSnapshot.aggregatesWithFilter(new HeapSnapshotModel.HeapSnapshotModel.NodeFilter())
       const endAggregates = endSnapshot.aggregatesWithFilter(new HeapSnapshotModel.HeapSnapshotModel.NodeFilter())
@@ -116,30 +132,14 @@ export async function findLeaks (pageUrl, options = {}) {
           numIterations
         }
       })
-      leakingObjects = sortBy(leakingObjects, ['-retainedSizeDelta', 'name'])
-
-      const chromeInternals = [
-        '(array)',
-        '(closure)',
-        '(compiled code)',
-        '(concatenated string)',
-        '(number)',
-        '(regexp)',
-        '(sliced string)',
-        '(string)',
-        '(system)',
-        'PerformanceLongTaskTiming',
-        'LayoutShift',
-        'LayoutShiftAttribution',
-        'TaskAttributionTiming'
-      ]
+      leakingObjects = sortBy(leakingObjects, ['countDelta', 'name'])
 
       const isProbablyNotLeaking = () => {
-        const leakingObjectsWithoutChromeInternals = leakingObjects.filter(_ => !chromeInternals.includes(_.name))
-        if (leakingObjectsWithoutChromeInternals.length) {
+        const leakingObjectsWithoutIgnoredClasses = leakingObjects.filter(_ => !ignoredClasses.includes(_.name))
+        if (leakingObjectsWithoutIgnoredClasses.length) {
           return false
         }
-        const deltaDueToChromeInternals = sum([...chromeInternals.map(name => {
+        const deltaDueToChromeInternals = sum([...ignoredClasses.map(name => {
           if (!(name in startAggregates && name in endAggregates)) {
             return 0
           }
