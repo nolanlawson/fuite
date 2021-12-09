@@ -29,10 +29,10 @@ const ignoredClasses = [
   // '(array)',
   // '(closure)',
   '(compiled code)',
-  // '(concatenated string)',
+  '(concatenated string)',
   // '(number)',
   // '(regexp)',
-  // '(sliced string)',
+  '(sliced string)',
   // '(string)',
   '(system)',
   'PerformanceLongTaskTiming',
@@ -52,17 +52,9 @@ export async function findLeaks (pageUrl, options = {}) {
       browser.close()
     })
   }
-  let scenario
-  if (options.scenario) {
-    scenario = options.scenario
-  } else {
-    scenario = defaultScenario
-  }
-
+  const scenario = options.scenario || defaultScenario
   const numIterations = typeof options.iterations === 'number' ? options.iterations : DEFAULT_ITERATIONS
-
   const onProgress = options.onProgress || noop
-
   const beforeStep = scenario.before
 
   onProgress('Gathering tests...')
