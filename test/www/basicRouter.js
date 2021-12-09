@@ -1,7 +1,6 @@
 /* global Navigo */
-(() => {
+export const makeRouter = (routes) => {
   const router = new Navigo(window.location.pathname)
-  const routes = ['', 'about', 'info', 'contact']
 
   const div = document.createElement('div')
   div.innerHTML = `
@@ -32,5 +31,5 @@
 
   router.resolve()
 
-  window.router = router
-})()
+  return router
+}

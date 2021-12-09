@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+</head>
+<body>
+<div id="persistent"></div>
+<footer id="also-persistent"></footer>
+<script src="../../../node_modules/navigo/lib/navigo.js"></script>
+<script type="module">
+  import { makeRouter } from '../basicRouter.js'
+
+  const router = makeRouter(['', 'about'])
+  router.addAfterHook('/about', () => {
+    window.addEventListener('resize', function onResize() {})
+    document.addEventListener('click', function onClick() {})
+    document.getElementById('persistent').addEventListener('transitionend', function onTransitionEnd() {})
+    document.getElementById('also-persistent').addEventListener('transitionstart', function onTransitionStart() {})
+  })
+</script>
+</body>
+</html>

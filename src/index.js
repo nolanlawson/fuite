@@ -5,6 +5,7 @@ import { takeHeapSnapshot } from './heapsnapshots.js'
 import { noop, sortBy, sum } from './util.js'
 import { waitForPageIdle } from './puppeteerUtil.js'
 import fs from 'fs/promises'
+import { v4 as uuidV4 } from 'uuid'
 
 export const DEFAULT_ITERATIONS = 7
 
@@ -25,21 +26,67 @@ async function runOnPage (browser, pageUrl, beforeStep, runnable) {
   }
 }
 
-const ignoredClasses = [
+// Make the simplifying assumption that certain classes, especially browser-internal
+// ones, aren't really leaks
+const browserInternalClasses = new Set([
   // '(array)',
   // '(closure)',
+  // '(regexp)',
   '(compiled code)',
   '(concatenated string)',
-  // '(number)',
-  // '(regexp)',
+  '(number)',
   '(sliced string)',
-  // '(string)',
+  '(string)',
   '(system)',
   'PerformanceLongTaskTiming',
   'LayoutShift',
   'LayoutShiftAttribution',
   'TaskAttributionTiming'
-]
+])
+
+// via https://stackoverflow.com/a/67030384
+async function getEventListeners(page) {
+  const objectGroup = uuidV4()
+  const cdpSession = await page.target().createCDPSession();
+  try {
+    const { result: { objectId } } = await cdpSession.send('Runtime.evaluate', {
+      expression: `[...document.querySelectorAll("*"), window, document]`,
+      objectGroup
+    });
+    // Using the returned remote object ID, actually get the list of descriptors
+    const { result } = await cdpSession.send('Runtime.getProperties', { objectId });
+
+    const arrayProps = Object.fromEntries(result.map(_ => ([_.name, _.value])))
+
+    const length = arrayProps['length'].value
+
+    const elements = [];
+
+    for (let i = 0; i < length; i++) {
+      elements.push(arrayProps[i])
+    }
+
+    const elementsWithListeners = []
+
+    for (const element of elements) {
+      const {objectId} = element;
+
+      const { listeners } = await cdpSession.send('DOMDebugger.getEventListeners', { objectId });
+
+      if (listeners.length) {
+        elementsWithListeners.push({
+          ...element,
+          listeners
+        })
+      }
+    }
+
+    await cdpSession.send('Runtime.releaseObjectGroup', { objectGroup });
+    return elementsWithListeners
+  } finally {
+    await cdpSession.detach()
+  }
+}
 
 export async function findLeaks (pageUrl, options = {}) {
   const browser = await puppeteer.launch({
@@ -69,6 +116,7 @@ export async function findLeaks (pageUrl, options = {}) {
       await scenario.iteration(page, test.data) // one throwaway iteration to avoid measuring one-time setup costs
       onProgress(`${messagePrefix} Taking start snapshot...`)
       const { snapshot: startSnapshot, filename: startFilename } = await takeHeapSnapshot(page)
+      const eventListenersStart = await getEventListeners(page)
       if (options.debug) {
         // "before" point in time
         debugger // eslint-disable-line no-debugger
@@ -80,6 +128,7 @@ export async function findLeaks (pageUrl, options = {}) {
       }
       onProgress(`${messagePrefix} Taking end snapshot...`)
       const { snapshot: endSnapshot, filename: endFilename } = await takeHeapSnapshot(page)
+      const eventListenersEnd = await getEventListeners(page)
       if (options.debug) {
         // "after" point in time
         debugger // eslint-disable-line no-debugger
@@ -98,11 +147,12 @@ export async function findLeaks (pageUrl, options = {}) {
       const startAggregates = startSnapshot.aggregatesWithFilter(new HeapSnapshotModel.HeapSnapshotModel.NodeFilter())
       const endAggregates = endSnapshot.aggregatesWithFilter(new HeapSnapshotModel.HeapSnapshotModel.NodeFilter())
 
-      let leakingObjects = suspiciousObjects.filter(([name]) => {
+      let leakingObjects = suspiciousObjects
+        // filter browser internals
+        .filter(([name]) => !browserInternalClasses.has(name))
         // Skip any objects that, for whatever reason, aren't in the aggregate collection.
         // We can't do anything with these
-        return name in startAggregates && name in endAggregates
-      })
+        .filter(([name]) => (name in startAggregates && name in endAggregates))
       leakingObjects = leakingObjects.map(([name, diff]) => {
         const startAggregatesForThisClass = startAggregates[name]
         const endAggregatesForThisClass = endAggregates[name]
@@ -127,26 +177,31 @@ export async function findLeaks (pageUrl, options = {}) {
       leakingObjects = sortBy(leakingObjects, ['countDelta', 'name'])
 
       const isProbablyNotLeaking = () => {
-        const leakingObjectsWithoutIgnoredClasses = leakingObjects.filter(_ => !ignoredClasses.includes(_.name))
-        if (leakingObjectsWithoutIgnoredClasses.length) {
+        if (leakingObjects.length) {
           return false
         }
-        const deltaDueToChromeInternals = sum([...ignoredClasses.map(name => {
+        const deltaDueToBrowserIternals = sum([...([...browserInternalClasses]).map(name => {
           if (!(name in startAggregates && name in endAggregates)) {
             return 0
           }
           return endAggregates[name].maxRet - startAggregates[name].maxRet
         })])
-        const deltaDueToChromeInternalsPerIteration = deltaDueToChromeInternals / numIterations
+        const deltaDueToBrowserInternalsPerIteration = deltaDueToBrowserIternals / numIterations
 
-        return deltaPerIteration < deltaDueToChromeInternalsPerIteration
+        return deltaPerIteration < deltaDueToBrowserInternalsPerIteration
       }
 
       const result = {
         delta,
         deltaPerIteration,
-        before: { statistics: { ...startSnapshot.statistics } },
-        after: { statistics: { ...endSnapshot.statistics } },
+        before: {
+          statistics: { ...startSnapshot.statistics },
+          listeners: eventListenersStart
+        },
+        after: {
+          statistics: { ...endSnapshot.statistics } ,
+          listeners: eventListenersEnd
+        },
         numIterations,
         leakingObjects,
         probablyNotLeaking: isProbablyNotLeaking()

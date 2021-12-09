@@ -8,6 +8,10 @@
 <a href="about" style="display:none">About</a>
 <a href="fake" style="display:none">Fake</a>
 <script src="../../../node_modules/navigo/lib/navigo.js"></script>
-<script src="../basicRouter.js"></script>
+<script type="module">
+  import { makeRouter } from '../basicRouter.js'
+
+  const router = makeRouter(['', 'about', 'info', 'contact'])
+</script>
 </body>
 </html>
