@@ -88,6 +88,10 @@ async function getEventListeners(page) {
   }
 }
 
+async function countDomNodes(page) {
+  return (await page.evaluate(() => document.querySelectorAll('*').length))
+}
+
 export async function findLeaks (pageUrl, options = {}) {
   const browser = await puppeteer.launch({
     headless: !options.debug,
@@ -115,8 +119,9 @@ export async function findLeaks (pageUrl, options = {}) {
     return runOnPage(browser, pageUrl, beforeStep, async page => {
       await scenario.iteration(page, test.data) // one throwaway iteration to avoid measuring one-time setup costs
       onProgress(`${messagePrefix} Taking start snapshot...`)
-      const { snapshot: startSnapshot, filename: startFilename } = await takeHeapSnapshot(page)
       const eventListenersStart = await getEventListeners(page)
+      const domNodesCountStart = await countDomNodes(page)
+      const { snapshot: startSnapshot, filename: startFilename } = await takeHeapSnapshot(page)
       if (options.debug) {
         // "before" point in time
         debugger // eslint-disable-line no-debugger
@@ -129,6 +134,7 @@ export async function findLeaks (pageUrl, options = {}) {
       onProgress(`${messagePrefix} Taking end snapshot...`)
       const { snapshot: endSnapshot, filename: endFilename } = await takeHeapSnapshot(page)
       const eventListenersEnd = await getEventListeners(page)
+      const domNodesCountEnd = await countDomNodes(page)
       if (options.debug) {
         // "after" point in time
         debugger // eslint-disable-line no-debugger
@@ -176,47 +182,40 @@ export async function findLeaks (pageUrl, options = {}) {
       })
       leakingObjects = sortBy(leakingObjects, ['countDelta', 'name'])
 
-      const isProbablyNotLeaking = () => {
+      const areLeaksDetected = () => {
         if (leakingObjects.length) {
-          return false
+          return true
         }
-        const deltaDueToBrowserIternals = sum([...([...browserInternalClasses]).map(name => {
-          if (!(name in startAggregates && name in endAggregates)) {
-            return 0
-          }
-          return endAggregates[name].maxRet - startAggregates[name].maxRet
-        })])
-        const deltaDueToBrowserInternalsPerIteration = deltaDueToBrowserIternals / numIterations
-
-        return deltaPerIteration < deltaDueToBrowserInternalsPerIteration
+        return false
       }
+
+      const leaksDetected = areLeaksDetected()
 
       const result = {
         delta,
         deltaPerIteration,
+        numIterations,
+        leaks: {
+          detected: leaksDetected,
+          objects: leakingObjects,
+        },
         before: {
           statistics: { ...startSnapshot.statistics },
-          listeners: eventListenersStart
+          eventListeners: eventListenersStart,
+          domNodesCount: domNodesCountStart
         },
         after: {
           statistics: { ...endSnapshot.statistics } ,
-          listeners: eventListenersEnd
+          eventListeners: eventListenersEnd,
+          domNodesCount: domNodesCountEnd
         },
-        numIterations,
-        leakingObjects,
-        probablyNotLeaking: isProbablyNotLeaking()
       }
 
       if (options.heapsnapshot) {
-        result.snapshots = {
-          before: startFilename,
-          after: endFilename
-        }
+        result.before.heapsnapshot = startFilename
+        result.after.heapsnapshot = endFilename
       } else {
-        await Promise.all([
-          fs.rm(startFilename),
-          fs.rm(endFilename)
-        ])
+        await Promise.all([fs.rm(startFilename), fs.rm(endFilename)])
       }
 
       return {
