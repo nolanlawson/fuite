@@ -7,6 +7,7 @@ import { getEventListeners } from './eventListeners.js'
 import fs from 'fs/promises'
 import { analyzeHeapSnapshots } from './analyzeHeapsnapshots.js'
 import { analyzeEventListeners } from './analyzeEventListeners.js'
+import { countDomNodes } from './domNodes.js'
 
 export const DEFAULT_ITERATIONS = 7
 
@@ -25,10 +26,6 @@ async function runOnFreshPage (browser, pageUrl, setup, runnable) {
   } finally {
     await page.close()
   }
-}
-
-async function countDomNodes (page) {
-  return (await page.evaluate(() => document.querySelectorAll('*').length))
 }
 
 export async function findLeaks (pageUrl, options = {}) {
@@ -83,9 +80,10 @@ export async function findLeaks (pageUrl, options = {}) {
         startSnapshotFilename, endSnapshotFilename, numIterations
       )
       const leakingListeners = analyzeEventListeners(eventListenersStart, eventListenersEnd, numIterations)
+      const domNodesCountDelta = domNodesCountEnd - domNodesCountStart
       const delta = endStatistics.total - startStatistics.total
       const deltaPerIteration = Math.round(delta / numIterations)
-      const leaksDetected = !!(leakingObjects.length || leakingListeners.length)
+      const leaksDetected = !!(leakingObjects.length || leakingListeners.length || domNodesCountDelta > 0)
 
       const result = {
         delta,
@@ -94,17 +92,25 @@ export async function findLeaks (pageUrl, options = {}) {
         leaks: {
           detected: leaksDetected,
           objects: leakingObjects,
-          eventListeners: leakingListeners
+          eventListeners: leakingListeners,
+          domNodes: {
+            delta: domNodesCountDelta,
+            deltaPerIteration: domNodesCountDelta / numIterations
+          }
         },
         before: {
           statistics: startStatistics,
           eventListeners: eventListenersStart,
-          domNodesCount: domNodesCountStart
+          domNodes: {
+            count: domNodesCountStart
+          }
         },
         after: {
           statistics: endStatistics,
           eventListeners: eventListenersEnd,
-          domNodesCount: domNodesCountEnd
+          domNodes: {
+            count: domNodesCountEnd
+          }
         }
       }
 

@@ -40,7 +40,7 @@ async function main () {
     scenario = await import(path.join(process.cwd(), options.scenario))
   }
 
-  console.log(`
+  console.log('\n' + `
 ${chalk.blue('URL')}       : ${url}
 ${chalk.blue('Scenario')}  : ${options.scenario || 'Default'}
 ${chalk.blue('Iterations')}: ${options.iterations} ${options.iterations === DEFAULT_ITERATIONS ? '(Default)' : ''}

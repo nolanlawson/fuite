@@ -45,6 +45,14 @@ ${markdownTable(tableData)}
       `.trim() + '\n\n'
 }
 
+function formatLeakingDomNodes (domNodes) {
+  return `
+Leaking DOM nodes:
+
+DOM size grew by ${domNodes.deltaPerIteration} node(s)
+  `.trim() + '\n\n'
+}
+
 export function formatResults (results) {
   let str = ''
   for (const { test, result } of results) {
@@ -64,6 +72,9 @@ export function formatResults (results) {
     if (result.leaks.eventListeners.length) {
       leakTables += formatLeakingEventListeners(result.leaks.eventListeners)
     }
+    if (result.leaks.domNodes.delta) {
+      leakTables += formatLeakingDomNodes(result.leaks.domNodes)
+    }
 
     let snapshots = ''
     if (result.before.heapsnapshot && result.after.heapsnapshot) {
@@ -81,5 +92,15 @@ ${leakTables}
 ${snapshots}
     `.trim() + '\n'
   }
+
+  if (results.some(({ result }) => result.leaks.detected)) {
+    str += '\n' + '-'.repeat(20) + '\n\n'
+    str += `
+For more details:
+  - Run with --debug
+  - Run with --output <filename>
+    `.trim() + '\n'
+  }
+
   return str
 }
