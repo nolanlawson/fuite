@@ -20,10 +20,10 @@ const program = new Command()
 
 program
   .argument('<url>', 'URL to load in the browser and analyze')
-  .option('-s, --scenario <scenario>', 'Scenario file to run')
-  .option('-i, --iterations <number>', 'Number of iterations', DEFAULT_ITERATIONS)
   .option('-o, --output <file>', 'Write JSON output to a file')
+  .option('-i, --iterations <number>', 'Number of iterations', DEFAULT_ITERATIONS)
   .option('-H, --heapsnapshot', 'Save heapsnapshot files')
+  .option('-s, --scenario <scenario>', 'Scenario file to run')
   .option('-d, --debug', 'Run in debug mode')
   .version(version)
 program.parse(process.argv)

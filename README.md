@@ -44,14 +44,34 @@ Arguments:
   url                        URL to load in the browser and analyze
 
 Options:
-  -s, --scenario <scenario>  Scenario file to run
-  -i, --iterations <number>  Number of iterations (default: 7)
   -o, --output <file>        Write JSON output to a file
+  -i, --iterations <number>  Number of iterations (default: 7)
+  -s, --scenario <scenario>  Scenario file to run
   -H, --heapsnapshot         Save heapsnapshot files
-  -d, --debug                Run in debug mode
+  -d, --debug                Run in debug mode  
   -V, --version              output the version number
   -h, --help                 display help for command
 ```
+
+### url
+
+    fuite <url>
+
+The URL to load. This should be whatever landing page you want to start at – you can use the `setup` option in a custom [scenario](#scenario) if you need to log in.
+
+### output
+
+    -o, --output <file>        Write JSON output to a file
+
+`fuite` generates a lot of data, but not all of it is shown in the CLI output. To dig deeper, use the `--output` option to create a JSON file containing `fuite`'s anlaysis. This contains additional information such as the line of code that an event listener was declared on.
+
+### iterations
+
+    -i, --iterations <number> 
+
+By default, `fuite` runs 7 iterations. But you can change this number.
+
+Why 7? Well, it's a nice, small, prime number. If you repeat an action 7 times and some object is leaking exactly 7 times, it's pretty unlikely to be unrelated. That said, on a very complex page, there may be enough noise that 7 is too small to cut through the noise – so you might try 13, 17, or 19 instead. Or 1 if you like to live dangerously.
 
 ### Scenarios
 
@@ -105,11 +125,23 @@ Inside of an `iteration`, you want to run the core test logic that you want to t
 
 The iteration assumes that whatever page it starts at, it ends up at that same page. If you test a multi-page app in this way, then it's extremely unlikely you'll detect any leaks, since multi-page apps don't leak memory in the same way that SPAs do when navigating between routes.
 
-### iterations
 ### heapsnapshot
-### output
-### heapsnapshot
+
+      -H, --heapsnapshot         Save heapsnapshot files
+
+By default, `fuite` doesn't save any heap snapshot files that it captures (to avoid filling up your disk with large files). If you use the `--heapsnapshot` flag, though, then the files will be saved in the `/tmp` directory, and the CLI will output their location. That way, you can inspect them and load them into the [Chrome DevTools memory tool](https://developer.chrome.com/docs/devtools/memory-problems/#discover_detached_dom_tree_memory_leaks_with_heap_snapshots) yourself.
+
 ### debug
+
+      -d, --debug                Run in debug mode
+
+Debug mode lets you drill in to a complex scenario and debug it yourself using the Chrome DevTools. The best way to run it is:
+
+```shell
+NODE_OPTIONS=--inspect-brk fuite --debug <url>
+```
+
+Then navigate to `chrome:inspect` in Chrome, click "Open dedicated DevTools for Node," and now you are debugging `fuite` itself. It will launch Chrome in non-headless mode, and also automatically pause before running iterations and afterwards. That way, you can open up the Chrome DevTools and analyze the scenario yourself, take your own heapsnapshots, etc.
 
 # JavaScript API
 
@@ -137,5 +169,10 @@ Similarly, `fuite` measures the JavaScript heap size of the page, corresponding 
 
 `fuite` works best when your source code is unminified. Otherwise the class names will show as the minified versions, which can be hard to debug.
 
+`fuite` may use a lot of memory itself to analyze large heapsnapshot files. If you find that Node.js is running out of memory, you can run something like:
+
+    NODE_OPTIONS=--max-old-space-size=8000 fuite <arguments>
+
+The above command will provide 8GB of memory to `fuite`.
 
 [page]: https://pptr.dev/#?product=Puppeteer&version=v12.0.1&show=api-class-page
