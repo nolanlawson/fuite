@@ -4,12 +4,12 @@ import cryptoRandomString from 'crypto-random-string'
 import { createReadStream, createWriteStream } from 'fs'
 import * as HeapSnapshotWorker from './thirdparty/devtools/heap_snapshot_worker/heap_snapshot_worker.js'
 
-async function writeSnapshot (page) {
-  const tmpFile = path.join(tempDir, `fuite-${cryptoRandomString({ length: 8, type: 'alphanumeric' })}.heapsnapshot`)
+export async function takeHeapSnapshot (page) {
+  const filename = path.join(tempDir, `fuite-${cryptoRandomString({ length: 8, type: 'alphanumeric' })}.heapsnapshot`)
   const cdpSession = await page.target().createCDPSession()
   let writeStream
   const writeStreamPromise = new Promise((resolve, reject) => {
-    writeStream = createWriteStream(tmpFile, { encoding: 'utf8' })
+    writeStream = createWriteStream(filename, { encoding: 'utf8' })
     writeStream.on('error', reject)
     writeStream.on('finish', () => resolve())
   })
@@ -33,10 +33,10 @@ async function writeSnapshot (page) {
   await cdpSession.detach()
   writeStream.close()
   await writeStreamPromise
-  return tmpFile
+  return filename
 }
 
-async function readSnapshot (tmpFile) {
+export async function createHeapSnapshotModel (filename) {
   let loader
   const loaderPromise = new Promise(resolve => {
     loader = new HeapSnapshotWorker.HeapSnapshotLoader.HeapSnapshotLoader({
@@ -50,7 +50,7 @@ async function readSnapshot (tmpFile) {
   })
   let readStream
   const readStreamPromise = new Promise((resolve, reject) => {
-    readStream = createReadStream(tmpFile, { encoding: 'utf8' })
+    readStream = createReadStream(filename, { encoding: 'utf8' })
     readStream.on('error', reject)
     readStream.on('end', () => resolve())
     readStream.on('data', chunk => {
@@ -63,12 +63,6 @@ async function readSnapshot (tmpFile) {
   await loaderPromise
 
   return (await loader.buildSnapshot())
-}
-
-export async function takeHeapSnapshot (page) {
-  const filename = await writeSnapshot(page)
-  const snapshot = await readSnapshot(filename)
-  return { filename, snapshot }
 }
 
 export async function takeThrowawayHeapSnapshot (page) {

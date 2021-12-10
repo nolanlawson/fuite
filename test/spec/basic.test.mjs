@@ -8,11 +8,12 @@ describe('basic test suite', () => {
     })
 
     expect(results.length).to.equal(3)
-    expect(results.map(_ => ({ href: _.test.data.href } ))).to.deep.equal([
+    expect(results.map(_ => ({ href: _.test.data.href }))).to.deep.equal([
       { href: 'about' },
       { href: 'info' },
       { href: 'contact' }
     ])
+    expect(results.map(_ => _.result.leaks.detected)).to.deep.equal([true, false, false])
 
     const deltas = results.map(_ => _.result.deltaPerIteration)
     expect(deltas[0]).to.be.above(1000000)
@@ -35,11 +36,12 @@ describe('basic test suite', () => {
     })
 
     expect(results.length).to.equal(3)
-    expect(results.map(_ => ({ href: _.test.data.href } ))).to.deep.equal([
+    expect(results.map(_ => ({ href: _.test.data.href }))).to.deep.equal([
       { href: 'about' },
       { href: 'info' },
       { href: 'contact' }
     ])
+    expect(results.map(_ => _.result.leaks.detected)).to.deep.equal([false, false, false])
 
     const deltas = results.map(_ => _.result.deltaPerIteration)
     expect(deltas[0]).to.be.above(0)

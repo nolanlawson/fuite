@@ -1,6 +1,6 @@
 import { waitForPageIdle } from './puppeteerUtil.js'
 
-function urlsAreEqual(url1, url2) {
+function urlsAreEqual (url1, url2) {
   for (const prop of ['protocol', 'hostname', 'port', 'pathname', 'search', 'hash']) {
     if (url1[prop] !== url2[prop]) {
       return false
@@ -9,9 +9,9 @@ function urlsAreEqual(url1, url2) {
   return true
 }
 
-async function clickFirstVisible(page, selector) {
+async function clickFirstVisible (page, selector) {
   const element = await page.evaluateHandle((selector) => {
-    return [...document.querySelectorAll(selector)].filter(el =>{
+    return [...document.querySelectorAll(selector)].filter(el => {
       // quick and dirty visibility check
       return window.getComputedStyle(el).getPropertyValue('display') !== 'none' &&
         el.offsetHeight > 0 &&

@@ -19,7 +19,7 @@ if (!esMain(import.meta)) {
 const program = new Command()
 
 program
-  .requiredOption('-u, --url <url>', 'URL to load in the browser')
+  .argument('<url>', 'URL to load in the browser and analyze')
   .option('-s, --scenario <scenario>', 'Scenario file to run')
   .option('-i, --iterations <number>', 'Number of iterations', DEFAULT_ITERATIONS)
   .option('-o, --output <file>', 'Write JSON output to a file')
@@ -28,6 +28,7 @@ program
   .version(version)
 program.parse(process.argv)
 const options = program.opts()
+const [url] = program.args
 
 let controller
 
@@ -40,7 +41,7 @@ async function main () {
   }
 
   console.log(`
-${chalk.blue('URL')}       : ${options.url}
+${chalk.blue('URL')}       : ${url}
 ${chalk.blue('Scenario')}  : ${options.scenario || 'Default'}
 ${chalk.blue('Iterations')}: ${options.iterations} ${options.iterations === DEFAULT_ITERATIONS ? '(Default)' : ''}
   `.trim())
@@ -55,7 +56,7 @@ ${chalk.blue('Output')}    : ${outputFilename}
   console.log()
 
   const spinner = ora('Starting...').start()
-  const results = await findLeaks(options.url, {
+  const results = await findLeaks(url, {
     debug: options.debug,
     heapsnapshot: options.heapsnapshot,
     iterations: parseInt(options.iterations, 10),

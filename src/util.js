@@ -21,6 +21,6 @@ export function sortBy (array, keys) {
   })
 }
 
-export function sum(array) {
+export function sum (array) {
   return array.reduce((a, b) => a + b, 0)
 }

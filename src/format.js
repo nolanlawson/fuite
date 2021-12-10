@@ -7,10 +7,10 @@ export function formatResults (results) {
   for (const { test, result } of results) {
     str += '\n' + '-'.repeat(20) + '\n'
 
-    str += `\nTest          : ${chalk.blue(test.description)}\n`
+    str += `\nTest         : ${chalk.blue(test.description)}\n`
 
     if (result.failed) {
-      str += `Failed        : ${result.error.message}\n${result.error.stack}\n`
+      str += `Failed       : ${result.error.message}\n${result.error.stack}\n`
       continue
     }
 
@@ -24,7 +24,7 @@ export function formatResults (results) {
       tableData.push([
         name,
         countDeltaPerIteration,
-        prettyBytes(retainedSizeDeltaPerIteration)
+        '+' + prettyBytes(retainedSizeDeltaPerIteration)
       ])
     }
 
@@ -47,8 +47,8 @@ After : ${result.after.heapsnapshot} (${chalk.red(prettyBytes(result.after.stati
     }
 
     str += `
-Memory change : ${result.deltaPerIteration > 0 ? chalk.red('+' + prettyBytes(result.deltaPerIteration)) : chalk.green(prettyBytes(result.deltaPerIteration))}
-Leaks detected: ${result.leaks.detected ? chalk.red('Yes') : chalk.green('No') }
+Memory change: ${result.deltaPerIteration > 0 ? chalk.red('+' + prettyBytes(result.deltaPerIteration)) : chalk.green(prettyBytes(result.deltaPerIteration))}
+Leak detected: ${result.leaks.detected ? chalk.red('Yes') : chalk.green('No')}
 
 ${leakTables}
 ${snapshots}
