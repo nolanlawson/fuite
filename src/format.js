@@ -2,6 +2,49 @@ import chalk from 'chalk'
 import prettyBytes from 'pretty-bytes'
 import { markdownTable } from 'markdown-table'
 
+function formatLeakingObjects (objects) {
+  const tableData = [[
+    'Object',
+    '# added',
+    'Retained size increase'
+  ]]
+
+  for (const { name, retainedSizeDeltaPerIteration, countDeltaPerIteration } of objects) {
+    tableData.push([
+      name,
+      countDeltaPerIteration,
+      '+' + prettyBytes(retainedSizeDeltaPerIteration)
+    ])
+  }
+  return `
+Leaking objects:
+
+${markdownTable(tableData)}
+      `.trim() + '\n\n'
+}
+
+function formatLeakingEventListeners (listenerSummaries) {
+  const tableData = [[
+    'Event',
+    '# added',
+    'Leaking node(s)'
+  ]]
+
+  for (const { type, deltaPerIteration, leakingNodes } of listenerSummaries) {
+    const leakingNodesFormatted = leakingNodes.map(_ => `${_.node.description} (${_.node.className})`).join(', ')
+    tableData.push([
+      type,
+      deltaPerIteration,
+      leakingNodesFormatted
+    ])
+  }
+  return `
+Leaking event listeners:
+
+${markdownTable(tableData)}
+      `.trim() + '\n\n'
+}
+
 export function formatResults (results) {
   let str = ''
   for (const { test, result } of results) {
@@ -14,28 +57,12 @@ export function formatResults (results) {
       continue
     }
 
-    const tableData = [[
-      'Object',
-      '# added',
-      'Retained size increase'
-    ]]
-
-    for (const { name, retainedSizeDeltaPerIteration, countDeltaPerIteration } of result.leaks.objects) {
-      tableData.push([
-        name,
-        countDeltaPerIteration,
-        '+' + prettyBytes(retainedSizeDeltaPerIteration)
-      ])
-    }
-
     let leakTables = ''
     if (result.leaks.objects.length) {
-      const table = result.leaks.objects.length ? markdownTable(tableData) : ''
-      leakTables += `
-Leaking objects:
-
-${table}
-      `.trim() + '\n\n'
+      leakTables += formatLeakingObjects(result.leaks.objects)
+    }
+    if (result.leaks.eventListeners.length) {
+      leakTables += formatLeakingEventListeners(result.leaks.eventListeners)
     }
 
     let snapshots = ''

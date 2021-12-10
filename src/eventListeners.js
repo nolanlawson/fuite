@@ -16,29 +16,29 @@ export async function getEventListeners (page) {
 
     const length = arrayProps.length.value
 
-    const elements = []
+    const nodes = []
 
     for (let i = 0; i < length; i++) {
-      elements.push(arrayProps[i])
+      nodes.push(arrayProps[i])
     }
 
-    const elementsWithListeners = []
+    const nodesWithListeners = []
 
-    for (const element of elements) {
-      const { objectId } = element
+    for (const node of nodes) {
+      const { objectId } = node
 
       const { listeners } = await cdpSession.send('DOMDebugger.getEventListeners', { objectId })
 
       if (listeners.length) {
-        elementsWithListeners.push({
-          ...element,
+        nodesWithListeners.push({
+          node,
           listeners
         })
       }
     }
 
     await cdpSession.send('Runtime.releaseObjectGroup', { objectGroup })
-    return elementsWithListeners
+    return nodesWithListeners
   } finally {
     await cdpSession.detach()
   }

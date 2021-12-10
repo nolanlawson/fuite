@@ -11,6 +11,10 @@
   import { makeRouter } from '../basicRouter.js'
 
   const router = makeRouter(['', 'about'])
+
+  window.addEventListener('keyup', function onKeyUp() {}) // NOT leaking
+  document.body.addEventListener('click', function onKeyDown() {}) // NOT leaking
+
   router.addAfterHook('/about', () => {
     window.addEventListener('resize', function onResize() {})
     document.addEventListener('click', function onClick() {})

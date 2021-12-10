@@ -6,6 +6,7 @@ import { waitForPageIdle } from './puppeteerUtil.js'
 import { getEventListeners } from './eventListeners.js'
 import fs from 'fs/promises'
 import { analyzeHeapSnapshots } from './analyzeHeapsnapshots.js'
+import { analyzeEventListeners } from './analyzeEventListeners.js'
 
 export const DEFAULT_ITERATIONS = 7
 
@@ -81,9 +82,10 @@ export async function findLeaks (pageUrl, options = {}) {
       const { leakingObjects, startStatistics, endStatistics } = await analyzeHeapSnapshots(
         startSnapshotFilename, endSnapshotFilename, numIterations
       )
+      const leakingListeners = analyzeEventListeners(eventListenersStart, eventListenersEnd, numIterations)
       const delta = endStatistics.total - startStatistics.total
       const deltaPerIteration = Math.round(delta / numIterations)
-      const leaksDetected = !!(leakingObjects.length)
+      const leaksDetected = !!(leakingObjects.length || leakingListeners.length)
 
       const result = {
         delta,
@@ -91,7 +93,8 @@ export async function findLeaks (pageUrl, options = {}) {
         numIterations,
         leaks: {
           detected: leaksDetected,
-          objects: leakingObjects
+          objects: leakingObjects,
+          eventListeners: leakingListeners
         },
         before: {
           statistics: startStatistics,
