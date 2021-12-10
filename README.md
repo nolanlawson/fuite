@@ -67,7 +67,7 @@ The URL to load. This should be whatever landing page you want to start at – y
 
 ### iterations
 
-    -i, --iterations <number> 
+    -i, --iterations <number>
 
 By default, `fuite` runs 7 iterations. But you can change this number.
 
