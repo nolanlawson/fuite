@@ -56,17 +56,15 @@ DOM size grew by ${domNodes.deltaPerIteration} node(s)
 function formatLeakingCollections (leakingCollections) {
   const tableData = [[
     'Collection type',
-    'Start size',
-    'End size',
-    'Increase per iteration'
+    'Size increase',
+    'Preview'
   ]]
 
-  for (const { type, sizeBefore, sizeAfter, deltaPerIteration } of leakingCollections) {
+  for (const { type, deltaPerIteration, preview } of leakingCollections) {
     tableData.push([
       type,
-      sizeBefore,
-      sizeAfter,
-      deltaPerIteration
+      deltaPerIteration,
+      preview
     ])
   }
   return `
@@ -95,7 +93,7 @@ export function formatResults (results) {
     if (result.leaks.eventListeners.length) {
       leakTables += formatLeakingEventListeners(result.leaks.eventListeners)
     }
-    if (result.leaks.domNodes.delta) {
+    if (result.leaks.domNodes.delta > 0) {
       leakTables += formatLeakingDomNodes(result.leaks.domNodes)
     }
     if (result.leaks.collections.length) {

@@ -17,16 +17,19 @@ const browserInternalClasses = new Set([
   '(sliced string)',
   '(string)',
   '(system)',
-  'PerformanceEntry',
-  'PerformanceEventTiming',
-  'PerformanceNavigation',
-  'PerformanceNavigationTiming',
-  'PerformanceLongTaskTiming',
-  'PerformancePaintTiming',
-  'PerformanceTiming',
+  'InternalNode',
   'LayoutShift',
   'LayoutShiftAttribution',
-  'TaskAttributionTiming'
+  'PerformanceEntry',
+  'PerformanceEventTiming',
+  'PerformanceLongTaskTiming',
+  'PerformanceNavigation',
+  'PerformanceNavigationTiming',
+  'PerformancePaintTiming',
+  'PerformanceResourceTiming',
+  'PerformanceTiming',
+  'TaskAttributionTiming',
+  'system / Context'
 ])
 
 export async function analyzeHeapSnapshots (startSnapshotFilename, endSnapshotFilename, numIterations) {

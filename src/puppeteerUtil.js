@@ -1,12 +1,20 @@
 async function waitForMainThreadIdle (page) {
-  await page.evaluate(() => {
-    let promise = Promise.resolve()
-    // consider 3 rICs to be "idle"
-    for (let i = 0; i < 3; i++) {
-      promise = promise.then(() => new Promise(resolve => window.requestIdleCallback(resolve)))
+  const MAX_RETRIES = 5
+  const DELAY = 100
+  for (let i = 0; i < MAX_RETRIES; i++) {
+    try {
+      await page.evaluate(() => {
+        return new Promise(resolve => window.requestIdleCallback(resolve))
+      })
+      return
+    } catch (err) {
+      // we should typically ignore any errors here, which may occur due to page navigation
+      if (i === MAX_RETRIES - 1) {
+        throw err
+      }
+      await new Promise(resolve => setTimeout(resolve, DELAY))
     }
-    return promise
-  })
+  }
 }
 
 export async function waitForPageIdle (page) {

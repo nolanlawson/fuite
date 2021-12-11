@@ -200,6 +200,6 @@ Then open `chrome:inspect` in Chrome and click "Open dedicated DevTools for Node
 
 Eventually `fuite` will give you a breakpoint in the Chrome DevTools itself, where you have access to the leaking collection (Array, Map, etc.) and can inspect it.
 
-Note that not every instance of a leaking collection is a serious memory leak: for instance, your router may keep some metadata about past routes in an ever-growing stack. Or your analytics library may store some timing in an array that continually grows. These are generally not a concern unless the objects are huge, or contain closures that reference lots of memory.
+Note that not every instance of a leaking collection is a serious memory leak: for instance, your router may keep some metadata about past routes in an ever-growing stack. Or your analytics library may store some timings in an array that continually grows. These are generally not a concern unless the objects are huge, or contain closures that reference lots of memory.
 
 [page]: https://pptr.dev/#?product=Puppeteer&version=v12.0.1&show=api-class-page

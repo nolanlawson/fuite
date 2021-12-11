@@ -17,10 +17,10 @@ export async function startTrackingCollections (page) {
       const { isArray } = Array
 
       // Via https://github.com/jonschlinkert/is-plain-object/blob/0a47f0f/is-plain-object.js
-      function isObject (o) {
-        return toString.call(o) === '[object Object]'
-      }
       function isPlainObject (o) {
+        function isObject (o) {
+          return toString.call(o) === '[object Object]'
+        }
         if (isObject(o) === false) {
           return false
         }
@@ -113,6 +113,58 @@ export async function findLeakingCollections (page, weakMap, numIterations, debu
       }
       return 'Object'
     }
+    function createPreviewOfValue(val) {
+      if (Array.isArray(val)) {
+        return 'Array'
+      }
+      if (typeof val === 'object' && val) {
+        if (val.constructor.name && val.constructor.name !== 'Object') {
+          return val.constructor.name
+        }
+        // only show first 3 keys
+        const keys = Object.keys(val)
+        const LIMIT = 3
+        return `{${keys.slice(0, LIMIT).join(', ')}${keys.length > LIMIT ? ', ...' : ''}}`
+      } else if (typeof val === 'function') {
+        return val.name ? `function ${val.name} () {}` : `(anonymous function)`
+      }
+      return (val + '') // primitive
+    }
+    function createPreviewOfFirstItem(obj) {
+      try {
+        let keyValue = false
+        let firstItem
+        if (obj instanceof Map) {
+          keyValue = true
+          firstItem = [...obj.entries()][0]
+        } else if (obj instanceof Set) {
+          firstItem = [...obj][0]
+        } else if (Array.isArray(obj)) {
+          firstItem = obj[0]
+        } else {
+          keyValue = true
+          firstItem = Object.entries(obj)[0]
+        }
+        if (keyValue) {
+          return `${firstItem[0]}: ${createPreviewOfValue(firstItem[1])}`
+        }
+        return createPreviewOfValue(firstItem)
+      } catch (err) {
+        return '...'
+      }
+    }
+    function createPreview(obj) {
+      if (obj instanceof Map) {
+        return `Map(${createPreviewOfFirstItem(obj)}, ...)`
+      }
+      if (obj instanceof Set) {
+        return `Set(${createPreviewOfFirstItem(obj)}, ...)`
+      }
+      if (Array.isArray(obj)) {
+        return `[${createPreviewOfFirstItem(obj)}, ...]`
+      }
+      return `{${createPreviewOfFirstItem(obj)}, ...}`
+    }
     const result = []
     for (const obj of objects) {
       if (weakMap.has(obj)) {
@@ -124,12 +176,14 @@ export async function findLeakingCollections (page, weakMap, numIterations, debu
             debugger // eslint-disable-line no-debugger
           }
           const type = getType(obj)
+          const preview = createPreview(obj)
           result.push({
             type,
             sizeBefore,
             sizeAfter,
             delta,
-            deltaPerIteration: delta / numIterations
+            deltaPerIteration: delta / numIterations,
+            preview
           })
         }
       }
