@@ -24,3 +24,12 @@ export function sortBy (array, keys) {
 export function sum (array) {
   return array.reduce((a, b) => a + b, 0)
 }
+
+// like Promise.all, but run serially
+export async function serial(promiseFactories) {
+  const res = []
+  for (const promiseFactory of promiseFactories) {
+    res.push(await promiseFactory())
+  }
+  return res
+}

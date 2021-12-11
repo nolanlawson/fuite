@@ -1,7 +1,7 @@
 import puppeteer from 'puppeteer'
 import * as defaultScenario from './defaultScenario.js'
 import { takeHeapSnapshot } from './heapsnapshots.js'
-import { noop } from './util.js'
+import { noop, serial } from './util.js'
 import { waitForPageIdle } from './puppeteerUtil.js'
 import { getEventListeners } from './eventListeners.js'
 import fs from 'fs/promises'
@@ -134,7 +134,7 @@ export async function findLeaks (pageUrl, options = {}) {
     const tests = await runOnFreshPage(browser, pageUrl, setup, async page => {
       return createTests(page)
     })
-    return (await Promise.all(tests.map(async (test, i) => {
+    return (await serial(tests.map((test, i) => async () => {
       try {
         return (await runIteration(test, i, tests.length))
       } catch (error) {
