@@ -141,7 +141,9 @@ Debug mode lets you drill in to a complex scenario and debug it yourself using t
 NODE_OPTIONS=--inspect-brk fuite --debug <url>
 ```
 
-Then navigate to `chrome:inspect` in Chrome, click "Open dedicated DevTools for Node," and now you are debugging `fuite` itself. It will launch Chrome in non-headless mode, and also automatically pause before running iterations and afterwards. That way, you can open up the Chrome DevTools and analyze the scenario yourself, take your own heapsnapshots, etc.
+Then navigate to `chrome:inspect` in Chrome, click "Open dedicated DevTools for Node," and now you are debugging `fuite` itself.
+
+This will launch Chrome in non-headless mode, and it will also automatically pause before running iterations and afterwards. That way, you can open up the Chrome DevTools and analyze the scenario yourself, take your own heapsnapshots, etc.
 
 # JavaScript API
 
@@ -172,5 +174,32 @@ Similarly, `fuite` measures the JavaScript heap size of the page, corresponding 
     NODE_OPTIONS=--max-old-space-size=8000 fuite <arguments>
 
 The above command will provide 8GB of memory to `fuite`.
+
+# FAQs
+
+**It says my page's memory grew, but it also said it didn't detect any leaks. Why?**
+
+Web pages can grow memory for lots of reasons. For instance, the browser's JavaScript engine may JIT certain functions, taking up additional memory. Or the browser might change its internal representation of strings or regexes.
+
+The web developer generally doesn't have control over such things, so `fuite` tries to distinguish between browser-internal memory and JavaScript objects that the page owns. `fuite` will only say "leak detected" if it can actually give some actionable advice to the web developer.
+
+**How do I debug leaking event listeners?**
+
+Use the `--output` command to output a JSON file, which will contain a list of event listeners and the line of code they were declared on. Otherwise, you can use the Chrome DevTools to analyze event listeners:
+
+- Elements panel -> Event Listeners
+- `getEventListeners(node)` (works in the DevTools console)
+
+**How do I debug leaking collections?**
+
+Run `fuite` in debug mode:
+
+    NODE_OPTIONS=--inspect-brk fuite https://my-website.com --debug
+
+Then open `chrome:inspect` in Chrome and click "Open dedicated DevTools for Node." Then, when the breakpoint is hit, open the DevTools in Chrome and click the "Play" button to let the scenario keep running.
+
+Eventually `fuite` will give you a breakpoint in the Chrome DevTools itself, where you have access to the leaking collection (Array, Map, etc.) and can inspect it.
+
+Note that not every instance of a leaking collection is a serious memory leak: for instance, your router may keep some metadata about past routes in an ever-growing stack. Or your analytics library may store some timing in an array that continually grows. These are generally not a concern unless the objects are huge, or contain closures that reference lots of memory.
 
 [page]: https://pptr.dev/#?product=Puppeteer&version=v12.0.1&show=api-class-page
