@@ -45,13 +45,8 @@ export async function findLeaks (pageUrl, options = {}) {
   const onProgress = options.onProgress || noop
   const { setup, createTests, iteration } = scenario
 
-  onProgress('Gathering tests...')
-  const tests = await runOnFreshPage(browser, pageUrl, setup, async page => {
-    return createTests(page)
-  })
-
-  const runIteration = async (test, i) => {
-    const messagePrefix = `Test ${i + 1}/${tests.length} - ${test.description} -`
+  const runIteration = async (test, i, numTests) => {
+    const messagePrefix = `Test ${i + 1}/${numTests} - ${test.description} -`
     onProgress(`${messagePrefix} Setup...`)
     return runOnFreshPage(browser, pageUrl, setup, async page => {
       await iteration(page, test.data) // one throwaway iteration to avoid measuring one-time setup costs
@@ -135,21 +130,20 @@ export async function findLeaks (pageUrl, options = {}) {
   }
 
   try {
-    const results = []
-
-    for (let i = 0; i < tests.length; i++) {
-      const test = tests[i]
+    onProgress('Gathering tests...')
+    const tests = await runOnFreshPage(browser, pageUrl, setup, async page => {
+      return createTests(page)
+    })
+    return (await Promise.all(tests.map(async (test, i) => {
       try {
-        const result = await runIteration(test, i)
-        results.push(result)
+        return (await runIteration(test, i, tests.length))
       } catch (error) {
-        results.push({
+        return {
           test,
           result: { failed: true, error }
-        })
+        }
       }
-    }
-    return results
+    })))
   } finally {
     await browser.close()
   }

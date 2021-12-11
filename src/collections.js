@@ -78,6 +78,19 @@ export async function findLeakingCollections (page, weakMap, numIterations, debu
   const objects = await page.queryObjects(
     prototype
   )
+
+  // Test if the weakMap is still available
+  try {
+    await page.evaluate(() => {
+      // no-op
+    }, weakMap)
+  } catch (err) {
+    if (err.message.includes('JSHandles can be evaluated only in the context they were created')) {
+      return [] // multi-page app, not single-page app
+    }
+    throw err
+  }
+
   const leakingCollections = await page.evaluate((objects, weakMap, numIterations, debug) => {
     function getSize (obj) {
       if (obj instanceof Map || obj instanceof Set) {

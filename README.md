@@ -150,8 +150,7 @@ Then navigate to `chrome:inspect` in Chrome, click "Open dedicated DevTools for 
 ```js
 import { findLeaks } from 'fuite'
 
-await findLeaks({
-  url: 'https://my-website.com',
+await findLeaks('https://my-website.com', {
   scenario: scenarioObject,
   heapsnapshot: false,
   debug: false
