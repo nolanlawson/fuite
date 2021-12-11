@@ -8,6 +8,7 @@ import fs from 'fs/promises'
 import { analyzeHeapSnapshots } from './analyzeHeapsnapshots.js'
 import { analyzeEventListeners } from './analyzeEventListeners.js'
 import { countDomNodes } from './domNodes.js'
+import { findLeakingCollections, startTrackingCollections } from './collections.js'
 
 export const DEFAULT_ITERATIONS = 7
 
@@ -55,11 +56,12 @@ export async function findLeaks (pageUrl, options = {}) {
     return runOnFreshPage(browser, pageUrl, setup, async page => {
       await iteration(page, test.data) // one throwaway iteration to avoid measuring one-time setup costs
       onProgress(`${messagePrefix} Taking start snapshot...`)
+      const weakMap = await startTrackingCollections(page)
       const eventListenersStart = await getEventListeners(page)
       const domNodesCountStart = await countDomNodes(page)
       const startSnapshotFilename = await takeHeapSnapshot(page)
       if (options.debug) {
-        // "before" point in time
+        // Point in time before running any iterations
         debugger // eslint-disable-line no-debugger
       }
       for (let i = 0; i < numIterations; i++) {
@@ -68,10 +70,11 @@ export async function findLeaks (pageUrl, options = {}) {
       }
       onProgress(`${messagePrefix} Taking end snapshot...`)
       const endSnapshotFilename = await takeHeapSnapshot(page)
-      const eventListenersEnd = await getEventListeners(page)
       const domNodesCountEnd = await countDomNodes(page)
+      const eventListenersEnd = await getEventListeners(page)
+      const leakingCollections = await findLeakingCollections(page, weakMap, numIterations, options.debug)
       if (options.debug) {
-        // "after" point in time
+        // Point in time after running iterations
         debugger // eslint-disable-line no-debugger
       }
 
@@ -83,7 +86,12 @@ export async function findLeaks (pageUrl, options = {}) {
       const domNodesCountDelta = domNodesCountEnd - domNodesCountStart
       const delta = endStatistics.total - startStatistics.total
       const deltaPerIteration = Math.round(delta / numIterations)
-      const leaksDetected = !!(leakingObjects.length || leakingListeners.length || domNodesCountDelta > 0)
+      const leaksDetected = !!(
+        leakingObjects.length ||
+        leakingListeners.length ||
+        domNodesCountDelta > 0 ||
+        leakingCollections.length
+      )
 
       const result = {
         delta,
@@ -96,7 +104,8 @@ export async function findLeaks (pageUrl, options = {}) {
           domNodes: {
             delta: domNodesCountDelta,
             deltaPerIteration: domNodesCountDelta / numIterations
-          }
+          },
+          collections: leakingCollections
         },
         before: {
           statistics: startStatistics,

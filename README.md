@@ -31,7 +31,7 @@ By default, `fuite` will assume that your site is a client-rendered webapp, and 
 - Objects (captured with Chrome [heapsnapshots](https://developer.chrome.com/docs/devtools/memory-problems/heap-snapshots/))
 - Event listeners
 - DOM nodes (attached to the DOM – detached nodes will show under "Objects")
-- Collections such as Arrays, Maps, Sets, and plain Objects (disabled by default; use `--analyzeCollections` to run)
+- Collections such as Arrays, Maps, Sets, and plain Objects
 
 The default scenario clicks internal links because it's the most generic scenario that can be run against a wide variety of SPAs, and it will often catch leaks if client-side routing is used.
 
@@ -154,8 +154,7 @@ await findLeaks({
   url: 'https://my-website.com',
   scenario: scenarioObject,
   heapsnapshot: false,
-  debug: false,
-  analyzeCollections: false
+  debug: false
 })
 ```
 

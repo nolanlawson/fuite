@@ -53,6 +53,29 @@ DOM size grew by ${domNodes.deltaPerIteration} node(s)
   `.trim() + '\n\n'
 }
 
+function formatLeakingCollections (leakingCollections) {
+  const tableData = [[
+    'Collection type',
+    'Start size',
+    'End size',
+    'Increase per iteration'
+  ]]
+
+  for (const { type, sizeBefore, sizeAfter, deltaPerIteration } of leakingCollections) {
+    tableData.push([
+      type,
+      sizeBefore,
+      sizeAfter,
+      deltaPerIteration
+    ])
+  }
+  return `
+Leaking collections:
+
+${markdownTable(tableData)}
+      `.trim() + '\n\n'
+}
+
 export function formatResults (results) {
   let str = ''
   for (const { test, result } of results) {
@@ -75,6 +98,9 @@ export function formatResults (results) {
     if (result.leaks.domNodes.delta) {
       leakTables += formatLeakingDomNodes(result.leaks.domNodes)
     }
+    if (result.leaks.collections.length) {
+      leakTables += formatLeakingCollections(result.leaks.collections)
+    }
 
     let snapshots = ''
     if (result.before.heapsnapshot && result.after.heapsnapshot) {
@@ -93,7 +119,7 @@ ${snapshots}
     `.trim() + '\n'
   }
 
-  if (results.some(({ result }) => result.leaks.detected)) {
+  if (results.some(({ result }) => result.leaks?.detected)) {
     str += '\n' + '-'.repeat(20) + '\n\n'
     str += `
 For more details:

@@ -5,16 +5,25 @@ import { createHeapSnapshotModel } from './heapsnapshots.js'
 // Make the simplifying assumption that certain classes, especially browser-internal
 // ones, aren't really leaks
 const browserInternalClasses = new Set([
-  // '(array)',
+  // Closures and regexes are a bit unique in that there is no other way to capture when these things leak,
+  // other than using the internal "(...)" classes. Even "(array)" has a corresponding "Array" we can track.
+  // As for numbers and strings, these just seem too small to be worth tracking on their own.
   // '(closure)',
   // '(regexp)',
+  '(array)',
   '(compiled code)',
   '(concatenated string)',
   '(number)',
   '(sliced string)',
   '(string)',
   '(system)',
+  'PerformanceEntry',
+  'PerformanceEventTiming',
+  'PerformanceNavigation',
+  'PerformanceNavigationTiming',
   'PerformanceLongTaskTiming',
+  'PerformancePaintTiming',
+  'PerformanceTiming',
   'LayoutShift',
   'LayoutShiftAttribution',
   'TaskAttributionTiming'

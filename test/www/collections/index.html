@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+</head>
+<body>
+<div id="persistent"></div>
+<footer id="also-persistent"></footer>
+<script src="../../../node_modules/navigo/lib/navigo.js"></script>
+<script type="module">
+  import { makeRouter } from '../basicRouter.js'
+
+  const router = makeRouter(['', 'about'])
+
+  // these are not leaking and should be ignore
+  const nonLeakyCollections = [
+    new Map(Object.entries({foo: 'bar'})),
+    new Set(["foo"]),
+    ["foo"],
+    {bar: 'baz'}
+  ]
+
+  // these are leaking
+  let map
+  let set
+  let arr
+  let obj
+
+  router.addAfterHook('/about', () => {
+    map = map || new Map()
+    set = set || new Set()
+    arr = arr || []
+    obj = obj || {}
+
+    const buff = new ArrayBuffer(1000000)
+
+    for (let i = 0; i < 2; i++) {
+      map.set(Math.random(), function mapClosure () { console.log(buff) })
+    }
+    set.add(function setClosure() { console.log(buff) })
+    for (let i = 0; i < 3; i++) {
+      arr.push(function arrayClosure () { console.log(buff) })
+    }
+    for (let i = 0; i < 4; i++) {
+      obj[Math.random()] = function mapClosure () { console.log(buff) }
+    }
+  })
+</script>
+</body>
+</html>
