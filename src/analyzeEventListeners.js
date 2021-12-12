@@ -39,38 +39,23 @@ export function analyzeEventListeners (startListenersSummary, endListenersSummar
     if (endAggregate.count <= startAggregate.count) {
       return
     }
-    const leakingNodes = []
+    let nodes = []
     const uniqueNodeIds = new Set(endAggregate.summaries.map(_ => _.node.objectId))
-    debugger
     for (const objectId of uniqueNodeIds) {
       const endSummary = endAggregate.summaries.find(_ => _.node.objectId === objectId)
 
-      const newCountForThisNodeAndListener = endSummary.listeners.filter(_ => _.type === listenerType).length
-      const startSummary = startAggregate.summaries.find(startSummary => startSummary.node.objectId === objectId)
-
-      let oldCountForThisNodeAndListener = 0
-      if (startSummary) {
-        oldCountForThisNodeAndListener = startSummary.listeners.filter(_ => _.type === listenerType).length
-      }
-      if (newCountForThisNodeAndListener > oldCountForThisNodeAndListener) {
-        const delta = newCountForThisNodeAndListener - oldCountForThisNodeAndListener
-        const deltaPerIteration = delta / numIterations
-        leakingNodes.push({
-          node: endSummary.node,
-          before: oldCountForThisNodeAndListener,
-          after: newCountForThisNodeAndListener,
-          delta,
-          deltaPerIteration
-        })
-      }
+      nodes.push(
+        endSummary.node
+      )
     }
+    nodes = sortBy(nodes, ['description'])
     result.push({
       type: listenerType,
       after: endAggregate.count,
       before: startAggregate.count,
       delta: endAggregate.count - startAggregate.count,
       deltaPerIteration: (endAggregate.count - startAggregate.count) / numIterations,
-      leakingNodes
+      nodes
     })
   })
 

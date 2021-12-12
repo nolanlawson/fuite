@@ -1,8 +1,20 @@
 import { findLeaks } from '../../src/index.js'
 import { expect } from 'chai'
 
+function createSummary (eventListeners) {
+  return eventListeners.map(_ => ({
+    type: _.type,
+    before: _.before,
+    after: _.after,
+    nodes: _.nodes.map(node => ({
+      className: node.className,
+      description: node.description
+    }))
+  }))
+}
+
 describe('event listeners', () => {
-  it.skip('can detect leaking event listeners', async () => {
+  it('can detect leaking event listeners', async () => {
     const results = await findLeaks('http://localhost:3000/test/www/eventListeners/', {
       iterations: 3
     })
@@ -14,50 +26,39 @@ describe('event listeners', () => {
     const result = results[0].result
     expect(result.leaks.detected).to.equal(true)
 
-    const summary = result.leaks.eventListeners.map(_ => ({
-      type: _.type,
-      before: _.before,
-      after: _.after,
-      leakingNodes: _.leakingNodes.map(node => ({
-        before: node.before,
-        after: node.after,
-        delta: node.delta,
-        node: {
-          className: node.node.className,
-          description: node.node.description
-        }
-      }))
-    }))
+    const summary = createSummary(result.leaks.eventListeners)
     expect(summary).to.deep.equal([
       {
         type: 'click',
         before: 4,
         after: 7,
-        leakingNodes: [
+        nodes: [
           {
-            before: 1,
-            after: 4,
-            delta: 3,
-            node: {
-              className: 'HTMLDocument',
-              description: '#document'
-            }
-          }
+            className: 'HTMLDocument',
+            description: '#document'
+          },
+          {
+            'className': 'HTMLAnchorElement',
+            'description': 'a'
+          },
+          {
+            'className': 'HTMLAnchorElement',
+            'description': 'a'
+          },
+          {
+            'className': 'HTMLBodyElement',
+            'description': 'body'
+          },
         ]
       },
       {
         type: 'resize',
         before: 1,
         after: 4,
-        leakingNodes: [
+        nodes: [
           {
-            before: 1,
-            after: 4,
-            delta: 3,
-            node: {
-              className: 'Window',
-              description: 'Window'
-            }
+            className: 'Window',
+            description: 'Window'
           }
         ]
       },
@@ -65,15 +66,10 @@ describe('event listeners', () => {
         type: 'transitionend',
         before: 1,
         after: 4,
-        leakingNodes: [
+        nodes: [
           {
-            before: 1,
-            after: 4,
-            delta: 3,
-            node: {
-              className: 'HTMLDivElement',
-              description: 'div#persistent'
-            }
+            className: 'HTMLDivElement',
+            description: 'div#persistent'
           }
         ]
       },
@@ -81,16 +77,10 @@ describe('event listeners', () => {
         type: 'transitionstart',
         before: 1,
         after: 4,
-        leakingNodes: [
-          {
-            before: 1,
-            after: 4,
-            delta: 3,
-            node: {
-              className: 'HTMLElement',
-              description: 'footer#also-persistent'
-            }
-          }
+        nodes: [{
+          className: 'HTMLElement',
+          description: 'footer#also-persistent'
+        }
         ]
       }
     ])
@@ -108,22 +98,43 @@ describe('event listeners', () => {
     const result = results[0].result
     expect(result.leaks.detected).to.equal(true)
 
-    const summary = result.leaks.eventListeners.map(_ => ({
-      type: _.type,
-      before: _.before,
-      after: _.after,
-      leakingNodes: _.leakingNodes.map(node => ({
-        before: node.before,
-        after: node.after,
-        delta: node.delta,
-        node: {
-          className: node.node.className,
-          description: node.node.description
-        }
-      }))
-    }))
-    console.log(JSON.stringify(summary, null, 2))
+    const summary = createSummary(result.leaks.eventListeners)
     expect(summary).to.deep.equal([
+      {
+        'type': 'resize',
+        'before': 4,
+        'after': 7,
+        'nodes': [
+          {
+            'className': 'HTMLDocument',
+            'description': '#document'
+          },
+          {
+            'className': 'Window',
+            'description': 'Window'
+          },
+          {
+            'className': 'HTMLBodyElement',
+            'description': 'body'
+          },
+          {
+            'className': 'HTMLDivElement',
+            'description': 'div'
+          },
+          {
+            'className': 'HTMLDivElement',
+            'description': 'div'
+          },
+          {
+            'className': 'HTMLDivElement',
+            'description': 'div'
+          },
+          {
+            'className': 'HTMLDivElement',
+            'description': 'div'
+          },
+        ]
+      }
     ])
   })
 })
