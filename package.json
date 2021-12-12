@@ -9,6 +9,7 @@
   "exports": {
     ".": "./src/index.js"
   },
+  "types": "./types/index.d.ts",
   "scripts": {
     "test": "run-p --race test:serve test:mocha",
     "test:serve": "serve",
