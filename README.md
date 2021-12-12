@@ -20,7 +20,13 @@ fuite https://my-website.com
 
 This will check for leaks and print output to stdout.
 
-By default, `fuite` will assume that your site is a client-rendered webapp, and it will click on links to internal URLs and press the back button to see if it's leaking. For other scenarios, see [scenarios](#scenarios).
+By default, `fuite` will assume that your site is a client-rendered webapp, and it will search for internal links on the given page. Then for each link, it will:
+
+1. Click the link
+2. Press the browser Back button
+3. Repeat to see if the scenario is leaking
+
+For other scenarios, see [scenarios](#scenarios).
 
 # How it works
 
@@ -159,7 +165,26 @@ await findLeaks('https://my-website.com', {
 })
 ```
 
-This returns the same output you would get using `--output <filename>` in the CLI – a plain object describing the leak. The format of the object is currently not specified and may change in the future. (Although `fuite` will do a major release if that's the case.)
+This returns the same output you would get using `--output <filename>` in the CLI – a plain object describing the leak. The format of the object can be found in [the TypeScript types](https://github.com/nolanlawson/fuite/blob/master/types/index.d.ts).
+
+If you're writing your own custom scenario, you can also extend the default scenario. For instance, if you want the default scenario, but to be able to log in with a username and password:
+
+```js
+import { defaultScenario, findLeaks } from 'fuite'
+
+const myScenario = {
+  ...defaultScenario,
+  async setup(page) {
+    await page.type('#username', 'myusername')
+    await page.type('#password', 'mypassword')
+    await page.click('#submit')
+  }
+}
+
+await findLeaks('https://my-website.com', {
+  scenario: myScenario
+})
+```
 
 # Limitations
 
@@ -179,11 +204,11 @@ The above command will provide 8GB of memory to `fuite`.
 
 **The results seem wrong or inconsistent.**
 
-Try running with `--iterations 13` or `--iterations 17`.  7 iterations is a good default, but it might report some false positives.
+Try running with `--iterations 13` or `--iterations 17`.  The default of 7 iterations is decent, but it might report some false positives.
 
 **It says I'm leaking 1kB. Do I really need to fix this?**
 
-Note that not every memory leak is a serious problem. If you're only leaking a few kBs on every interaction, then the user will probably never notice, and you'll certainly never hit an Out Of Memory error in the browser itself. You should probably only focus on the leaks in the 100kB+ range.
+Not every memory leak is a serious problem. If you're only leaking a few kBs on every interaction, then the user will probably never notice, and you'll certainly never hit an Out Of Memory error in the browser. You should probably only focus on the leaks in the 100kB+ range.
 
 **It says my page's memory grew, but it also said it didn't detect any leaks. Why?**
 
@@ -195,18 +220,32 @@ The web developer generally doesn't have control over such things, so `fuite` tr
 
 Use the `--output` command to output a JSON file, which will contain a list of event listeners and the line of code they were declared on. Otherwise, you can use the Chrome DevTools to analyze event listeners:
 
-- Elements panel -> Event Listeners
-- `getEventListeners(node)` (works in the DevTools console)
+- Open the DevTools
+- Open the Elements panel
+- Open Event Listeners
+- Alternatively, run `getEventListeners(node)` in the DevTools console
 
 **How do I debug leaking collections?**
 
-Run `fuite` in debug mode:
+Figuring out why an Array or Object is continually growing may be tricky. First, run `fuite` in debug mode:
 
     NODE_OPTIONS=--inspect-brk fuite https://my-website.com --debug
 
 Then open `chrome:inspect` in Chrome and click "Open dedicated DevTools for Node." Then, when the breakpoint is hit, open the DevTools in Chrome and click the "Play" button to let the scenario keep running.
 
 Eventually `fuite` will give you a breakpoint in the Chrome DevTools itself, where you have access to the leaking collection (Array, Map, etc.) and can inspect it.
+
+One technique is to override the object's methods to check whenever it's called:
+
+```js
+for (const prop of ['push', 'concat', 'unshift', 'splice']) {
+  const original = array[prop]
+  array[prop] = function () {
+    debugger
+    return array[prop].apply(this, arguments)
+  }
+}
+```
 
 Note that not every leaking collection is a serious memory leak: for instance, your router may keep some metadata about past routes in an ever-growing stack. Or your analytics library may store some timings in an array that continually grows. These are generally not a concern unless the objects are huge, or contain closures that reference lots of memory.
 
