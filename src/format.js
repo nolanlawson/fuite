@@ -31,7 +31,7 @@ function formatLeakingEventListeners (listenerSummaries) {
   ]]
 
   for (const { type, deltaPerIteration, leakingNodes } of listenerSummaries) {
-    const leakingNodesFormatted = leakingNodes.map(_ => `${_.node.description} (${_.node.className})`).join(', ')
+    const leakingNodesFormatted = leakingNodes.map(_ => _.node.description).join(', ')
     tableData.push([
       type,
       deltaPerIteration,

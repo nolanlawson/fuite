@@ -177,6 +177,14 @@ The above command will provide 8GB of memory to `fuite`.
 
 # FAQs
 
+**The results seem wrong or inconsistent.**
+
+Try running with `--iterations 13` or `--iterations 17`.  7 iterations is a good default, but it might report some false positives.
+
+**It says I'm leaking 1kB. Do I really need to fix this?**
+
+Note that not every memory leak is a serious problem. If you're only leaking a few kBs on every interaction, then the user will probably never notice, and you'll certainly never hit an Out Of Memory error in the browser itself. You should probably only focus on the leaks in the 100kB+ range.
+
 **It says my page's memory grew, but it also said it didn't detect any leaks. Why?**
 
 Web pages can grow memory for lots of reasons. For instance, the browser's JavaScript engine may JIT certain functions, taking up additional memory. Or the browser might change its internal representation of strings or regexes.
@@ -200,6 +208,6 @@ Then open `chrome:inspect` in Chrome and click "Open dedicated DevTools for Node
 
 Eventually `fuite` will give you a breakpoint in the Chrome DevTools itself, where you have access to the leaking collection (Array, Map, etc.) and can inspect it.
 
-Note that not every instance of a leaking collection is a serious memory leak: for instance, your router may keep some metadata about past routes in an ever-growing stack. Or your analytics library may store some timings in an array that continually grows. These are generally not a concern unless the objects are huge, or contain closures that reference lots of memory.
+Note that not every leaking collection is a serious memory leak: for instance, your router may keep some metadata about past routes in an ever-growing stack. Or your analytics library may store some timings in an array that continually grows. These are generally not a concern unless the objects are huge, or contain closures that reference lots of memory.
 
 [page]: https://pptr.dev/#?product=Puppeteer&version=v12.0.1&show=api-class-page

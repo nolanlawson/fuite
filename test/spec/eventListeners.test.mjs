@@ -2,7 +2,7 @@ import { findLeaks } from '../../src/index.js'
 import { expect } from 'chai'
 
 describe('event listeners', () => {
-  it('can detect leaking event listeners', async () => {
+  it.skip('can detect leaking event listeners', async () => {
     const results = await findLeaks('http://localhost:3000/test/www/eventListeners/', {
       iterations: 3
     })
@@ -13,7 +13,6 @@ describe('event listeners', () => {
     ])
     const result = results[0].result
     expect(result.leaks.detected).to.equal(true)
-    expect(result.leaks.eventListeners.length).to.equal(4)
 
     const summary = result.leaks.eventListeners.map(_ => ({
       type: _.type,
@@ -94,6 +93,37 @@ describe('event listeners', () => {
           }
         ]
       }
+    ])
+  })
+
+  it('can detect leaking event listeners in new nodes', async () => {
+    const results = await findLeaks('http://localhost:3000/test/www/eventListenersNewNodes/', {
+      iterations: 3
+    })
+
+    expect(results.length).to.equal(1)
+    expect(results.map(_ => ({ href: _.test.data.href }))).to.deep.equal([
+      { href: 'about' }
+    ])
+    const result = results[0].result
+    expect(result.leaks.detected).to.equal(true)
+
+    const summary = result.leaks.eventListeners.map(_ => ({
+      type: _.type,
+      before: _.before,
+      after: _.after,
+      leakingNodes: _.leakingNodes.map(node => ({
+        before: node.before,
+        after: node.after,
+        delta: node.delta,
+        node: {
+          className: node.node.className,
+          description: node.node.description
+        }
+      }))
+    }))
+    console.log(JSON.stringify(summary, null, 2))
+    expect(summary).to.deep.equal([
     ])
   })
 })

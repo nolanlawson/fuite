@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+</head>
+<body>
+<div id="persistent"></div>
+<footer id="also-persistent"></footer>
+<script src="../../../node_modules/navigo/lib/navigo.js"></script>
+<script type="module">
+  import { makeRouter } from '../basicRouter.js'
+
+  const router = makeRouter(['', 'about'])
+
+  window.addEventListener('resize', () => {}) // NOT leaking
+  document.addEventListener('resize', () => {}) // NOT leaking
+  document.body.addEventListener('resize', () => {}) // NOT leaking
+
+  router.addAfterHook('/about', () => {
+    const div = document.createElement('div')
+    document.body.appendChild(div)
+    const buff = new ArrayBuffer(1000)
+    div.addEventListener('resize', () => { console.log(buff) })
+  })
+</script>
+</body>
+</html>

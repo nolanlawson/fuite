@@ -81,11 +81,13 @@ export async function findLeaks (pageUrl, options = {}) {
       const domNodesCountDelta = domNodesCountEnd - domNodesCountStart
       const delta = endStatistics.total - startStatistics.total
       const deltaPerIteration = Math.round(delta / numIterations)
-      const leaksDetected = !!(
-        leakingObjects.length ||
-        leakingListeners.length ||
-        domNodesCountDelta > 0 ||
-        leakingCollections.length
+      const leaksDetected = Boolean(
+        deltaPerIteration > 0 && (
+          leakingObjects.length ||
+          leakingListeners.length ||
+          domNodesCountDelta > 0 ||
+          leakingCollections.length
+        )
       )
 
       const result = {
