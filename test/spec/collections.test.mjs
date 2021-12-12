@@ -20,7 +20,7 @@ describe('collections', () => {
         sizeAfter: 12,
         delta: 9,
         deltaPerIteration: 3,
-        "preview": "[function arrayClosure () {}, ...]"
+        preview: '[function arrayClosure () {}, ...]'
       },
       {
         type: 'Map',
@@ -28,7 +28,7 @@ describe('collections', () => {
         sizeAfter: 8,
         delta: 6,
         deltaPerIteration: 2,
-        "preview": "Map(1: function mapClosure () {}, ...)"
+        preview: 'Map(1: function mapClosure () {}, ...)'
       },
       {
         type: 'Object',
@@ -36,7 +36,7 @@ describe('collections', () => {
         sizeAfter: 16,
         delta: 12,
         deltaPerIteration: 4,
-        "preview": "{3: function objectClosure () {}, ...}"
+        preview: '{3: function objectClosure () {}, ...}'
       },
       {
         type: 'Set',
@@ -44,7 +44,7 @@ describe('collections', () => {
         sizeAfter: 4,
         delta: 3,
         deltaPerIteration: 1,
-        "preview": "Set(function setClosure () {}, ...)"
+        preview: 'Set(function setClosure () {}, ...)'
       }
     ])
   })

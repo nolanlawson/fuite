@@ -7,7 +7,6 @@ import path from 'path'
 import { formatResult } from './format.js'
 import chalk from 'chalk'
 import { createWriteStream } from 'fs'
-import fs from 'fs/promises'
 
 const require = createRequire(import.meta.url)
 const { version } = require('../package.json')

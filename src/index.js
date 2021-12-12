@@ -1,7 +1,7 @@
 import puppeteer from 'puppeteer'
 import * as defaultScenario from './defaultScenario.js'
 import { takeHeapSnapshot } from './heapsnapshots.js'
-import { noop, serial } from './util.js'
+import { noop } from './util.js'
 import { waitForPageIdle } from './puppeteerUtil.js'
 import { getEventListeners } from './eventListeners.js'
 import fs from 'fs/promises'
@@ -182,12 +182,17 @@ export async function findLeaks (pageUrl, options = {}) {
   }
 
   try {
-    const tests = await runWithSpinner(progress, async onProgress => {
-      onProgress('Gathering tests...')
-      return (await runOnFreshPage(browser, pageUrl, setup, async page => {
-        return createTests(page)
-      }))
-    })
+    let tests
+    if (createTests) {
+      tests = await runWithSpinner(progress, async onProgress => {
+        onProgress('Gathering tests...')
+        return (await runOnFreshPage(browser, pageUrl, setup, async page => {
+          return createTests(page)
+        }))
+      })
+    } else {
+      tests = [{}] // default - one test with empty data
+    }
     const results = returnResults && []
     for (let i = 0; i < tests.length; i++) {
       const test = tests[i]
@@ -204,3 +209,5 @@ export async function findLeaks (pageUrl, options = {}) {
     await browser.close()
   }
 }
+
+export { defaultScenario }
