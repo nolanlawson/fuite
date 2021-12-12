@@ -76,57 +76,45 @@ ${markdownTable(tableData)}
       `.trim() + '\n\n'
 }
 
-export function formatResults (results) {
+export function formatResult ({ test, result }) {
   let str = ''
-  for (const { test, result } of results) {
-    str += '\n' + '-'.repeat(20) + '\n'
 
-    str += `\nTest         : ${chalk.blue(test.description)}\n`
+  str += `Test         : ${chalk.blue(test.description)}\n`
 
-    if (result.failed) {
-      str += `Failed       : ${result.error.message}\n${result.error.stack}\n`
-      continue
-    }
+  if (result.failed) {
+    str += `Failed       : ${result.error.message}\n${result.error.stack}\n`
+    return str
+  }
 
-    let leakTables = ''
-    if (result.leaks.objects.length) {
-      leakTables += formatLeakingObjects(result.leaks.objects)
-    }
-    if (result.leaks.eventListeners.length) {
-      leakTables += formatLeakingEventListeners(result.leaks.eventListeners)
-    }
-    if (result.leaks.domNodes.delta > 0) {
-      leakTables += formatLeakingDomNodes(result.leaks.domNodes)
-    }
-    if (result.leaks.collections.length) {
-      leakTables += formatLeakingCollections(result.leaks.collections)
-    }
+  let leakTables = ''
+  if (result.leaks.objects.length) {
+    leakTables += formatLeakingObjects(result.leaks.objects)
+  }
+  if (result.leaks.eventListeners.length) {
+    leakTables += formatLeakingEventListeners(result.leaks.eventListeners)
+  }
+  if (result.leaks.domNodes.delta > 0) {
+    leakTables += formatLeakingDomNodes(result.leaks.domNodes)
+  }
+  if (result.leaks.collections.length) {
+    leakTables += formatLeakingCollections(result.leaks.collections)
+  }
 
-    let snapshots = ''
-    if (result.before.heapsnapshot && result.after.heapsnapshot) {
-      snapshots = '\n' + `
+  let snapshots = ''
+  if (result.before.heapsnapshot && result.after.heapsnapshot) {
+    snapshots = '\n' + `
 Before: ${result.before.heapsnapshot} (${chalk.blue(prettyBytes(result.before.statistics.total))})
 After : ${result.after.heapsnapshot} (${chalk.red(prettyBytes(result.after.statistics.total))}) (${result.numIterations} iterations)
       `.trim()
-    }
+  }
 
-    str += `
+  str += `
 Memory change: ${result.deltaPerIteration > 0 ? chalk.red('+' + prettyBytes(result.deltaPerIteration)) : chalk.green(prettyBytes(result.deltaPerIteration))}
 Leak detected: ${result.leaks.detected ? chalk.red('Yes') : chalk.green('No')}
 
 ${leakTables}
 ${snapshots}
-    `.trim() + '\n'
-  }
-
-  if (results.some(({ result }) => result.leaks?.detected)) {
-    str += '\n' + '-'.repeat(20) + '\n\n'
-    str += `
-For more details:
-  - Run with --debug
-  - Run with --output <filename>
-    `.trim() + '\n'
-  }
+    `.trim()
 
   return str
 }

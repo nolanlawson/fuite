@@ -26,6 +26,8 @@
   let arr
   let obj
 
+  let count = 0
+
   router.addAfterHook('/about', () => {
     map = map || new Map()
     set = set || new Set()
@@ -35,14 +37,14 @@
     const buff = new ArrayBuffer(1000000)
 
     for (let i = 0; i < 2; i++) {
-      map.set(Math.random(), function mapClosure () { console.log(buff) })
+      map.set(++count, function mapClosure () { console.log(buff) })
     }
     set.add(function setClosure() { console.log(buff) })
     for (let i = 0; i < 3; i++) {
       arr.push(function arrayClosure () { console.log(buff) })
     }
     for (let i = 0; i < 4; i++) {
-      obj[Math.random()] = function mapClosure () { console.log(buff) }
+      obj[++count] = function objectClosure () { console.log(buff) }
     }
   })
 </script>

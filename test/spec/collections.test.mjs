@@ -1,7 +1,7 @@
 import { findLeaks } from '../../src/index.js'
 import { expect } from 'chai'
 
-describe('event listeners', () => {
+describe('collections', () => {
   it('can detect leaking event listeners', async () => {
     const results = await findLeaks('http://localhost:3000/test/www/collections/', {
       iterations: 3
@@ -19,28 +19,32 @@ describe('event listeners', () => {
         sizeBefore: 3,
         sizeAfter: 12,
         delta: 9,
-        deltaPerIteration: 3
+        deltaPerIteration: 3,
+        "preview": "[function arrayClosure () {}, ...]"
       },
       {
         type: 'Map',
         sizeBefore: 2,
         sizeAfter: 8,
         delta: 6,
-        deltaPerIteration: 2
+        deltaPerIteration: 2,
+        "preview": "Map(1: function mapClosure () {}, ...)"
       },
       {
         type: 'Object',
         sizeBefore: 4,
         sizeAfter: 16,
         delta: 12,
-        deltaPerIteration: 4
+        deltaPerIteration: 4,
+        "preview": "{3: function objectClosure () {}, ...}"
       },
       {
         type: 'Set',
         sizeBefore: 1,
         sizeAfter: 4,
         delta: 3,
-        deltaPerIteration: 1
+        deltaPerIteration: 1,
+        "preview": "Set(function setClosure () {}, ...)"
       }
     ])
   })

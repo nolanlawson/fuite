@@ -9,6 +9,7 @@ import { analyzeHeapSnapshots } from './analyzeHeapsnapshots.js'
 import { analyzeEventListeners } from './analyzeEventListeners.js'
 import { countDomNodes } from './domNodes.js'
 import { findLeakingCollections, startTrackingCollections } from './collections.js'
+import ora from 'ora'
 
 export const DEFAULT_ITERATIONS = 7
 
@@ -29,12 +30,12 @@ async function runOnFreshPage (browser, pageUrl, setup, runnable) {
   }
 }
 
-export async function findLeaks (pageUrl, options = {}) {
+async function analyzeOptions (options) {
+  const { debug, heapsnapshot, progress } = options
   const browser = await puppeteer.launch({
-    headless: !options.debug,
+    headless: !debug,
     defaultViewport: { width: 1280, height: 800 }
   })
-
   if (options.signal) {
     options.signal.addEventListener('abort', () => {
       browser.close()
@@ -42,38 +43,69 @@ export async function findLeaks (pageUrl, options = {}) {
   }
   const scenario = options.scenario || defaultScenario
   const numIterations = typeof options.iterations === 'number' ? options.iterations : DEFAULT_ITERATIONS
-  const onProgress = options.onProgress || noop
+  const onResult = options.onResult || noop
+  const returnResults = 'returnResults' in options ? options.returnResults : true
+
+  return {
+    scenario,
+    numIterations,
+    progress,
+    debug,
+    heapsnapshot,
+    onResult,
+    browser,
+    returnResults
+  }
+}
+
+async function runWithSpinner (enableSpinner, runnable) {
+  const spinner = enableSpinner && ora().start()
+  try {
+    return (await runnable(text => {
+      if (spinner) {
+        spinner.text = text
+      }
+    }))
+  } finally {
+    if (spinner) {
+      spinner.stop()
+    }
+  }
+}
+
+export async function findLeaks (pageUrl, options = {}) {
+  const {
+    scenario, numIterations, progress, debug, heapsnapshot, onResult, browser, returnResults
+  } = await analyzeOptions(options)
   const { setup, createTests, iteration } = scenario
 
-  const runIteration = async (test, i, numTests) => {
-    const messagePrefix = `Test ${i + 1}/${numTests} - ${test.description} -`
-    onProgress(`${messagePrefix} Setup...`)
-    return runOnFreshPage(browser, pageUrl, setup, async page => {
+  const runIterationOnPage = async (onProgress, test) => {
+    return (await runOnFreshPage(browser, pageUrl, setup, async page => {
       await iteration(page, test.data) // one throwaway iteration to avoid measuring one-time setup costs
-      onProgress(`${messagePrefix} Taking start snapshot...`)
+      onProgress('Taking start snapshot...')
       const weakMap = await startTrackingCollections(page)
       const eventListenersStart = await getEventListeners(page)
       const domNodesCountStart = await countDomNodes(page)
       const startSnapshotFilename = await takeHeapSnapshot(page)
-      if (options.debug) {
+      if (debug) {
         // Point in time before running any iterations
         debugger // eslint-disable-line no-debugger
       }
       for (let i = 0; i < numIterations; i++) {
-        onProgress(`${messagePrefix} Iteration ${i + 1}/${numIterations}...`)
+        onProgress(`Iteration ${i + 1}/${numIterations}...`)
         await iteration(page, test.data)
       }
-      onProgress(`${messagePrefix} Taking end snapshot...`)
+      onProgress('Taking end snapshot...')
       const endSnapshotFilename = await takeHeapSnapshot(page)
       const domNodesCountEnd = await countDomNodes(page)
       const eventListenersEnd = await getEventListeners(page)
-      const leakingCollections = await findLeakingCollections(page, weakMap, numIterations, options.debug)
-      if (options.debug) {
+      const leakingCollections = await findLeakingCollections(page, weakMap, numIterations, debug)
+      if (debug) {
         // Point in time after running iterations
         debugger // eslint-disable-line no-debugger
       }
 
-      onProgress(`${messagePrefix} Analyzing snapshots...`)
+      onProgress('Analyzing snapshots...')
       const { leakingObjects, startStatistics, endStatistics } = await analyzeHeapSnapshots(
         startSnapshotFilename, endSnapshotFilename, numIterations
       )
@@ -120,7 +152,7 @@ export async function findLeaks (pageUrl, options = {}) {
         }
       }
 
-      if (options.heapsnapshot) {
+      if (heapsnapshot) {
         result.before.heapsnapshot = startSnapshotFilename
         result.after.heapsnapshot = endSnapshotFilename
       } else {
@@ -128,24 +160,46 @@ export async function findLeaks (pageUrl, options = {}) {
       }
 
       return { test, result }
-    })
+    }))
+  }
+
+  const runIteration = async (test, i, numTests) => {
+    try {
+      const prefix = `Test ${i + 1}/${numTests} - ${test.description} -`
+      return (await runWithSpinner(progress, async (onProgress) => {
+        const onProgressWithPrefix = message => {
+          onProgress(`${prefix} ${message}`)
+        }
+        onProgressWithPrefix('Setup...')
+        return (await runIterationOnPage(onProgressWithPrefix, test))
+      }))
+    } catch (error) {
+      return {
+        test,
+        result: { failed: true, error }
+      }
+    }
   }
 
   try {
-    onProgress('Gathering tests...')
-    const tests = await runOnFreshPage(browser, pageUrl, setup, async page => {
-      return createTests(page)
+    const tests = await runWithSpinner(progress, async onProgress => {
+      onProgress('Gathering tests...')
+      return (await runOnFreshPage(browser, pageUrl, setup, async page => {
+        return createTests(page)
+      }))
     })
-    return (await serial(tests.map((test, i) => async () => {
-      try {
-        return (await runIteration(test, i, tests.length))
-      } catch (error) {
-        return {
-          test,
-          result: { failed: true, error }
-        }
+    const results = returnResults && []
+    for (let i = 0; i < tests.length; i++) {
+      const test = tests[i]
+      const result = (await runIteration(test, i, tests.length))
+      onResult(result)
+      if (returnResults) {
+        results.push(result)
       }
-    })))
+    }
+    if (returnResults) {
+      return results
+    }
   } finally {
     await browser.close()
   }

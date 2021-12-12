@@ -4,9 +4,9 @@ import { DEFAULT_ITERATIONS, findLeaks } from './index.js'
 import { Command } from 'commander'
 import { createRequire } from 'module'
 import path from 'path'
-import { formatResults } from './format.js'
+import { formatResult } from './format.js'
 import chalk from 'chalk'
-import ora from 'ora'
+import { createWriteStream } from 'fs'
 import fs from 'fs/promises'
 
 const require = createRequire(import.meta.url)
@@ -25,6 +25,7 @@ program
   .option('-H, --heapsnapshot', 'Save heapsnapshot files')
   .option('-s, --scenario <scenario>', 'Scenario file to run')
   .option('-d, --debug', 'Run in debug mode')
+  .option('-p, --progress', 'Show progress spinner (--no-progress to disable)', true)
   .version(version)
 program.parse(process.argv)
 const options = program.opts()
@@ -56,27 +57,58 @@ ${chalk.blue('Output')}    : ${outputFilename}
   console.log()
 
   const iterations = parseInt(options.iterations, 10)
-  const { debug, heapsnapshot } = options
-  const spinner = ora('Starting...').start()
-  const results = await findLeaks(url, {
+  const { debug, heapsnapshot, progress } = options
+  console.log(chalk.blue('TEST RESULTS') + '\n\n' + '-'.repeat(20) + '\n')
+  let writeCount = 0
+  const writeStream = outputFilename && createWriteStream(outputFilename, 'utf8')
+  if (writeStream) {
+    writeStream.write('[\n')
+  }
+  let leaksDetected = false
+  await findLeaks(url, {
     debug,
     heapsnapshot,
     iterations,
     scenario,
     signal,
-    onProgress (message) {
-      spinner.text = message
+    progress,
+    returnResults: false,
+    onResult: result => {
+      console.log(formatResult(result))
+      console.log('\n' + '-'.repeat(20) + '\n')
+      if (result.leaks?.detected) {
+        leaksDetected = true
+      }
+      if (writeStream) {
+        if (writeCount > 0) {
+          writeStream.write(',\n')
+        }
+        writeStream.write(JSON.stringify(result, null, 2))
+        writeCount++
+      }
     }
   })
-  spinner.stop()
   controller = undefined
 
-  if (outputFilename) {
-    await fs.writeFile(outputFilename, JSON.stringify(results, null, 2), 'utf8')
+  if (leaksDetected) {
+    let str = ''
+    str += `
+For more details:
+  - Run with --debug
+  - Run with --output <filename>
+    `.trim() + '\n'
+    console.log(str)
   }
 
-  console.log(chalk.blue('TEST RESULTS'))
-  console.log(formatResults(results))
+  if (writeStream) {
+    const writeStreamPromise = new Promise((resolve, reject) => {
+      writeStream.on('error', reject)
+      writeStream.on('finish', () => resolve())
+    })
+    writeStream.write('\n]')
+    writeStream.close()
+    await writeStreamPromise
+  }
 }
 
 main().catch(err => {
