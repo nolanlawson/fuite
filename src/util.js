@@ -42,3 +42,15 @@ export function pick (obj, keys) {
   }
   return res
 }
+
+// like lodash.omit
+
+export function omit (obj, keys) {
+  const res = {}
+  for (const key of Object.keys(obj)) {
+    if (!keys.includes(key)) {
+      res[key] = obj[key]
+    }
+  }
+  return res
+}

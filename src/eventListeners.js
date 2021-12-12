@@ -1,4 +1,5 @@
 import { v4 as uuidV4 } from 'uuid'
+import { omit, pick } from './util.js'
 
 // via https://stackoverflow.com/a/67030384
 export async function getEventListeners (page) {
@@ -31,8 +32,15 @@ export async function getEventListeners (page) {
 
       if (listeners.length) {
         nodesWithListeners.push({
-          node,
-          listeners
+          node: pick(node, ['className', 'description']),
+          listeners: listeners.map(listener => {
+            return {
+              // originalHandler seems to contain the same information as handler
+              // as for objectId, these are useless since we will just release the object group anyway
+              ...omit(listener, ['backendNodeId', 'originalHandler']),
+              handler: omit(listener.handler, ['objectId'])
+            }
+          })
         })
       }
     }
