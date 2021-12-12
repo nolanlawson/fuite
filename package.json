@@ -5,11 +5,15 @@
   "type": "module",
   "main": "./src/index.js",
   "module": "./src/index.js",
-  "bin": "./src/cli.js",
+  "bin": "./src/cli.cjs",
   "exports": {
     ".": "./src/index.js"
   },
   "types": "./types/index.d.ts",
+  "files": [
+    "src",
+    "types"
+  ],
   "scripts": {
     "test": "run-p --race test:serve test:mocha",
     "test:serve": "serve",
@@ -20,10 +24,10 @@
     "chalk": "^5.0.0",
     "commander": "^8.3.0",
     "crypto-random-string": "^4.0.0",
-    "es-main": "^1.0.2",
     "exit-hook": "^3.0.0",
     "markdown-table": "^3.0.2",
     "ora": "^6.0.1",
+    "please-upgrade-node": "^3.2.0",
     "pretty-bytes": "^5.6.0",
     "puppeteer": "^12.0.1",
     "temp-dir": "^2.0.0",
@@ -53,9 +57,9 @@
     "url": "https://github.com/nolanlawson/fuite/issues"
   },
   "homepage": "https://github.com/nolanlawson/fuite#readme",
-  "//": "Require ES modules: https://git.io/JMbBG",
+  "//": "Require Node 14 and ES modules: https://git.io/JMbBG",
   "engines": {
-    "node": "^12.20.0 || ^14.13.1 || >=16.0.0"
+    "node": ">= 14.13.1"
   },
   "volta": {
     "node": "16.13.1",

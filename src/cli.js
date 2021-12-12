@@ -1,4 +1,3 @@
-import esMain from 'es-main'
 import exitHook from 'exit-hook'
 import { DEFAULT_ITERATIONS, findLeaks } from './index.js'
 import { Command } from 'commander'
@@ -10,10 +9,6 @@ import { createWriteStream } from 'fs'
 
 const require = createRequire(import.meta.url)
 const { version } = require('../package.json')
-
-if (!esMain(import.meta)) {
-  throw new Error('cli.js should be run directly from the CLI')
-}
 
 const program = new Command()
 
@@ -75,7 +70,7 @@ ${chalk.blue('Output')}    : ${outputFilename}
     onResult: result => {
       console.log(formatResult(result))
       console.log('\n' + '-'.repeat(20) + '\n')
-      if (result.leaks?.detected) {
+      if (result.leaks && result.leaks.detected) {
         leaksDetected = true
       }
       if (writeStream) {
