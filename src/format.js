@@ -51,7 +51,7 @@ function formatLeakingDomNodes (domNodes) {
   return `
 Leaking DOM nodes:
 
-DOM size grew by ${domNodes.deltaPerIteration} node(s) per iteration
+DOM size grew by ${domNodes.deltaPerIteration} node(s)
   `.trim() + '\n\n'
 }
 

@@ -2,7 +2,14 @@ import { waitForPageIdle } from './puppeteerUtil.js'
 
 function urlsAreEqual (url1, url2) {
   for (const prop of ['protocol', 'hostname', 'port', 'pathname', 'search', 'hash']) {
-    if (url1[prop] !== url2[prop]) {
+    let value1 = url1[prop]
+    let value2 = url2[prop]
+    if (prop === 'pathname') {
+      // ignore trailing slashes, most of the time these are effectively the same URL
+      value1 = value1.replace(/\/+$/g, '')
+      value2 = value2.replace(/\/+$/g, '')
+    }
+    if (value1 !== value2) {
       return false
     }
   }
@@ -12,8 +19,10 @@ function urlsAreEqual (url1, url2) {
 async function clickFirstVisible (page, selector) {
   const element = await page.evaluateHandle((selector) => {
     return [...document.querySelectorAll(selector)].filter(el => {
-      // quick and dirty visibility check
-      return window.getComputedStyle(el).getPropertyValue('display') !== 'none' &&
+      // avoid links that open in a new tab
+      return el.target === '' &&
+        // quick and dirty visibility check
+        window.getComputedStyle(el).getPropertyValue('display') !== 'none' &&
         el.offsetHeight > 0 &&
         el.offsetWidth > 0
     })[0]
@@ -31,8 +40,10 @@ export async function createTests (page) {
   const hrefs = await page.$$eval('a[href]', elements => {
     return elements
       .filter(el => {
-        // quick and dirty visibility check
-        return window.getComputedStyle(el).getPropertyValue('display') !== 'none' &&
+        // avoid links that open in a new tab
+        return el.target === '' &&
+          // quick and dirty visibility check
+          window.getComputedStyle(el).getPropertyValue('display') !== 'none' &&
           el.offsetHeight > 0 &&
           el.offsetWidth > 0
       })
