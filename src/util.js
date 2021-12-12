@@ -33,3 +33,12 @@ export async function serial (promiseFactories) {
   }
   return res
 }
+
+// like lodash.pick
+export function pick (obj, keys) {
+  const res = {}
+  for (const key of keys) {
+    res[key] = obj[key]
+  }
+  return res
+}

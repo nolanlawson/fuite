@@ -1,18 +1,6 @@
 import { findLeaks } from '../../src/index.js'
 import { expect } from 'chai'
 
-function createSummary (eventListeners) {
-  return eventListeners.map(_ => ({
-    type: _.type,
-    before: _.before,
-    after: _.after,
-    nodes: _.nodes.map(node => ({
-      className: node.className,
-      description: node.description
-    }))
-  }))
-}
-
 describe('event listeners', () => {
   it('can detect leaking event listeners', async () => {
     const results = await findLeaks('http://localhost:3000/test/www/eventListeners/', {
@@ -26,61 +14,125 @@ describe('event listeners', () => {
     const result = results[0].result
     expect(result.leaks.detected).to.equal(true)
 
-    const summary = createSummary(result.leaks.eventListeners)
-    expect(summary).to.deep.equal([
+    expect(result.leaks.eventListeners).to.deep.equal([
       {
         type: 'click',
-        before: 4,
         after: 7,
-        nodes: [
+        before: 4,
+        delta: 3,
+        deltaPerIteration: 1,
+        leakingNodes: [
           {
-            className: 'HTMLDocument',
-            description: '#document'
-          },
-          {
-            className: 'HTMLAnchorElement',
-            description: 'a'
-          },
-          {
-            className: 'HTMLAnchorElement',
-            description: 'a'
-          },
-          {
-            className: 'HTMLBodyElement',
-            description: 'body'
+            countBefore: 1,
+            countAfter: 4,
+            delta: 3,
+            deltaPerIteration: 1,
+            description: '#document',
+            nodesBefore: [
+              {
+                className: 'HTMLDocument',
+                description: '#document'
+              }
+            ],
+            nodesAfter: [
+              {
+                className: 'HTMLDocument',
+                description: '#document'
+              }
+            ],
+            nodeCountDelta: 0,
+            nodeCountDeltaPerIteration: 0
           }
         ]
       },
       {
         type: 'resize',
-        before: 1,
         after: 4,
-        nodes: [
+        before: 1,
+        delta: 3,
+        deltaPerIteration: 1,
+        leakingNodes: [
           {
-            className: 'Window',
-            description: 'Window'
+            countBefore: 1,
+            countAfter: 4,
+            delta: 3,
+            deltaPerIteration: 1,
+            description: 'Window',
+            nodesBefore: [
+              {
+                className: 'Window',
+                description: 'Window'
+              }
+            ],
+            nodesAfter: [
+              {
+                className: 'Window',
+                description: 'Window'
+              }
+            ],
+            nodeCountDelta: 0,
+            nodeCountDeltaPerIteration: 0
           }
         ]
       },
       {
         type: 'transitionend',
-        before: 1,
         after: 4,
-        nodes: [
+        before: 1,
+        delta: 3,
+        deltaPerIteration: 1,
+        leakingNodes: [
           {
-            className: 'HTMLDivElement',
-            description: 'div#persistent'
+            countBefore: 1,
+            countAfter: 4,
+            delta: 3,
+            deltaPerIteration: 1,
+            description: 'div#persistent',
+            nodesBefore: [
+              {
+                className: 'HTMLDivElement',
+                description: 'div#persistent'
+              }
+            ],
+            nodesAfter: [
+              {
+                className: 'HTMLDivElement',
+                description: 'div#persistent'
+              }
+            ],
+            nodeCountDelta: 0,
+            nodeCountDeltaPerIteration: 0
           }
         ]
       },
       {
         type: 'transitionstart',
-        before: 1,
         after: 4,
-        nodes: [{
-          className: 'HTMLElement',
-          description: 'footer#also-persistent'
-        }
+        before: 1,
+        delta: 3,
+        deltaPerIteration: 1,
+        leakingNodes: [
+          {
+            countBefore: 1,
+            countAfter: 4,
+            delta: 3,
+            deltaPerIteration: 1,
+            description: 'footer#also-persistent',
+            nodesBefore: [
+              {
+                className: 'HTMLElement',
+                description: 'footer#also-persistent'
+              }
+            ],
+            nodesAfter: [
+              {
+                className: 'HTMLElement',
+                description: 'footer#also-persistent'
+              }
+            ],
+            nodeCountDelta: 0,
+            nodeCountDeltaPerIteration: 0
+          }
         ]
       }
     ])
@@ -98,40 +150,46 @@ describe('event listeners', () => {
     const result = results[0].result
     expect(result.leaks.detected).to.equal(true)
 
-    const summary = createSummary(result.leaks.eventListeners)
-    expect(summary).to.deep.equal([
+    expect(result.leaks.eventListeners).to.deep.equal([
       {
         type: 'resize',
-        before: 4,
         after: 7,
-        nodes: [
+        before: 4,
+        delta: 3,
+        deltaPerIteration: 1,
+        leakingNodes: [
           {
-            className: 'HTMLDocument',
-            description: '#document'
-          },
-          {
-            className: 'Window',
-            description: 'Window'
-          },
-          {
-            className: 'HTMLBodyElement',
-            description: 'body'
-          },
-          {
-            className: 'HTMLDivElement',
-            description: 'div'
-          },
-          {
-            className: 'HTMLDivElement',
-            description: 'div'
-          },
-          {
-            className: 'HTMLDivElement',
-            description: 'div'
-          },
-          {
-            className: 'HTMLDivElement',
-            description: 'div'
+            countBefore: 1,
+            countAfter: 4,
+            delta: 3,
+            deltaPerIteration: 1,
+            description: 'div',
+            nodesBefore: [
+              {
+                className: 'HTMLDivElement',
+                description: 'div'
+              }
+            ],
+            nodesAfter: [
+              {
+                className: 'HTMLDivElement',
+                description: 'div'
+              },
+              {
+                className: 'HTMLDivElement',
+                description: 'div'
+              },
+              {
+                className: 'HTMLDivElement',
+                description: 'div'
+              },
+              {
+                className: 'HTMLDivElement',
+                description: 'div'
+              }
+            ],
+            nodeCountDelta: 3,
+            nodeCountDeltaPerIteration: 1
           }
         ]
       }

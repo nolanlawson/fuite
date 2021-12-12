@@ -55,11 +55,13 @@ ${chalk.blue('Output')}    : ${outputFilename}
   }
   console.log()
 
+  const iterations = parseInt(options.iterations, 10)
+  const { debug, heapsnapshot } = options
   const spinner = ora('Starting...').start()
   const results = await findLeaks(url, {
-    debug: options.debug,
-    heapsnapshot: options.heapsnapshot,
-    iterations: parseInt(options.iterations, 10),
+    debug,
+    heapsnapshot,
+    iterations,
     scenario,
     signal,
     onProgress (message) {

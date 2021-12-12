@@ -30,8 +30,10 @@ function formatLeakingEventListeners (listenerSummaries) {
     'Nodes'
   ]]
 
-  for (const { type, deltaPerIteration, nodes } of listenerSummaries) {
-    const nodesFormatted = nodes.map(_ => _.description).join(', ')
+  for (const { type, deltaPerIteration, leakingNodes } of listenerSummaries) {
+    const nodesFormatted = leakingNodes.map(({ description, nodeCountDeltaPerIteration }) => {
+      return `${description}${nodeCountDeltaPerIteration !== 0 ? ` (+${nodeCountDeltaPerIteration})` : ''}`
+    }).join(', ')
     tableData.push([
       type,
       deltaPerIteration,
@@ -49,7 +51,7 @@ function formatLeakingDomNodes (domNodes) {
   return `
 Leaking DOM nodes:
 
-DOM size grew by ${domNodes.deltaPerIteration} node(s)
+DOM size grew by ${domNodes.deltaPerIteration} node(s) per iteration
   `.trim() + '\n\n'
 }
 
