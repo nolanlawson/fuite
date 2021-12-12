@@ -12,7 +12,6 @@ export async function startTrackingCollections (page) {
   const weakMap = await page.evaluateHandle(() => new WeakMap())
   await page.evaluate(
     (objects, weakMap) => {
-
       const { hasOwnProperty, toString } = Object.prototype
       const { isArray } = Array
 
@@ -113,7 +112,7 @@ export async function findLeakingCollections (page, weakMap, numIterations, debu
       }
       return 'Object'
     }
-    function createPreviewOfValue(val) {
+    function createPreviewOfValue (val) {
       if (Array.isArray(val)) {
         return 'Array'
       }
@@ -126,11 +125,11 @@ export async function findLeakingCollections (page, weakMap, numIterations, debu
         const LIMIT = 3
         return `{${keys.slice(0, LIMIT).join(', ')}${keys.length > LIMIT ? ', ...' : ''}}`
       } else if (typeof val === 'function') {
-        return val.name ? `function ${val.name} () {}` : `(anonymous function)`
+        return val.name ? `function ${val.name} () {}` : '(anonymous function)'
       }
       return (val + '') // primitive
     }
-    function createPreviewOfFirstItem(obj) {
+    function createPreviewOfFirstItem (obj) {
       try {
         let keyValue = false
         let firstItem
@@ -153,7 +152,7 @@ export async function findLeakingCollections (page, weakMap, numIterations, debu
         return '...'
       }
     }
-    function createPreview(obj) {
+    function createPreview (obj) {
       if (obj instanceof Map) {
         return `Map(${createPreviewOfFirstItem(obj)}, ...)`
       }

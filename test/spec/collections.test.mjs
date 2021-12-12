@@ -15,32 +15,32 @@ describe('event listeners', () => {
     expect(result.leaks.detected).to.equal(true)
     expect(result.leaks.collections).to.deep.equal([
       {
-        'type': 'Array',
-        'sizeBefore': 3,
-        'sizeAfter': 12,
-        'delta': 9,
-        'deltaPerIteration': 3
+        type: 'Array',
+        sizeBefore: 3,
+        sizeAfter: 12,
+        delta: 9,
+        deltaPerIteration: 3
       },
       {
-        'type': 'Map',
-        'sizeBefore': 2,
-        'sizeAfter': 8,
-        'delta': 6,
-        'deltaPerIteration': 2
+        type: 'Map',
+        sizeBefore: 2,
+        sizeAfter: 8,
+        delta: 6,
+        deltaPerIteration: 2
       },
       {
-        'type': 'Object',
-        'sizeBefore': 4,
-        'sizeAfter': 16,
-        'delta': 12,
-        'deltaPerIteration': 4
+        type: 'Object',
+        sizeBefore: 4,
+        sizeAfter: 16,
+        delta: 12,
+        deltaPerIteration: 4
       },
       {
-        'type': 'Set',
-        'sizeBefore': 1,
-        'sizeAfter': 4,
-        'delta': 3,
-        'deltaPerIteration': 1
+        type: 'Set',
+        sizeBefore: 1,
+        sizeAfter: 4,
+        delta: 3,
+        deltaPerIteration: 1
       }
     ])
   })

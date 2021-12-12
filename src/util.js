@@ -26,7 +26,7 @@ export function sum (array) {
 }
 
 // like Promise.all, but run serially
-export async function serial(promiseFactories) {
+export async function serial (promiseFactories) {
   const res = []
   for (const promiseFactory of promiseFactories) {
     res.push(await promiseFactory())

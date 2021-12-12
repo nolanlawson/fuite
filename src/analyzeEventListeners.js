@@ -29,10 +29,8 @@ export function analyzeEventListeners (startListenersSummary, endListenersSummar
     createListenerTypeToAggregatesMap(endListenersSummary)
   ]
 
-
   endListenerTypesToAggregates.forEach((endAggregate, listenerType) => {
     const startAggregate = startListenerTypesToAggregates.get(listenerType)
-    debugger
     if (!startAggregate) {
       return
     }

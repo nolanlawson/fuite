@@ -38,17 +38,17 @@ describe('event listeners', () => {
             description: '#document'
           },
           {
-            'className': 'HTMLAnchorElement',
-            'description': 'a'
+            className: 'HTMLAnchorElement',
+            description: 'a'
           },
           {
-            'className': 'HTMLAnchorElement',
-            'description': 'a'
+            className: 'HTMLAnchorElement',
+            description: 'a'
           },
           {
-            'className': 'HTMLBodyElement',
-            'description': 'body'
-          },
+            className: 'HTMLBodyElement',
+            description: 'body'
+          }
         ]
       },
       {
@@ -101,38 +101,38 @@ describe('event listeners', () => {
     const summary = createSummary(result.leaks.eventListeners)
     expect(summary).to.deep.equal([
       {
-        'type': 'resize',
-        'before': 4,
-        'after': 7,
-        'nodes': [
+        type: 'resize',
+        before: 4,
+        after: 7,
+        nodes: [
           {
-            'className': 'HTMLDocument',
-            'description': '#document'
+            className: 'HTMLDocument',
+            description: '#document'
           },
           {
-            'className': 'Window',
-            'description': 'Window'
+            className: 'Window',
+            description: 'Window'
           },
           {
-            'className': 'HTMLBodyElement',
-            'description': 'body'
+            className: 'HTMLBodyElement',
+            description: 'body'
           },
           {
-            'className': 'HTMLDivElement',
-            'description': 'div'
+            className: 'HTMLDivElement',
+            description: 'div'
           },
           {
-            'className': 'HTMLDivElement',
-            'description': 'div'
+            className: 'HTMLDivElement',
+            description: 'div'
           },
           {
-            'className': 'HTMLDivElement',
-            'description': 'div'
+            className: 'HTMLDivElement',
+            description: 'div'
           },
           {
-            'className': 'HTMLDivElement',
-            'description': 'div'
-          },
+            className: 'HTMLDivElement',
+            description: 'div'
+          }
         ]
       }
     ])
