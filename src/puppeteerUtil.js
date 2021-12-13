@@ -19,6 +19,12 @@ async function waitForMainThreadIdle (page) {
 
 export async function waitForPageIdle (page) {
   await waitForMainThreadIdle(page)
-  await page.waitForNetworkIdle()
+  try {
+    await page.waitForNetworkIdle()
+  } catch (err) {
+    if (err.name !== 'TimeoutError') { // ignore timeouts, just proceed
+      throw err
+    }
+  }
   await waitForMainThreadIdle(page)
 }
