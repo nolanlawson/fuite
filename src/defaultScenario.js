@@ -1,4 +1,5 @@
 import { waitForPageIdle } from './puppeteerUtil.js'
+import { ono } from 'ono'
 
 function urlsAreEqual (url1, url2) {
   for (const prop of ['protocol', 'hostname', 'port', 'pathname', 'search', 'hash']) {
@@ -28,7 +29,11 @@ async function clickFirstVisible (page, selector) {
     })[0]
   }, selector)
   try {
-    await element.click()
+    try {
+      await element.click()
+    } catch (err) {
+      throw ono(err, `Element ${selector} is not clickable or is not an in-page SPA navigation`)
+    }
   } finally {
     await element.dispose()
   }
