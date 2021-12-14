@@ -144,9 +144,7 @@ export declare type Options = {
     scenario?: Scenario<any>;
     signal?: AbortSignal;
     progress?: boolean;
-    onResult?: (result: TestResult) => void;
-    returnResults?: false;
 };
-export declare function findLeaks(url: string, options: Options): Promise<TestResult[]>;
+export declare function findLeaks(url: string, options: Options): AsyncGenerator<TestResult>;
 export declare const defaultScenario: Scenario<any>;
 export {};

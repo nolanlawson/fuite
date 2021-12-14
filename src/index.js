@@ -1,7 +1,6 @@
 import puppeteer from 'puppeteer'
 import * as defaultScenario from './defaultScenario.js'
 import { takeHeapSnapshot } from './heapsnapshots.js'
-import { noop } from './util.js'
 import { waitForPageIdle } from './puppeteerUtil.js'
 import { getEventListeners } from './eventListeners.js'
 import fs from 'fs/promises'
@@ -43,8 +42,6 @@ async function analyzeOptions (options) {
   }
   const scenario = options.scenario || defaultScenario
   const numIterations = typeof options.iterations === 'number' ? options.iterations : DEFAULT_ITERATIONS
-  const onResult = options.onResult || noop
-  const returnResults = 'returnResults' in options ? options.returnResults : true
 
   return {
     scenario,
@@ -52,9 +49,7 @@ async function analyzeOptions (options) {
     progress,
     debug,
     heapsnapshot,
-    onResult,
-    browser,
-    returnResults
+    browser
   }
 }
 
@@ -73,9 +68,9 @@ async function runWithSpinner (enableSpinner, runnable) {
   }
 }
 
-export async function findLeaks (pageUrl, options = {}) {
+export async function * findLeaks (pageUrl, options = {}) {
   const {
-    scenario, numIterations, progress, debug, heapsnapshot, onResult, browser, returnResults
+    scenario, numIterations, progress, debug, heapsnapshot, browser
   } = await analyzeOptions(options)
   const { setup, createTests, iteration } = scenario
 
@@ -193,17 +188,10 @@ export async function findLeaks (pageUrl, options = {}) {
     } else {
       tests = [{}] // default - one test with empty data
     }
-    const results = returnResults && []
     for (let i = 0; i < tests.length; i++) {
       const test = tests[i]
       const result = (await runIteration(test, i, tests.length))
-      onResult(result)
-      if (returnResults) {
-        results.push(result)
-      }
-    }
-    if (returnResults) {
-      return results
+      yield result
     }
   } finally {
     await browser.close()

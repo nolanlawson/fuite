@@ -1,11 +1,12 @@
 import { findLeaks } from '../../src/index.js'
 import { expect } from 'chai'
+import { asyncIterableToArray } from './util.js'
 
 describe('event listeners', () => {
   it('can detect leaking event listeners', async () => {
-    const results = await findLeaks('http://localhost:3000/test/www/eventListeners/', {
+    const results = await asyncIterableToArray(findLeaks('http://localhost:3000/test/www/eventListeners/', {
       iterations: 3
-    })
+    }))
 
     expect(results.length).to.equal(1)
     expect(results.map(_ => ({ href: _.test.data.href }))).to.deep.equal([
@@ -139,9 +140,9 @@ describe('event listeners', () => {
   })
 
   it('can detect leaking event listeners in new nodes', async () => {
-    const results = await findLeaks('http://localhost:3000/test/www/eventListenersNewNodes/', {
+    const results = await asyncIterableToArray(findLeaks('http://localhost:3000/test/www/eventListenersNewNodes/', {
       iterations: 3
-    })
+    }))
 
     expect(results.length).to.equal(1)
     expect(results.map(_ => ({ href: _.test.data.href }))).to.deep.equal([

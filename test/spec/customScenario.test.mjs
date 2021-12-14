@@ -1,6 +1,7 @@
 import { findLeaks } from '../../src/index.js'
 import * as defaultScenario from '../../src/defaultScenario.js'
 import { expect } from 'chai'
+import { asyncIterableToArray } from './util.js'
 
 describe('custom scenario', () => {
   it('can do a custom version of the default scenario', async () => {
@@ -13,10 +14,10 @@ describe('custom scenario', () => {
       createTests: defaultScenario.createTests,
       iteration: defaultScenario.iteration
     }
-    const results = await findLeaks('http://localhost:3000/test/www/login/', {
+    const results = await asyncIterableToArray(findLeaks('http://localhost:3000/test/www/login/', {
       iterations: 3,
       scenario
-    })
+    }))
     expect(results.length).to.equal(1)
     const { result } = results[0]
     expect(result.leaks.detected).to.equal(true)
@@ -39,10 +40,10 @@ describe('custom scenario', () => {
       }
     }
 
-    const results = await findLeaks('http://localhost:3000/test/www/minimal/', {
+    const results = await asyncIterableToArray(findLeaks('http://localhost:3000/test/www/minimal/', {
       iterations: 3,
       scenario
-    })
+    }))
     expect(results.length).to.equal(1)
     const { result } = results[0]
     expect(result.leaks.detected).to.equal(true)

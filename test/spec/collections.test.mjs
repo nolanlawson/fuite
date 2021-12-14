@@ -1,11 +1,12 @@
 import { findLeaks } from '../../src/index.js'
 import { expect } from 'chai'
+import { asyncIterableToArray } from './util.js'
 
 describe('collections', () => {
   it('can detect leaking event listeners', async () => {
-    const results = await findLeaks('http://localhost:3000/test/www/collections/', {
+    const results = await asyncIterableToArray(findLeaks('http://localhost:3000/test/www/collections/', {
       iterations: 3
-    })
+    }))
 
     expect(results.length).to.equal(1)
     expect(results.map(_ => ({ href: _.test.data.href }))).to.deep.equal([

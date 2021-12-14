@@ -158,12 +158,17 @@ This will launch Chrome in non-headless mode, and it will also automatically pau
 ```js
 import { findLeaks } from 'fuite'
 
-await findLeaks('https://my-website.com', {
+const results = findLeaks('https://my-website.com', {
   scenario: scenarioObject,
   heapsnapshot: false,
   debug: false
 })
+for await (const result of results) {
+  console.log(result)
+}
 ```
+
+Note that `findLeaks` returns an [async iterable](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/for-await...of).
 
 This returns the same output you would get using `--output <filename>` in the CLI – a plain object describing the leak. The format of the object can be found in [the TypeScript types](https://github.com/nolanlawson/fuite/blob/master/types/index.d.ts).
 

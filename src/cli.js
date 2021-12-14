@@ -59,29 +59,28 @@ ${chalk.blue('Output')}    : ${outputFilename}
     writeStream.write('[\n')
   }
   let leaksDetected = false
-  await findLeaks(url, {
+  const findLeaksIterable = findLeaks(url, {
     debug,
     heapsnapshot,
     iterations,
     scenario,
     signal,
-    progress,
-    returnResults: false,
-    onResult: result => {
-      console.log(formatResult(result))
-      console.log('\n' + '-'.repeat(20) + '\n')
-      if (result.leaks && result.leaks.detected) {
-        leaksDetected = true
-      }
-      if (writeStream) {
-        if (writeCount > 0) {
-          writeStream.write(',\n')
-        }
-        writeStream.write(JSON.stringify(result, null, 2))
-        writeCount++
-      }
-    }
+    progress
   })
+  for await (const result of findLeaksIterable) {
+    console.log(formatResult(result))
+    console.log('\n' + '-'.repeat(20) + '\n')
+    if (result.leaks && result.leaks.detected) {
+      leaksDetected = true
+    }
+    if (writeStream) {
+      if (writeCount > 0) {
+        writeStream.write(',\n')
+      }
+      writeStream.write(JSON.stringify(result, null, 2))
+      writeCount++
+    }
+  }
   controller = undefined
 
   if (leaksDetected) {

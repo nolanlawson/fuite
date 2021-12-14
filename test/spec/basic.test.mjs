@@ -1,11 +1,12 @@
 import { findLeaks } from '../../src/index.js'
 import { expect } from 'chai'
+import { asyncIterableToArray } from './util.js'
 
 describe('basic test suite', () => {
   it('can detect a simple leak', async () => {
-    const results = await findLeaks('http://localhost:3000/test/www/basic/', {
+    const results = await asyncIterableToArray(findLeaks('http://localhost:3000/test/www/basic/', {
       iterations: 3
-    })
+    }))
 
     expect(results.length).to.equal(3)
     expect(results.map(_ => ({ href: _.test.data.href }))).to.deep.equal([
@@ -31,9 +32,9 @@ describe('basic test suite', () => {
   })
 
   it('works with invisible links', async () => {
-    const results = await findLeaks('http://localhost:3000/test/www/invisibleLinks/', {
+    const results = await asyncIterableToArray(findLeaks('http://localhost:3000/test/www/invisibleLinks/', {
       iterations: 3
-    })
+    }))
 
     expect(results.length).to.equal(3)
     expect(results.map(_ => ({ href: _.test.data.href }))).to.deep.equal([
