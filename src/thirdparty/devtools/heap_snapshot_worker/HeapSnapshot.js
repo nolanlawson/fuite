@@ -1068,7 +1068,7 @@ var HeapSnapshot = /** @class */ (function () {
                 }
                 errors.addError(dumpNode.name() + " @" + dumpNode.id() + "  weak retainers: " + retainers.join(', '));
             }
-            console.warn(errors.toString());
+            // console.warn(errors.toString());
         }
         // If we already processed all orphan nodes that have only weak retainers and still have some orphans...
         if (postOrderIndex !== nodeCount) {
@@ -1089,7 +1089,7 @@ var HeapSnapshot = /** @class */ (function () {
             }
             nodeOrdinal2PostOrderIndex[rootNodeOrdinal] = postOrderIndex;
             postOrderIndex2NodeOrdinal[postOrderIndex++] = rootNodeOrdinal;
-            console.warn(errors.toString());
+            // console.warn(errors.toString());
         }
         return {
             postOrderIndex2NodeOrdinal: postOrderIndex2NodeOrdinal,

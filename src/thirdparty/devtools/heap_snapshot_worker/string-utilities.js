@@ -98,10 +98,10 @@ export var format = function (formatString, substitutions, formatters, initialVa
         return 'String.format("' + formatString + '", "' + Array.prototype.join.call(substitutions, '", "') + '")';
     }
     function warn(msg) {
-        console.warn(prettyFunctionName() + ': ' + msg);
+        // console.warn(prettyFunctionName() + ': ' + msg);
     }
     function error(msg) {
-        console.error(prettyFunctionName() + ': ' + msg);
+        // console.error(prettyFunctionName() + ': ' + msg);
     }
     var result = initialValue;
     var tokens = tokenizedFormat || tokenizeFormatString(formatString, formatters);

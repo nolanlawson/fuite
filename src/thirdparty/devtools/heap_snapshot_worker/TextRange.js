@@ -156,8 +156,8 @@ var TextRange = /** @class */ (function () {
         return relative;
     };
     TextRange.prototype.rebaseAfterTextEdit = function (originalRange, editedRange) {
-        console.assert(originalRange.startLine === editedRange.startLine);
-        console.assert(originalRange.startColumn === editedRange.startColumn);
+        // console.assert(originalRange.startLine === editedRange.startLine);
+        // console.assert(originalRange.startColumn === editedRange.startColumn);
         var rebase = this.clone();
         if (!this.follows(originalRange)) {
             return rebase;
