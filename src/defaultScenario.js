@@ -2,7 +2,7 @@ import { waitForPageIdle } from './puppeteerUtil.js'
 import { ono } from 'ono'
 
 function urlsAreEqual (url1, url2) {
-  for (const prop of ['protocol', 'hostname', 'port', 'pathname', 'search', 'hash']) {
+  for (const prop of ['protocol', 'hostname', 'port', 'pathname', 'search']) {
     let value1 = url1[prop]
     let value2 = url2[prop]
     if (prop === 'pathname') {
