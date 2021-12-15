@@ -14,10 +14,10 @@ npx fuite https://my-website.com
 
 This will check for leaks and print output to stdout.
 
-By default, `fuite` will assume that your site is a client-rendered webapp, and it will search for internal links on the given page. Then for each link, it will:
+By default, `fuite` will assume that the site is a client-rendered webapp, and it will search for internal links on the given page. Then for each link, it will:
 
 1. Click the link
-2. Press the browser Back button
+2. Press the browser back button
 3. Repeat to see if the scenario is leaking
 
 For other scenarios, see [scenarios](#scenarios).
