@@ -53,19 +53,19 @@ Options:
   -h, --help                 display help for command
 ```
 
-### url
+### URL
 
     fuite <url>
 
 The URL to load. This should be whatever landing page you want to start at – you can use the `setup` option in a custom [scenario](#scenario) if you need to log in.
 
-### output
+### Output
 
     -o, --output <file>        Write JSON output to a file
 
 `fuite` generates a lot of data, but not all of it is shown in the CLI output. To dig deeper, use the `--output` option to create a JSON file containing `fuite`'s anlaysis. This contains additional information such as the line of code that an event listener was declared on.
 
-### iterations
+### Iterations
 
     -i, --iterations <number>
 
@@ -125,13 +125,13 @@ Inside of an `iteration`, you want to run the core test logic that you want to t
 
 The iteration assumes that whatever page it starts at, it ends up at that same page. If you test a multi-page app in this way, then it's extremely unlikely you'll detect any leaks, since multi-page apps don't leak memory in the same way that SPAs do when navigating between routes.
 
-### heapsnapshot
+### Heap snapshot
 
       -H, --heapsnapshot         Save heapsnapshot files
 
 By default, `fuite` doesn't save any heap snapshot files that it captures (to avoid filling up your disk with large files). If you use the `--heapsnapshot` flag, though, then the files will be saved in the `/tmp` directory, and the CLI will output their location. That way, you can inspect them and load them into the [Chrome DevTools memory tool](https://developer.chrome.com/docs/devtools/memory-problems/#discover_detached_dom_tree_memory_leaks_with_heap_snapshots) yourself.
 
-### debug
+### Debug
 
       -d, --debug                Run in debug mode
 
