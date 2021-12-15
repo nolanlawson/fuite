@@ -1,6 +1,6 @@
 # fuite
 
-> **fuite** _\fɥit\_ French for "leak" 
+> **fuite** _/fɥit/_ French for "leak" 
 
 `fuite` is a CLI tool for finding memory leaks in web apps.
 
