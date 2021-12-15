@@ -1,21 +1,15 @@
 # fuite
 
-> **fuite** \fɥit\ French for "leak" 
+> **fuite** _\fɥit\_ French for "leak" 
 
-`fuite` is a tool for finding memory leaks in web apps.
+`fuite` is a CLI tool for finding memory leaks in web apps.
+
+Node 12+ is required.
 
 # Usage
 
-**Install:**
-
 ```shell
-npm install -g fuite
-```
-
-**Run:**
-
-```shell
-fuite https://my-website.com
+npx fuite https://my-website.com
 ```
 
 This will check for leaks and print output to stdout.
