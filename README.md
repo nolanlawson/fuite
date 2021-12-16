@@ -28,7 +28,7 @@ For other scenarios, see [scenarios](#scenarios).
 
 `fuite` looks for the following leaks:
 
-- Objects (captured with Chrome [heapsnapshots](https://developer.chrome.com/docs/devtools/memory-problems/heap-snapshots/))
+- Objects (captured with Chrome [heap snapshots](https://developer.chrome.com/docs/devtools/memory-problems/heap-snapshots/))
 - Event listeners
 - DOM nodes (attached to the DOM – detached nodes will show under "Objects")
 - Collections such as Arrays, Maps, Sets, and plain Objects
@@ -143,7 +143,7 @@ NODE_OPTIONS=--inspect-brk fuite --debug <url>
 
 Then navigate to `chrome:inspect` in Chrome, click "Open dedicated DevTools for Node," and now you are debugging `fuite` itself.
 
-This will launch Chrome in non-headless mode, and it will also automatically pause before running iterations and afterwards. That way, you can open up the Chrome DevTools and analyze the scenario yourself, take your own heapsnapshots, etc.
+This will launch Chrome in non-headless mode, and it will also automatically pause before running iterations and afterwards. That way, you can open up the Chrome DevTools and analyze the scenario yourself, take your own heap snapshots, etc.
 
 # JavaScript API
 
@@ -193,7 +193,7 @@ Similarly, `fuite` measures the JavaScript heap size of the page, corresponding 
 
 `fuite` works best when your source code is unminified. Otherwise the class names will show as the minified versions, which can be hard to debug.
 
-`fuite` may use a lot of memory itself to analyze large heapsnapshot files. If you find that Node.js is running out of memory, you can run something like:
+`fuite` may use a lot of memory itself to analyze large heap snapshot files. If you find that Node.js is running out of memory, you can run something like:
 
     NODE_OPTIONS=--max-old-space-size=8000 fuite <arguments>
 
@@ -211,7 +211,7 @@ Not every memory leak is a serious problem. If you're only leaking a few kBs on 
 
 **It says my page's memory grew, but it also said it didn't detect any leaks. Why?**
 
-Web pages can grow memory for lots of reasons. For instance, the browser's JavaScript engine may JIT certain functions, taking up additional memory. Or the browser might change its internal representation of strings or regexes.
+Web pages can grow memory for lots of reasons. For instance, the browser's JavaScript engine may JIT certain functions, taking up additional memory. Or the browser may decide to use certain internal data structures to prioritize CPU over memory usage.
 
 The web developer generally doesn't have control over such things, so `fuite` tries to distinguish between browser-internal memory and JavaScript objects that the page owns. `fuite` will only say "leak detected" if it can actually give some actionable advice to the web developer.
 
