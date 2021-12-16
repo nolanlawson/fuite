@@ -252,6 +252,6 @@ Note that not every leaking collection is a serious memory leak: for instance, y
 
 Currently `fuite` requires Chromium-specific tools such as heap snapshots, `getEventListeners`, `queryObjects`, and other things that are only available with Chromium and the Chrome DevTools Protocol (CDP). Potentially, such things could be accessible in a cross-browser way, but today it just isn't possible.
 
-That said, if something is leaking in Chrome, it's likely leaking in Safari and Firefox too. So it's not like `fuite` is inherently anti-web compatibility.
+That said, if something is leaking in Chrome, it's likely leaking in Safari and Firefox too.
 
 [page]: https://pptr.dev/#?product=Puppeteer&version=v12.0.1&show=api-class-page
