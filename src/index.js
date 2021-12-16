@@ -68,11 +68,26 @@ async function runWithSpinner (enableSpinner, runnable) {
   }
 }
 
+function massagePageUrl (pageUrl) {
+  // add the scheme if necessary
+  if (!/^https?:\/\//.test(pageUrl)) {
+    // use insecure for localhost
+    if (pageUrl.startsWith('localhost') || pageUrl.startsWith('127.0.0.1')) {
+      return `http://${pageUrl}`
+    }
+    // use secure everywhere else
+    return `https://${pageUrl}`
+  }
+  return pageUrl
+}
+
 export async function * findLeaks (pageUrl, options = {}) {
   const {
     scenario, numIterations, progress, debug, heapsnapshot, browser
   } = await analyzeOptions(options)
   const { setup, createTests, iteration } = scenario
+
+  pageUrl = massagePageUrl(pageUrl)
 
   const runIterationOnPage = async (onProgress, test) => {
     return (await runOnFreshPage(browser, pageUrl, setup, async page => {
