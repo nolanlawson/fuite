@@ -67,7 +67,9 @@ ${chalk.blue('Output')}    : ${outputFilename}
     signal,
     progress
   })
+  let numResults = 0
   for await (const result of findLeaksIterable) {
+    numResults++
     console.log(formatResult(result))
     console.log('\n' + '-'.repeat(20) + '\n')
     if (result.leaks && result.leaks.detected) {
@@ -83,7 +85,12 @@ ${chalk.blue('Output')}    : ${outputFilename}
   }
   controller = undefined
 
-  if (leaksDetected) {
+  if (!numResults) {
+    console.log('No tests to run.')
+    if (!scenario) {
+      console.log('(In the default scenario, this means that no internal links were found on the page.)\n')
+    }
+  } else if (leaksDetected) {
     let str = ''
     str += `
 For more details:
