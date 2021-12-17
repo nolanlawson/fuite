@@ -4,7 +4,7 @@
 
 `fuite` is a CLI tool for finding memory leaks in web apps.
 
-Node 14+ is required.
+[Introductory blog post](https://nolanlawson.com/2021/12/17/introducing-fuite-a-tool-for-finding-memory-leaks-in-web-apps/)
 
 # Usage
 
