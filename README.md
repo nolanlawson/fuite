@@ -9,7 +9,7 @@ Node 14+ is required.
 # Usage
 
 ```shell
-npx fuite https://my-website.com
+npx fuite https://example.com
 ```
 
 This will check for leaks and print output to stdout.
@@ -80,7 +80,7 @@ Why 7? Well, it's a nice, small, prime number. If you repeat an action 7 times a
 The default scenario is to find all internal links on the page, click them, and press the back button. You can also define a scenario file that does whatever you want:
 
 ```bash
-fuite --scenario ./myScenario.js https://my-website.com
+fuite --scenario ./myScenario.js https://example.com
 ```
 
 ```js
@@ -152,7 +152,7 @@ This will launch Chrome in non-headless mode, and it will also automatically pau
 ```js
 import { findLeaks } from 'fuite'
 
-const results = findLeaks('https://my-website.com', {
+const results = findLeaks('https://example.com', {
   scenario: scenarioObject,
   heapsnapshot: false,
   debug: false
@@ -165,6 +165,19 @@ for await (const result of results) {
 Note that `findLeaks` returns an [async iterable](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/for-await...of).
 
 This returns the same output you would get using `--output <filename>` in the CLI – a plain object describing the leak. The format of the object can be found in [the TypeScript types](https://github.com/nolanlawson/fuite/blob/master/types/index.d.ts).
+
+You can also pass in an [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal) to cancel the test on-demand:
+
+```js
+const controller = new AbortController();
+const { signal } = controller;
+findLeaks('https://example.com', { signal });
+
+// Later
+controller.abort();
+```
+
+## Extending the default scenario
 
 If you're writing your own custom scenario, you can also extend the default scenario. For instance, if you want the default scenario, but to be able to log in with a username and password:
 
@@ -180,7 +193,7 @@ const myScenario = {
   }
 }
 
-await findLeaks('https://my-website.com', {
+await findLeaks('https://example.com', {
   scenario: myScenario
 })
 ```
@@ -228,7 +241,7 @@ Use the `--output` command to output a JSON file, which will contain a list of e
 
 Figuring out why an Array or Object is continually growing may be tricky. First, run `fuite` in debug mode:
 
-    NODE_OPTIONS=--inspect-brk fuite https://my-website.com --debug
+    NODE_OPTIONS=--inspect-brk fuite https://example.com --debug
 
 Then open `chrome:inspect` in Chrome and click "Open dedicated DevTools for Node." Then, when the breakpoint is hit, open the DevTools in Chrome and click the "Play" button to let the scenario keep running.
 
