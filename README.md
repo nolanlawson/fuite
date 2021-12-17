@@ -114,6 +114,21 @@ The `createTests` function takes a Puppeteer [page][] as input and returns an ar
 
 If this function is not defined, then the default tests are `[{}]` (a single test with empty data).
 
+If you would like a nice description to be printed to the CLI while running the test, you can add a `description` property to the test data:
+
+```json
+[
+  {
+    "description": "My test 1",
+    "foo": "foo"
+  },
+  {
+    "description": "My test 2",
+    "foo": "bar"
+  }
+]
+```
+
 #### iteration
 
 The `iteration` function takes a Puppeteer [page][] and _iteration data_ as input and returns undefined. It runs for each iteration of the memory leak test. The _iteration data_ is a plain object and comes from the `createTests` function, so by default it is just an empty object: `{}`.

@@ -37,7 +37,7 @@ async function main () {
   const { signal } = controller
   let scenario
   if (options.scenario) {
-    scenario = await import(path.join(process.cwd(), options.scenario))
+    scenario = await import(path.resolve(process.cwd(), options.scenario))
   }
 
   console.log('\n' + `
