@@ -143,6 +143,8 @@ Debug mode lets you drill in to a complex scenario and debug it yourself using t
 NODE_OPTIONS=--inspect-brk fuite --debug <url>
 ```
 
+(Note that `NODE_OPTIONS` will _not_ work if you run `npx fuite`. So you have to install `fuite` locally or globally, e.g. using `npm i -g fuite`.)
+
 Then navigate to `chrome:inspect` in Chrome, click "Open dedicated DevTools for Node," and now you are debugging `fuite` itself.
 
 This will launch Chrome in non-headless mode, and it will also automatically pause before running iterations and afterwards. That way, you can open up the Chrome DevTools and analyze the scenario yourself, take your own heap snapshots, etc.
