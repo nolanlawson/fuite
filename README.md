@@ -166,7 +166,7 @@ for await (const result of results) {
 
 Note that `findLeaks` returns an [async iterable](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/for-await...of).
 
-This returns the same output you would get using `--output <filename>` in the CLI – a plain object describing the leak. The format of the object can be found in [the TypeScript types](https://github.com/nolanlawson/fuite/blob/master/types/index.d.ts).
+This returns the same output you would get using `--output <filename>` in the CLI – a plain object describing the leak. The format of the object is not fully specified yet, but a basic shape cane be found in [the TypeScript types](https://github.com/nolanlawson/fuite/blob/master/types/index.d.ts).
 
 You can also pass in an [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal) to cancel the test on-demand:
 
