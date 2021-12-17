@@ -6,6 +6,11 @@ import path from 'path'
 import { formatResult } from './format.js'
 import chalk from 'chalk'
 import { createWriteStream } from 'fs'
+import { AbortController as AbortControllerPolyfill } from 'node-abort-controller'
+
+if (typeof AbortController !== 'function') {
+  global.AbortController = AbortControllerPolyfill
+}
 
 const require = createRequire(import.meta.url)
 const { version } = require('../package.json')
