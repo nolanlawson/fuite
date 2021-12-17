@@ -61,9 +61,11 @@ The URL to load. This should be whatever landing page you want to start at – y
 
 ### Output
 
-    -o, --output <file>        Write JSON output to a file
+    -o, --output <file>
 
 `fuite` generates a lot of data, but not all of it is shown in the CLI output. To dig deeper, use the `--output` option to create a JSON file containing `fuite`'s anlaysis. This contains additional information such as the line of code that an event listener was declared on.
+
+Anything that you see in the CLI, you can also find in the output JSON file.
 
 ### Iterations
 
@@ -98,7 +100,7 @@ export async function iteration(page, data) {
 }
 ```
 
-Your `myScenario.js` can export several `async functions`. Here's what they do:
+Your `myScenario.js` can export several `async function`s. Here's what they do:
 
 #### setup
 
@@ -208,7 +210,7 @@ Similarly, `fuite` measures the JavaScript heap size of the page, corresponding 
 
 `fuite` may use a lot of memory itself to analyze large heap snapshot files. If you find that Node.js is running out of memory, you can run something like:
 
-    NODE_OPTIONS=--max-old-space-size=8000 fuite <arguments>
+    NODE_OPTIONS=--max-old-space-size=8000 npx fuite <url>
 
 The above command will provide 8GB of memory to `fuite`.
 
@@ -220,7 +222,7 @@ Try running with `--iterations 13` or `--iterations 17`.  The default of 7 itera
 
 **It says I'm leaking 1kB. Do I really need to fix this?**
 
-Not every memory leak is a serious problem. If you're only leaking a few kBs on every interaction, then the user will probably never notice, and you'll certainly never hit an Out Of Memory error in the browser. You should probably only focus on the leaks in the 100kB+ range.
+Not every memory leak is a serious problem. If you're only leaking a few kBs on every interaction, then the user will probably never notice, and you'll certainly never hit an Out Of Memory error in the browser. Your ceiling for "acceptable leaks" will differ, though, depending on your use case. E.g., if you're building for embedded devices, then you probably want to keep your memory usage much lower.
 
 **It says my page's memory grew, but it also said it didn't detect any leaks. Why?**
 
