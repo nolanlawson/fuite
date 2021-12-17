@@ -270,3 +270,4 @@ Currently `fuite` requires Chromium-specific tools such as heap snapshots, `getE
 That said, if something is leaking in Chrome, it's likely leaking in Safari and Firefox too.
 
 [page]: https://pptr.dev/#?product=Puppeteer&version=v12.0.1&show=api-class-page
+
