@@ -6,6 +6,8 @@
 
 [Introductory blog post](https://nolanlawson.com/2021/12/17/introducing-fuite-a-tool-for-finding-memory-leaks-in-web-apps/)
 
+[Tutorial video](https://youtu.be/H0BHL2lo89M)
+
 # Usage
 
 ```shell
@@ -163,11 +165,7 @@ By default, `fuite` doesn't save any heap snapshot files that it captures (to av
 
       -d, --debug                Run in debug mode
 
-Debug mode lets you drill in to a complex scenario and debug it yourself using the Chrome DevTools.
-
-If you prefer video tutorials, [here is a video](https://youtu.be/H0BHL2lo89M) showing how to use it.
-
-The best way to run it is:
+Debug mode lets you drill in to a complex scenario and debug it yourself using the Chrome DevTools. The best way to run it is:
 
 ```shell
 NODE_OPTIONS=--inspect-brk fuite --debug <url>
