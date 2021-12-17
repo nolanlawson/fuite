@@ -212,9 +212,9 @@ Similarly, `fuite` measures the JavaScript heap size of the page, corresponding 
 
 `fuite` may use a lot of memory itself to analyze large heap snapshot files. If you find that Node.js is running out of memory, you can run something like:
 
-    NODE_OPTIONS=--max-old-space-size=8000 npx fuite <url>
+    NODE_OPTIONS=--max-old-space-size=8000 fuite <url>
 
-The above command will provide 8GB of memory to `fuite`.
+The above command will provide 8GB of memory to `fuite`. (Note that `NODE_OPTIONS` will not work if you run `npx fuite`; you have to run `fuite` directly, e.g. by running `npm i -g fuite` first.)
 
 # FAQs
 
