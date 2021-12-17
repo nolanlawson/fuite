@@ -110,9 +110,35 @@ If this function is not defined, then no setup code will be run.
 
 #### createTests
 
-The `createTests` function takes a Puppeteer [page][] as input and returns an array of plain objects representing the tests to run, and the data to pass for each one. This is useful if you want to dynamically determine what tests to run against a page (for instance, which links to click).
+The `createTests` function takes a Puppeteer [page][] as input and returns an array of _test data objects_ representing the tests to run, and the data to pass for each one. This is useful if you want to dynamically determine what tests to run against a page (for instance, which links to click).
 
-If this function is not defined, then the default tests are `[{}]` (a single test with empty data).
+If `createTests` is not defined, then the default tests are `[{}]` (a single test with empty data).
+
+The basic shape for a test data object is like so:
+
+```json
+{
+  "description": "Some human-readable description",
+  "data": {
+    "some data": "which is passed to the test"
+  }
+}
+```
+
+For instance, your `createTests` might return:
+
+```json
+[
+  {
+    "description": "My test 1",
+    "data": { "foo": "foo" }
+  },
+  {
+    "description": "My test 2",
+    "data": { "foo": "bar" }
+  }
+]
+```
 
 #### iteration
 
