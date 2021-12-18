@@ -55,13 +55,13 @@ Options:
   -h, --help                 display help for command
 ```
 
-### URL
+## URL
 
     fuite <url>
 
 The URL to load. This should be whatever landing page you want to start at – you can use the `setup` option in a custom [scenario](#scenario) if you need to log in.
 
-### Output
+## Output
 
     -o, --output <file>
 
@@ -69,7 +69,7 @@ The URL to load. This should be whatever landing page you want to start at – y
 
 Anything that you see in the CLI, you can also find in the output JSON file.
 
-### Iterations
+## Iterations
 
     -i, --iterations <number>
 
@@ -77,7 +77,7 @@ By default, `fuite` runs 7 iterations. But you can change this number.
 
 Why 7? Well, it's a nice, small, prime number. If you repeat an action 7 times and some object is leaking exactly 7 times, it's pretty unlikely to be unrelated. That said, on a very complex page, there may be enough noise that 7 is too small to cut through the noise – so you might try 13, 17, or 19 instead. Or 1 if you like to live dangerously.
 
-### Scenarios
+## Scenarios
 
     --scenario <scenario>
 
@@ -104,13 +104,13 @@ export async function iteration(page, data) {
 
 Your `myScenario.js` can export several `async function`s. Here's what they do:
 
-#### setup
+### setup
 
 The `setup` function takes a Puppeteer [page][] as input and returns undefined. It runs before each `iteration`, or before `createTests`. This is a good place to log in, if your webapp requires a login.
 
 If this function is not defined, then no setup code will be run.
 
-#### createTests
+### createTests
 
 The `createTests` function takes a Puppeteer [page][] as input and returns an array of _test data objects_ representing the tests to run, and the data to pass for each one. This is useful if you want to dynamically determine what tests to run against a page (for instance, which links to click).
 
@@ -142,7 +142,7 @@ For instance, your `createTests` might return:
 ]
 ```
 
-#### iteration
+### iteration
 
 The `iteration` function takes a Puppeteer [page][] and _iteration data_ as input and returns undefined. It runs for each iteration of the memory leak test. The _iteration data_ is a plain object and comes from the `createTests` function, so by default it is just an empty object: `{}`.
 
@@ -155,7 +155,7 @@ Inside of an `iteration`, you want to run the core test logic that you want to t
 
 The iteration assumes that whatever page it starts at, it ends up at that same page. If you test a multi-page app in this way, then it's extremely unlikely you'll detect any leaks, since multi-page apps don't leak memory in the same way that SPAs do when navigating between routes.
 
-#### Extending the default scenario in the CLI
+### Extending the default scenario in the CLI
 
 You can also extend the default scenario, e.g. to add a `setup` step that logs the user in. To do so, you must first install `fuite` in a local Node project. If you don't have one, run:
 
@@ -192,13 +192,13 @@ Then run:
 npx fuite https://example.com --scenario ./customScenario.mjs
 ```
 
-### Heap snapshot
+## Heap snapshot
 
       -H, --heapsnapshot         Save heapsnapshot files
 
 By default, `fuite` doesn't save any heap snapshot files that it captures (to avoid filling up your disk with large files). If you use the `--heapsnapshot` flag, though, then the files will be saved in the `/tmp` directory, and the CLI will output their location. That way, you can inspect them and load them into the [Chrome DevTools memory tool](https://developer.chrome.com/docs/devtools/memory-problems/#discover_detached_dom_tree_memory_leaks_with_heap_snapshots) yourself.
 
-### Debug
+## Debug
 
       -d, --debug                Run in debug mode
 
@@ -267,7 +267,7 @@ await findLeaks('https://example.com', {
 })
 ```
 
-Note that the above works if you're using the JavaScript API. For the CLI, see [#extending-the-default-scenario-in-the-cli].
+Note that the above works if you're using the JavaScript API. For the CLI, see [extending the default scenario in the CLI](#extending-the-default-scenario-in-the-cli).
 
 # Limitations
 
