@@ -49,8 +49,10 @@ Options:
   -o, --output <file>        Write JSON output to a file
   -i, --iterations <number>  Number of iterations (default: 7)
   -s, --scenario <scenario>  Scenario file to run
+  -S, --setup <setup>        Setup function to run
   -H, --heapsnapshot         Save heapsnapshot files
-  -d, --debug                Run in debug mode  
+  -d, --debug                Run in debug mode
+  -p, --progress             Show progress spinner (use --no-progress to disable)
   -V, --version              output the version number
   -h, --help                 display help for command
 ```
@@ -205,6 +207,12 @@ Then navigate to `chrome:inspect` in Chrome, click "Open dedicated DevTools for 
 
 This will launch Chrome in non-headless mode, and it will also automatically pause before running iterations and afterwards. That way, you can open up the Chrome DevTools and analyze the scenario yourself, take your own heap snapshots, etc.
 
+## Progress
+
+    -p, --progress             Show progress spinner (use --no-progress to disable)
+
+Enable or disable the progress spinner while the test runs. It's true by default, so you should use `--no-progress` to disable.
+
 # JavaScript API
 
 `fuite` can also be used via a JavaScript API, which works similarly to the CLI:
@@ -233,7 +241,6 @@ This returns the same output you would get using `--output <filename>` in the CL
 The options for `findLeaks` are basically the same as for the CLI. The only differences between the JavaScript API and the CLI are:
 
 - `scenario` takes an object with keys `setup`, `createTests`, and `iteration` rather than a filename (see [Scenario object](#scenario-object) and [Extending the default scenario](#extending-the-default-scenario) below).
-- `progress` can be set to `false` to disable the progress spinner.
 - `setup` is not supported – use `scenario` instead.
 - `signal` can be used to cancel the test (see [Cancel the test](#cancel-the-test) below).
 
