@@ -155,6 +155,43 @@ Inside of an `iteration`, you want to run the core test logic that you want to t
 
 The iteration assumes that whatever page it starts at, it ends up at that same page. If you test a multi-page app in this way, then it's extremely unlikely you'll detect any leaks, since multi-page apps don't leak memory in the same way that SPAs do when navigating between routes.
 
+#### Extending the default scenario in the CLI
+
+You can also extend the default scenario, e.g. to add a `setup` step that logs the user in. To do so, you must first install `fuite` in a local Node project. If you don't have one, run:
+
+```shell
+mkdir my-project
+cd my-project
+npm init --yes
+```
+
+Once you have your project, run:
+
+```shell
+npm i --save-dev fuite
+```
+
+Then create a file called `customScenario.mjs`:
+
+```js
+import { defaultScenario } from 'fuite'
+const { createTests, iteration } = defaultScenario
+
+async function setup (page) {
+  await (await page.$('#username')).type('myusername')
+  await (await page.$('#password')).type('mypassword')
+  await (await page.$('#submit')).click()
+}
+
+export { createTests, iteration, setup }
+```
+
+Then run:
+
+```shell
+npx fuite https://example.com --scenario ./customScenario.mjs
+```
+
 ### Heap snapshot
 
       -H, --heapsnapshot         Save heapsnapshot files
@@ -229,6 +266,8 @@ await findLeaks('https://example.com', {
   scenario: myScenario
 })
 ```
+
+Note that the above works if you're using the JavaScript API. For the CLI, see [#extending-the-default-scenario-in-the-cli].
 
 # Limitations
 
