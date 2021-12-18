@@ -1,5 +1,5 @@
 import exitHook from 'exit-hook'
-import { DEFAULT_ITERATIONS, findLeaks } from './index.js'
+import { DEFAULT_ITERATIONS, defaultScenario, findLeaks } from './index.js'
 import { Command } from 'commander'
 import { createRequire } from 'module'
 import path from 'path'
@@ -23,6 +23,7 @@ program
   .option('-i, --iterations <number>', 'Number of iterations', DEFAULT_ITERATIONS)
   .option('-H, --heapsnapshot', 'Save heapsnapshot files')
   .option('-s, --scenario <scenario>', 'Scenario file to run')
+  .option('-S, --setup <setup>', 'Setup function to run (e.g. in the default scenario)')
   .option('-d, --debug', 'Run in debug mode')
   .option('-p, --progress', 'Show progress spinner (--no-progress to disable)', true)
   .version(version)
@@ -38,6 +39,16 @@ async function main () {
   let scenario
   if (options.scenario) {
     scenario = await import(path.resolve(process.cwd(), options.scenario))
+  } else {
+    scenario = defaultScenario
+  }
+  if (options.setup) {
+    // override whatever setup function is defined on the scenario
+    const { setup } = await import(path.resolve(process.cwd(), options.setup))
+    scenario = {
+      ...scenario,
+      setup
+    }
   }
 
   console.log('\n' + `
