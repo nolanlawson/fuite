@@ -112,7 +112,7 @@ The `setup` function takes a Puppeteer [Page][] as input and returns undefined. 
 
 If this function is not defined, then no setup code will be run.
 
-Note that there is also a [`--setup` flag](#setup) flag. If defined, it will override the `setup` function defined in a scenario.
+Note that there is also a [`--setup` flag](#setup). If defined, it will override the `setup` function defined in a scenario.
 
 ### `createTests` function
 
