@@ -232,10 +232,10 @@ This returns the same output you would get using `--output <filename>` in the CL
 
 The options for `findLeaks` are basically the same as for the CLI. The only differences between the JavaScript API and the CLI are:
 
-- `scenario` takes an object with keys `setup`, `createTests`, and `iteration` rather than a filename (see [Scenario object](#scenario-object) and [Extending the default scenario](#extending-the-default-scenario)).
+- `scenario` takes an object with keys `setup`, `createTests`, and `iteration` rather than a filename (see [Scenario object](#scenario-object) and [Extending the default scenario](#extending-the-default-scenario) below).
 - `progress` can be set to `false` to disable the progress spinner.
-- `setup` is not supported – use `scenario` instead
-- `signal` can be used to cancel the test (see [Cancel the test](#cancel-the-test))
+- `setup` is not supported – use `scenario` instead.
+- `signal` can be used to cancel the test (see [Cancel the test](#cancel-the-test) below).
 
 ### Cancel the test
 
