@@ -357,7 +357,7 @@ for (const prop of ['push', 'concat', 'unshift', 'splice']) {
   const original = array[prop];
   array[prop] = function () {
     debugger;
-    return array[prop].apply(this, arguments);
+    return original.apply(this, arguments);
   };
 }
 ```
