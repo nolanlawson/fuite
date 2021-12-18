@@ -59,7 +59,7 @@ Options:
 
     fuite <url>
 
-The URL to load. This should be whatever landing page you want to start at – you can use the `setup` option in a custom [scenario](#scenario) if you need to log in.
+The URL to load. This should be whatever landing page you want to start at. Note that you can use [`--setup`](#setup) for a custom setup function (e.g. to log in with a username/password).
 
 ## Output
 
@@ -106,7 +106,7 @@ Your `myScenario.mjs` can export several `async function`s. Here's what they do:
 
 ### `setup` function
 
-The `setup` function takes a Puppeteer [page][] as input and returns undefined. It runs before each `iteration`, or before `createTests`. This is a good place to log in, if your webapp requires a login.
+The `setup` function takes a Puppeteer [Page][] as input and returns undefined. It runs before each `iteration`, or before `createTests`. This is a good place to log in, if your webapp requires a login.
 
 If this function is not defined, then no setup code will be run.
 
@@ -114,7 +114,7 @@ Note that there is also a [`--setup` flag](#setup) flag. If defined, it will ove
 
 ### `createTests` function
 
-The `createTests` function takes a Puppeteer [page][] as input and returns an array of _test data objects_ representing the tests to run, and the data to pass for each one. This is useful if you want to dynamically determine what tests to run against a page (for instance, which links to click).
+The `createTests` function takes a Puppeteer [Page][] as input and returns an array of _test data objects_ representing the tests to run, and the data to pass for each one. This is useful if you want to dynamically determine what tests to run against a page (for instance, which links to click).
 
 If `createTests` is not defined, then the default tests are `[{}]` (a single test with empty data).
 
@@ -146,7 +146,7 @@ For instance, your `createTests` might return:
 
 ### `iteration` function
 
-The `iteration` function takes a Puppeteer [page][] and _iteration data_ as input and returns undefined. It runs for each iteration of the memory leak test. The _iteration data_ is a plain object and comes from the `createTests` function, so by default it is just an empty object: `{}`.
+The `iteration` function takes a Puppeteer [Page][] and _iteration data_ as input and returns undefined. It runs for each iteration of the memory leak test. The _iteration data_ is a plain object and comes from the `createTests` function, so by default it is just an empty object: `{}`.
 
 Inside of an `iteration`, you want to run the core test logic that you want to test for leaks. The idea is that, at the beginning of the iteration and at the end, the memory _should_ be the same.  So an iteration might do things like:
 
@@ -161,7 +161,7 @@ The iteration assumes that whatever page it starts at, it ends up at that same p
 
     --setup <setup>
 
-The `--setup` flag can define a custom `setup` function. This is useful for overriding the `setup` function in the default scenario.
+The `--setup` option can define a custom `setup` function, which runs immediately after the page is loaded, but before any other scenario code.
 
 For instance, you can use `--setup` to log in with a username/password. To do so, first create a file called `mySetup.mjs`:
 
@@ -179,7 +179,7 @@ Then pass it in:
 npx fuite https://example.com --setup ./mySetup.mjs
 ```
 
-The [`setup` function](#setup-function) defined here is the same one that you can define in a custom scenario [`--scenario`](#scenario).
+The [`setup` function](#setup-function) defined here is the same one that you can define in a custom scenario ([`--scenario`](#scenario)).
 
 If both `--scenario` and `--setup` are defined, then `--setup` will override the `setup` function in the scenario.
 
@@ -230,7 +230,7 @@ This returns the same output you would get using `--output <filename>` in the CL
 
 ## Options
 
-The options for `findLeaks` are basically the same as for the CLI. The only differences between this API and the CLI are:
+The options for `findLeaks` are basically the same as for the CLI. The only differences between the JavaScript API and the CLI are:
 
 - `scenario` takes an object with keys `setup`, `createTests`, and `iteration` rather than a filename (see [Scenario object](#scenario-object) and [Extending the default scenario](#extending-the-default-scenario)).
 - `progress` can be set to `false` to disable the progress spinner.
@@ -368,4 +368,4 @@ Currently `fuite` requires Chromium-specific tools such as heap snapshots, `getE
 
 That said, if something is leaking in Chrome, it's likely leaking in Safari and Firefox too.
 
-[page]: https://pptr.dev/#?product=Puppeteer&version=v12.0.1&show=api-class-page
+[Page]: https://pptr.dev/#?product=Puppeteer&version=v12.0.1&show=api-class-page
