@@ -369,6 +369,8 @@ for (const prop of ['push', 'concat', 'unshift', 'splice']) {
 }
 ```
 
+For Maps you can override `set`, and for Sets you can override `add`. For plain Objects, the only solution I'm aware of is to call [`Object.freeze()`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/freeze) on the object and then set a breakpoint for when an error is thrown, using ["Pause on exceptions"](https://developers.google.com/web/updates/2015/05/automatically-pause-on-any-exception).
+
 Note that not every leaking collection is a serious memory leak: for instance, your router may keep some metadata about past routes in an ever-growing stack. Or your analytics library may store some timings in an array that continually grows. These are generally not a concern unless the objects are huge, or contain closures that reference lots of memory.
 
 **Why not support multiple browsers?**
