@@ -239,7 +239,7 @@ The options for `findLeaks` are basically the same as for the CLI. The only diff
 
 ### Cancel the test
 
-You can also pass in an [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal) as the `signal` option to cancel the test on-demand:
+You can pass in an [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal) as the `signal` option to cancel the test on-demand:
 
 ```js
 const controller = new AbortController();
