@@ -252,7 +252,7 @@ controller.abort();
 
 ## Scenario object
 
-For the JavaScript API, you can pass in your own custom scenario defined as a plain object:
+For the JavaScript API, you can pass in a custom scenario as a plain object. First, define it:
 
 ```js
 const myScenario = {
@@ -273,6 +273,8 @@ for await (const result of findLeaks('https://example.com', {
   console.log(result);
 }
 ```
+
+If `scenario` is undefined, then the default scenario will be used.
 
 ### Extending the default scenario
 
