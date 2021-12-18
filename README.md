@@ -179,7 +179,7 @@ Then pass it in:
 npx fuite https://example.com --setup ./mySetup.mjs
 ```
 
-The [`setup` function](#setup-function) defined here is the same one that you can define in a custom scenario ([`--scenario`](#scenario)).
+The [`setup` function](#setup-function) defined here is the same one that you can define in a custom scenario ([`--scenario`](#scenario)) (i.e. it takes a Puppeteer [Page][] as input).
 
 If both `--scenario` and `--setup` are defined, then `--setup` will override the `setup` function in the scenario.
 
