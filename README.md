@@ -258,7 +258,7 @@ For the JavaScript API, you can pass in a custom scenario as a plain object. Fir
 const myScenario = {
   async setup(page) { /* ... */ },
   async createTests(page) { /* ... */ },
-  async iteration(page, options) { /* ... */ }
+  async iteration(page, data) { /* ... */ }
 };
 ```
 
