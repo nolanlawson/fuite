@@ -59,7 +59,7 @@ Options:
 
     fuite <url>
 
-The URL to load. This should be whatever landing page you want to start at – you can use the `setup` option in a custom [scenario](#scenario) if you need to log in.
+The URL to load. This should be whatever landing page you want to start at. Note that you can use [`--setup`](#setup) for a custom setup function (e.g. to log in with a username/password).
 
 ## Output
 
@@ -77,18 +77,18 @@ By default, `fuite` runs 7 iterations. But you can change this number.
 
 Why 7? Well, it's a nice, small, prime number. If you repeat an action 7 times and some object is leaking exactly 7 times, it's pretty unlikely to be unrelated. That said, on a very complex page, there may be enough noise that 7 is too small to cut through the noise – so you might try 13, 17, or 19 instead. Or 1 if you like to live dangerously.
 
-## Scenarios
+## Scenario
 
     --scenario <scenario>
 
 The default scenario is to find all internal links on the page, click them, and press the back button. You can also define a scenario file that does whatever you want:
 
 ```bash
-fuite --scenario ./myScenario.js https://example.com
+fuite --scenario ./myScenario.mjs https://example.com
 ```
 
 ```js
-// myScenario.js
+// myScenario.mjs
 export async function setup(page) {
   // Setup code to run before each test
 }
@@ -102,17 +102,19 @@ export async function iteration(page, data) {
 }
 ```
 
-Your `myScenario.js` can export several `async function`s. Here's what they do:
+Your `myScenario.mjs` can export several `async function`s. Here's what they do:
 
-### setup
+### `setup` function
 
-The `setup` function takes a Puppeteer [page][] as input and returns undefined. It runs before each `iteration`, or before `createTests`. This is a good place to log in, if your webapp requires a login.
+The `setup` function takes a Puppeteer [Page][] as input and returns undefined. It runs before each `iteration`, or before `createTests`. This is a good place to log in, if your webapp requires a login.
 
 If this function is not defined, then no setup code will be run.
 
-### createTests
+Note that there is also a [`--setup` flag](#setup) flag. If defined, it will override the `setup` function defined in a scenario.
 
-The `createTests` function takes a Puppeteer [page][] as input and returns an array of _test data objects_ representing the tests to run, and the data to pass for each one. This is useful if you want to dynamically determine what tests to run against a page (for instance, which links to click).
+### `createTests` function
+
+The `createTests` function takes a Puppeteer [Page][] as input and returns an array of _test data objects_ representing the tests to run, and the data to pass for each one. This is useful if you want to dynamically determine what tests to run against a page (for instance, which links to click).
 
 If `createTests` is not defined, then the default tests are `[{}]` (a single test with empty data).
 
@@ -142,9 +144,9 @@ For instance, your `createTests` might return:
 ]
 ```
 
-### iteration
+### `iteration` function
 
-The `iteration` function takes a Puppeteer [page][] and _iteration data_ as input and returns undefined. It runs for each iteration of the memory leak test. The _iteration data_ is a plain object and comes from the `createTests` function, so by default it is just an empty object: `{}`.
+The `iteration` function takes a Puppeteer [Page][] and _iteration data_ as input and returns undefined. It runs for each iteration of the memory leak test. The _iteration data_ is a plain object and comes from the `createTests` function, so by default it is just an empty object: `{}`.
 
 Inside of an `iteration`, you want to run the core test logic that you want to test for leaks. The idea is that, at the beginning of the iteration and at the end, the memory _should_ be the same.  So an iteration might do things like:
 
@@ -155,42 +157,31 @@ Inside of an `iteration`, you want to run the core test logic that you want to t
 
 The iteration assumes that whatever page it starts at, it ends up at that same page. If you test a multi-page app in this way, then it's extremely unlikely you'll detect any leaks, since multi-page apps don't leak memory in the same way that SPAs do when navigating between routes.
 
-### Extending the default scenario in the CLI
+## Setup
 
-You can also extend the default scenario, e.g. to add a `setup` step that logs the user in. To do so, you must first install `fuite` in a local Node project. If you don't have one, run:
+    --setup <setup>
 
-```shell
-mkdir my-project
-cd my-project
-npm init --yes
-```
+The `--setup` option can define a custom `setup` function, which runs immediately after the page is loaded, but before any other scenario code.
 
-Once you have your project, run:
-
-```shell
-npm i --save-dev fuite
-```
-
-Then create a file called `customScenario.mjs`:
+For instance, you can use `--setup` to log in with a username/password. To do so, first create a file called `mySetup.mjs`:
 
 ```js
-import { defaultScenario } from 'fuite'
-const { createTests, iteration } = defaultScenario
-
-async function setup (page) {
-  await (await page.$('#username')).type('myusername')
-  await (await page.$('#password')).type('mypassword')
-  await (await page.$('#submit')).click()
+export async function setup (page) {
+  await page.type('#username', 'myusername');
+  await page.type('#password', 'mypassword');
+  await page.click('#submit');
 }
-
-export { createTests, iteration, setup }
 ```
 
-Then run:
+Then pass it in:
 
 ```shell
-npx fuite https://example.com --scenario ./customScenario.mjs
+npx fuite https://example.com --setup ./mySetup.mjs
 ```
+
+The [`setup` function](#setup-function) defined here is the same one that you can define in a custom scenario using [`--scenario`](#scenario) (i.e. it takes a Puppeteer [Page][] as input).
+
+If both `--scenario` and `--setup` are defined, then `--setup` will override the `setup` function in the scenario.
 
 ## Heap snapshot
 
@@ -219,15 +210,17 @@ This will launch Chrome in non-headless mode, and it will also automatically pau
 `fuite` can also be used via a JavaScript API, which works similarly to the CLI:
 
 ```js
-import { findLeaks } from 'fuite'
+import { findLeaks } from 'fuite';
 
 const results = findLeaks('https://example.com', {
   scenario: scenarioObject,
+  iterations: 7,
   heapsnapshot: false,
-  debug: false
-})
+  debug: false,
+  progress: true
+});
 for await (const result of results) {
-  console.log(result)
+  console.log(result);
 }
 ```
 
@@ -235,7 +228,18 @@ Note that `findLeaks` returns an [async iterable](https://developer.mozilla.org/
 
 This returns the same output you would get using `--output <filename>` in the CLI – a plain object describing the leak. The format of the object is not fully specified yet, but a basic shape can be found in [the TypeScript types](https://github.com/nolanlawson/fuite/blob/master/types/index.d.ts).
 
-You can also pass in an [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal) to cancel the test on-demand:
+## Options
+
+The options for `findLeaks` are basically the same as for the CLI. The only differences between the JavaScript API and the CLI are:
+
+- `scenario` takes an object with keys `setup`, `createTests`, and `iteration` rather than a filename (see [Scenario object](#scenario-object) and [Extending the default scenario](#extending-the-default-scenario) below).
+- `progress` can be set to `false` to disable the progress spinner.
+- `setup` is not supported – use `scenario` instead.
+- `signal` can be used to cancel the test (see [Cancel the test](#cancel-the-test) below).
+
+### Cancel the test
+
+You can pass in an [`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal) as the `signal` option to cancel the test on-demand:
 
 ```js
 const controller = new AbortController();
@@ -246,12 +250,38 @@ findLeaks('https://example.com', { signal });
 controller.abort();
 ```
 
-## Extending the default scenario
+## Scenario object
 
-If you're writing your own custom scenario, you can also extend the default scenario. For instance, if you want the default scenario, but to be able to log in with a username and password:
+For the JavaScript API, you can pass in a custom scenario as a plain object. First, define it:
 
 ```js
-import { defaultScenario, findLeaks } from 'fuite'
+const myScenario = {
+  async setup(page) { /* ... */ },
+  async createTests(page) { /* ... */ },
+  async iteration(page, data) { /* ... */ }
+};
+```
+
+Then pass it in:
+
+```js
+import { findLeaks } from 'fuite';
+
+for await (const result of findLeaks('https://example.com', {
+  scenario: myScenario
+})) {
+  console.log(result);
+}
+```
+
+If `scenario` is undefined, then the default scenario will be used.
+
+### Extending the default scenario
+
+If you're writing your own custom scenario, you can also extend the default scenario. For instance, if you want the default scenario, but to be able to log in with a username and password first:
+
+```js
+import { defaultScenario, findLeaks } from 'fuite';
 
 const myScenario = {
   ...defaultScenario,
@@ -260,14 +290,16 @@ const myScenario = {
     await page.type('#password', 'mypassword')
     await page.click('#submit')
   }
-}
+};
 
-await findLeaks('https://example.com', {
+for await (const result of findLeaks('https://example.com', {
   scenario: myScenario
-})
+})) {
+  console.log(result);
+}
 ```
 
-Note that the above works if you're using the JavaScript API. For the CLI, see [extending the default scenario in the CLI](#extending-the-default-scenario-in-the-cli).
+Note that the above works if you're using the JavaScript API. For the CLI, you probably want to use [the `--setup` flag](#setup).
 
 # Limitations
 
@@ -322,11 +354,11 @@ One technique is to override the object's methods to check whenever it's called:
 
 ```js
 for (const prop of ['push', 'concat', 'unshift', 'splice']) {
-  const original = array[prop]
+  const original = array[prop];
   array[prop] = function () {
-    debugger
-    return array[prop].apply(this, arguments)
-  }
+    debugger;
+    return original.apply(this, arguments);
+  };
 }
 ```
 
@@ -338,4 +370,4 @@ Currently `fuite` requires Chromium-specific tools such as heap snapshots, `getE
 
 That said, if something is leaking in Chrome, it's likely leaking in Safari and Firefox too.
 
-[page]: https://pptr.dev/#?product=Puppeteer&version=v12.0.1&show=api-class-page
+[Page]: https://pptr.dev/#?product=Puppeteer&version=v12.0.1&show=api-class-page
