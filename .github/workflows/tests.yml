@@ -1,4 +1,4 @@
-name: pull-request
+name: Tests
 on:
   pull_request:
     branches: [ master ]
@@ -10,7 +10,7 @@ jobs:
       - uses: actions/setup-node@v2
         with:
           node-version: '16'
-#        run: sudo apt-get install xvfb
-      - run: yarn
+          cache: 'yarn'
+      - run: yarn --immutable
       - run: yarn lint
       - run: yarn test
