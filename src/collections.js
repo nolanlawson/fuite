@@ -46,13 +46,19 @@ export async function startTrackingCollections (page) {
       }
 
       function getSize (obj) {
-        if (obj instanceof Map || obj instanceof Set) {
-          return obj.size
+        try {
+          if (obj instanceof Map || obj instanceof Set) {
+            return obj.size
+          }
+          if (isArray(obj)) {
+            return obj.length
+          } // else plain object
+          return Object.keys(obj).length
+        } catch (err) {
+          // If for whatever reason the collection errors (e.g. somebody extended Map), return 0.
+          // There is not much we can do in these cases
+          return 0
         }
-        if (isArray(obj)) {
-          return obj.length
-        } // else plain object
-        return Object.keys(obj).length
       }
 
       for (const obj of objects) {
@@ -91,14 +97,21 @@ export async function findLeakingCollections (page, weakMap, numIterations, debu
   }
 
   const leakingCollections = await page.evaluate((objects, weakMap, numIterations, debug) => {
+    const { isArray } = Array
     function getSize (obj) {
-      if (obj instanceof Map || obj instanceof Set) {
-        return obj.size
+      try {
+        if (obj instanceof Map || obj instanceof Set) {
+          return obj.size
+        }
+        if (isArray(obj)) {
+          return obj.length
+        } // else plain object
+        return Object.keys(obj).length
+      } catch (err) {
+        // If for whatever reason the collection errors (e.g. somebody extended Map), return 0.
+        // There is not much we can do in these cases
+        return 0
       }
-      if (Array.isArray(obj)) {
-        return obj.length
-      } // else plain object
-      return Object.keys(obj).length
     }
     function getType (obj) {
       if (obj instanceof Map) {
@@ -107,13 +120,13 @@ export async function findLeakingCollections (page, weakMap, numIterations, debu
       if (obj instanceof Set) {
         return 'Set'
       }
-      if (Array.isArray(obj)) {
+      if (isArray(obj)) {
         return 'Array'
       }
       return 'Object'
     }
     function createPreviewOfValue (val) {
-      if (Array.isArray(val)) {
+      if (isArray(val)) {
         return 'Array'
       }
       if (typeof val === 'object' && val) {
@@ -138,7 +151,7 @@ export async function findLeakingCollections (page, weakMap, numIterations, debu
           firstItem = [...obj.entries()][0]
         } else if (obj instanceof Set) {
           firstItem = [...obj][0]
-        } else if (Array.isArray(obj)) {
+        } else if (isArray(obj)) {
           firstItem = obj[0]
         } else {
           keyValue = true
@@ -159,7 +172,7 @@ export async function findLeakingCollections (page, weakMap, numIterations, debu
       if (obj instanceof Set) {
         return `Set(${createPreviewOfFirstItem(obj)}, ...)`
       }
-      if (Array.isArray(obj)) {
+      if (isArray(obj)) {
         return `[${createPreviewOfFirstItem(obj)}, ...]`
       }
       return `{${createPreviewOfFirstItem(obj)}, ...}`
