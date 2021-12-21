@@ -15,6 +15,13 @@ describe('event listeners', () => {
     const result = results[0].result
     expect(result.leaks.detected).to.equal(true)
 
+    expect(result.leaks.eventListenersSummary).to.deep.equal({
+      before: 9,
+      after: 21,
+      delta: 12,
+      deltaPerIteration: 4
+    })
+
     expect(result.leaks.eventListeners).to.deep.equal([
       {
         type: 'click',
@@ -150,6 +157,14 @@ describe('event listeners', () => {
     ])
     const result = results[0].result
     expect(result.leaks.detected).to.equal(true)
+
+    expect(result.leaks.eventListenersSummary).to.deep.equal({
+      before: 7,
+      after: 10,
+      delta: 3,
+      deltaPerIteration: 1
+    }
+    )
 
     expect(result.leaks.eventListeners).to.deep.equal([
       {

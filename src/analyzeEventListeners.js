@@ -85,3 +85,17 @@ export function analyzeEventListeners (startListenersSummary, endListenersSummar
 
   return sortBy(result, ['type'])
 }
+
+export function calculateEventListenersSummary (eventListenersStart, eventListenersEnd, numIterations) {
+  const before = sum(eventListenersStart.map(({ listeners }) => listeners.length))
+  const after = sum(eventListenersEnd.map(({ listeners }) => listeners.length))
+  const delta = after - before
+  const deltaPerIteration = delta / numIterations
+
+  return {
+    before,
+    after,
+    delta,
+    deltaPerIteration
+  }
+}

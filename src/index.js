@@ -2,13 +2,13 @@ import puppeteer from 'puppeteer'
 import * as defaultScenario from './defaultScenario.js'
 import { takeHeapSnapshot } from './heapsnapshots.js'
 import { waitForPageIdle } from './puppeteerUtil.js'
-import { getEventListeners } from './eventListeners.js'
+import { getDomNodesAndListeners } from './eventListeners.js'
 import fs from 'fs/promises'
 import { analyzeHeapSnapshots } from './analyzeHeapsnapshots.js'
-import { analyzeEventListeners } from './analyzeEventListeners.js'
-import { countDomNodes } from './domNodes.js'
+import { analyzeEventListeners, calculateEventListenersSummary } from './analyzeEventListeners.js'
 import { findLeakingCollections, startTrackingCollections } from './collections.js'
 import ora from 'ora'
+import { analyzeDomNodes } from './analyzeDomNodes.js'
 
 export const DEFAULT_ITERATIONS = 7
 
@@ -81,6 +81,15 @@ function massagePageUrl (pageUrl) {
   return pageUrl
 }
 
+async function runWithCdpSession (page, runnable) {
+  const cdpSession = await page.target().createCDPSession()
+  try {
+    return (await runnable(cdpSession))
+  } finally {
+    await cdpSession.detach()
+  }
+}
+
 export async function * findLeaks (pageUrl, options = {}) {
   const {
     scenario, numIterations, progress, debug, heapsnapshot, browser
@@ -93,83 +102,88 @@ export async function * findLeaks (pageUrl, options = {}) {
     return (await runOnFreshPage(browser, pageUrl, setup, async page => {
       await iteration(page, test.data) // one throwaway iteration to avoid measuring one-time setup costs
       onProgress('Taking start snapshot...')
-      const weakMap = await startTrackingCollections(page)
-      const eventListenersStart = await getEventListeners(page)
-      const domNodesCountStart = await countDomNodes(page)
-      const startSnapshotFilename = await takeHeapSnapshot(page)
-      if (debug) {
-        // Point in time before running any iterations
-        debugger // eslint-disable-line no-debugger
-      }
-      for (let i = 0; i < numIterations; i++) {
-        onProgress(`Iteration ${i + 1}/${numIterations}...`)
-        await iteration(page, test.data)
-      }
-      onProgress('Taking end snapshot...')
-      const endSnapshotFilename = await takeHeapSnapshot(page)
-      const domNodesCountEnd = await countDomNodes(page)
-      const eventListenersEnd = await getEventListeners(page)
-      const leakingCollections = await findLeakingCollections(page, weakMap, numIterations, debug)
-      if (debug) {
-        // Point in time after running iterations
-        debugger // eslint-disable-line no-debugger
-      }
+      return (await runWithCdpSession(page, async cdpSession => {
+        const weakMap = await startTrackingCollections(page)
+        const { nodes: domNodesStart, listeners: eventListenersStart } = await getDomNodesAndListeners(page, cdpSession)
+        const startSnapshotFilename = await takeHeapSnapshot(page, cdpSession)
+        if (debug) {
+          // Point in time before running any iterations
+          debugger // eslint-disable-line no-debugger
+        }
+        for (let i = 0; i < numIterations; i++) {
+          onProgress(`Iteration ${i + 1}/${numIterations}...`)
+          await iteration(page, test.data)
+        }
+        onProgress('Taking end snapshot...')
+        const endSnapshotFilename = await takeHeapSnapshot(page, cdpSession)
+        const { nodes: domNodesEnd, listeners: eventListenersEnd } = await getDomNodesAndListeners(page, cdpSession)
+        const leakingCollections = await findLeakingCollections(page, weakMap, numIterations, debug)
+        if (debug) {
+          // Point in time after running iterations
+          debugger // eslint-disable-line no-debugger
+        }
 
-      onProgress('Analyzing snapshots...')
-      const { leakingObjects, startStatistics, endStatistics } = await analyzeHeapSnapshots(
-        startSnapshotFilename, endSnapshotFilename, numIterations
-      )
-      const leakingListeners = analyzeEventListeners(eventListenersStart, eventListenersEnd, numIterations)
-      const domNodesCountDelta = domNodesCountEnd - domNodesCountStart
-      const delta = endStatistics.total - startStatistics.total
-      const deltaPerIteration = Math.round(delta / numIterations)
-      const leaksDetected = Boolean(
-        deltaPerIteration > 0 && (
-          leakingObjects.length ||
-          leakingListeners.length ||
-          domNodesCountDelta > 0 ||
-          leakingCollections.length
+        onProgress('Analyzing snapshots...')
+        const { leakingObjects, startStatistics, endStatistics } = await analyzeHeapSnapshots(
+          startSnapshotFilename, endSnapshotFilename, numIterations
         )
-      )
+        const leakingListeners = analyzeEventListeners(eventListenersStart, eventListenersEnd, numIterations)
+        const eventListenersSummary = calculateEventListenersSummary(eventListenersStart, eventListenersEnd, numIterations)
+        const leakingDomNodes = analyzeDomNodes(domNodesStart, domNodesEnd, numIterations)
+        const delta = endStatistics.total - startStatistics.total
+        const deltaPerIteration = Math.round(delta / numIterations)
+        const leaksDetected = Boolean(
+          deltaPerIteration > 0 && (
+            leakingObjects.length ||
+            leakingListeners.length ||
+            leakingDomNodes.length ||
+            leakingCollections.length
+          )
+        )
 
-      const result = {
-        delta,
-        deltaPerIteration,
-        numIterations,
-        leaks: {
-          detected: leaksDetected,
-          objects: leakingObjects,
-          eventListeners: leakingListeners,
-          domNodes: {
-            delta: domNodesCountDelta,
-            deltaPerIteration: domNodesCountDelta / numIterations
+        const result = {
+          delta,
+          deltaPerIteration,
+          numIterations,
+          leaks: {
+            detected: leaksDetected,
+            objects: leakingObjects,
+            eventListeners: leakingListeners,
+            eventListenersSummary, // eventListenersSummary is a separate object for backwards compat
+            domNodes: {
+              delta: domNodesEnd.length - domNodesStart.length,
+              deltaPerIteration: (domNodesEnd.length - domNodesStart.length) / numIterations,
+              nodes: leakingDomNodes
+            },
+            collections: leakingCollections
           },
-          collections: leakingCollections
-        },
-        before: {
-          statistics: startStatistics,
-          eventListeners: eventListenersStart,
-          domNodes: {
-            count: domNodesCountStart
-          }
-        },
-        after: {
-          statistics: endStatistics,
-          eventListeners: eventListenersEnd,
-          domNodes: {
-            count: domNodesCountEnd
+          before: {
+            statistics: startStatistics,
+            eventListeners: eventListenersStart,
+            domNodes: {
+              count: domNodesStart.length, // domNodes.count is redundant, but for backwards compat
+              nodes: domNodesStart
+            }
+          },
+          after: {
+            statistics: endStatistics,
+            eventListeners: eventListenersEnd,
+            domNodes: {
+              count: domNodesEnd.length, // domNodes.count is redundant, but for backwards compat
+              nodes: domNodesEnd
+            }
           }
         }
-      }
 
-      if (heapsnapshot) {
-        result.before.heapsnapshot = startSnapshotFilename
-        result.after.heapsnapshot = endSnapshotFilename
-      } else {
-        await Promise.all([fs.rm(startSnapshotFilename), fs.rm(endSnapshotFilename)])
-      }
+        if (heapsnapshot) {
+          result.before.heapsnapshot = startSnapshotFilename
+          result.after.heapsnapshot = endSnapshotFilename
+        } else {
+          await Promise.all([fs.rm(startSnapshotFilename), fs.rm(endSnapshotFilename)])
+        }
 
-      return { test, result }
+        return { test, result }
+      }))
     }))
   }
 

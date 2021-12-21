@@ -1,59 +1,52 @@
 import { v4 as uuidV4 } from 'uuid'
 import { omit, pick } from './util.js'
+import { getDescriptors } from './getDescriptors.js'
 import { getAllDomNodes } from './browser/getAllDomNodes.js'
 
 // via https://stackoverflow.com/a/67030384
-export async function getEventListeners (page) {
+export async function getDomNodesAndListeners (page, cdpSession) {
   const objectGroup = uuidV4()
-  const cdpSession = await page.target().createCDPSession()
-  try {
-    const { result: { objectId } } = await cdpSession.send('Runtime.evaluate', {
-      expression: `
+  const { result: { objectId } } = await cdpSession.send('Runtime.evaluate', {
+    expression: `
         (function () {
           ${getAllDomNodes}
           return [...getAllDomNodes(), window, document]
         })()
       `,
-      objectGroup
-    })
-    // Using the returned remote object ID, actually get the list of descriptors
-    const { result } = await cdpSession.send('Runtime.getProperties', { objectId })
+    objectGroup
+  })
+  const nodeDescriptors = await getDescriptors(cdpSession, objectId)
 
-    const arrayProps = Object.fromEntries(result.map(_ => ([_.name, _.value])))
+  const listenersWithNodes = []
 
-    const length = arrayProps.length.value
+  // scrub the objects for external consumption, remove unnecessary stuff like objectId
+  const cleanNode = node => pick(node, ['className', 'description'])
+  const cleanListener = listener => ({
+    // originalHandler seems to contain the same information as handler
+    ...omit(listener, ['backendNodeId', 'originalHandler']),
+    handler: omit(listener.handler, ['objectId'])
+  })
 
-    const nodes = []
+  for (const node of nodeDescriptors) {
+    const { objectId } = node
 
-    for (let i = 0; i < length; i++) {
-      nodes.push(arrayProps[i])
+    const { listeners } = await cdpSession.send('DOMDebugger.getEventListeners', { objectId })
+
+    if (listeners.length) {
+      listenersWithNodes.push({
+        node: cleanNode(node),
+        listeners: listeners.map(cleanListener)
+      })
     }
+  }
 
-    const nodesWithListeners = []
+  await cdpSession.send('Runtime.releaseObjectGroup', { objectGroup })
 
-    for (const node of nodes) {
-      const { objectId } = node
+  // don't include the window/document objects in the list of dom nodes
+  const returnNodes = nodeDescriptors.slice(0, nodeDescriptors.length - 2).map(cleanNode)
 
-      const { listeners } = await cdpSession.send('DOMDebugger.getEventListeners', { objectId })
-
-      if (listeners.length) {
-        nodesWithListeners.push({
-          node: pick(node, ['className', 'description']),
-          listeners: listeners.map(listener => {
-            return {
-              // originalHandler seems to contain the same information as handler
-              // as for objectId, these are useless since we will just release the object group anyway
-              ...omit(listener, ['backendNodeId', 'originalHandler']),
-              handler: omit(listener.handler, ['objectId'])
-            }
-          })
-        })
-      }
-    }
-
-    await cdpSession.send('Runtime.releaseObjectGroup', { objectGroup })
-    return nodesWithListeners
-  } finally {
-    await cdpSession.detach()
+  return {
+    nodes: returnNodes,
+    listeners: listenersWithNodes
   }
 }

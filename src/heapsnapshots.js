@@ -4,9 +4,8 @@ import cryptoRandomString from 'crypto-random-string'
 import { createReadStream, createWriteStream } from 'fs'
 import * as HeapSnapshotWorker from './thirdparty/devtools/heap_snapshot_worker/heap_snapshot_worker.js'
 
-export async function takeHeapSnapshot (page) {
+export async function takeHeapSnapshot (page, cdpSession) {
   const filename = path.join(tempDir, `fuite-${cryptoRandomString({ length: 8, type: 'alphanumeric' })}.heapsnapshot`)
-  const cdpSession = await page.target().createCDPSession()
   let writeStream
   const writeStreamPromise = new Promise((resolve, reject) => {
     writeStream = createWriteStream(filename, { encoding: 'utf8' })
@@ -30,7 +29,6 @@ export async function takeHeapSnapshot (page) {
   })
 
   await heapProfilerPromise
-  await cdpSession.detach()
   writeStream.close()
   await writeStreamPromise
   return filename
@@ -63,23 +61,4 @@ export async function createHeapSnapshotModel (filename) {
   await loaderPromise
 
   return (await loader.buildSnapshot())
-}
-
-export async function takeThrowawayHeapSnapshot (page) {
-  const cdpSession = await page.target().createCDPSession()
-  const heapProfilerPromise = new Promise(resolve => {
-    cdpSession.on('HeapProfiler.reportHeapSnapshotProgress', ({ finished }) => {
-      if (finished) {
-        resolve()
-      }
-    })
-  })
-  await cdpSession.send('HeapProfiler.enable')
-  await cdpSession.send('HeapProfiler.collectGarbage')
-  await cdpSession.send('HeapProfiler.takeHeapSnapshot', {
-    reportProgress: true
-  })
-
-  await heapProfilerPromise
-  await cdpSession.detach()
 }
