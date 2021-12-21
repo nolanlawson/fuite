@@ -80,14 +80,14 @@ describe('dom nodes', () => {
     expect(result.after.domNodes.count).to.equal(18)
 
     expect(result.leaks.domNodes.nodes).to.deep.equal([
-        {
-          description: 'div.actually-leaking',
-          before: 1,
-          after: 4,
-          delta: 3,
-          deltaPerIteration: 1
-        }
-      ]
+      {
+        description: 'div.actually-leaking',
+        before: 1,
+        after: 4,
+        delta: 3,
+        deltaPerIteration: 1
+      }
+    ]
     )
   })
 })
