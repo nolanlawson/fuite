@@ -1,5 +1,5 @@
-// Given an array of dom nodes, get their descriptors
-export async function getNodeDescriptors (cdpSession, objectId) {
+// Given an array of objects, get their descriptors
+export async function getDescriptors (cdpSession, objectId) {
   // via https://stackoverflow.com/a/67030384
   const { result } = await cdpSession.send('Runtime.getProperties', { objectId })
 

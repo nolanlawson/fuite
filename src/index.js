@@ -151,7 +151,6 @@ export async function * findLeaks (pageUrl, options = {}) {
             eventListeners: leakingListeners,
             eventListenersSummary, // eventListenersSummary is a separate object for backwards compat
             domNodes: {
-              // delta and deltaPerIteration are redundant, but for backwards compat
               delta: domNodesEnd.length - domNodesStart.length,
               deltaPerIteration: (domNodesEnd.length - domNodesStart.length) / numIterations,
               nodes: leakingDomNodes
