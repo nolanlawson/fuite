@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+</head>
+<body>
+<script src="../../../node_modules/navigo/lib/navigo.js"></script>
+<script type="module">
+  import { makeRouter } from '../basicRouter.js'
+
+  const router = makeRouter(['', 'about'])
+
+  router.addAfterHook('/about', () => {
+    const name = `fake-${btoa(Math.round(Math.random() * 1000000).toString())}`
+
+    const listener = () => {}
+    document.addEventListener(name, listener)
+  })
+</script>
+</body>
+</html>

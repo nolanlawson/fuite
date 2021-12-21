@@ -87,7 +87,28 @@ describe('dom nodes', () => {
         delta: 3,
         deltaPerIteration: 1
       }
-    ]
-    )
+    ])
+  })
+
+  it('can handle dom nodes leaking with different tag names every time', async () => {
+    const results = await asyncIterableToArray(findLeaks('http://localhost:3000/test/www/domNodesLeakWithNewNames/', {
+      iterations: 3
+    }))
+
+    expect(results.length).to.equal(1)
+    expect(results.map(_ => ({ href: _.test.data.href }))).to.deep.equal([
+      { href: 'about' }
+    ])
+    const result = results[0].result
+    expect(result.leaks.detected).to.equal(true)
+    expect(result.leaks.domNodes.delta).to.equal(3)
+    expect(result.leaks.domNodes.deltaPerIteration).to.equal(1)
+
+    expect(result.before.domNodes.count).to.equal(12)
+    expect(result.after.domNodes.count).to.equal(15)
+
+    expect(result.leaks.domNodes.nodes).to.deep.equal([
+      // TODO: it'd be great to have something here, but it's hard to summarize this situation
+    ])
   })
 })

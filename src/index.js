@@ -130,13 +130,18 @@ export async function * findLeaks (pageUrl, options = {}) {
         const leakingListeners = analyzeEventListeners(eventListenersStart, eventListenersEnd, numIterations)
         const eventListenersSummary = calculateEventListenersSummary(eventListenersStart, eventListenersEnd, numIterations)
         const leakingDomNodes = analyzeDomNodes(domNodesStart, domNodesEnd, numIterations)
+        const domNodesSummary = {
+          delta: domNodesEnd.length - domNodesStart.length,
+          deltaPerIteration: (domNodesEnd.length - domNodesStart.length) / numIterations,
+          nodes: leakingDomNodes
+        }
         const delta = endStatistics.total - startStatistics.total
         const deltaPerIteration = Math.round(delta / numIterations)
         const leaksDetected = Boolean(
           deltaPerIteration > 0 && (
             leakingObjects.length ||
-            leakingListeners.length ||
-            leakingDomNodes.length ||
+            (eventListenersSummary.delta > 0) ||
+            (domNodesSummary.delta > 0) ||
             leakingCollections.length
           )
         )
@@ -150,11 +155,7 @@ export async function * findLeaks (pageUrl, options = {}) {
             objects: leakingObjects,
             eventListeners: leakingListeners,
             eventListenersSummary, // eventListenersSummary is a separate object for backwards compat
-            domNodes: {
-              delta: domNodesEnd.length - domNodesStart.length,
-              deltaPerIteration: (domNodesEnd.length - domNodesStart.length) / numIterations,
-              nodes: leakingDomNodes
-            },
+            domNodes: domNodesSummary,
             collections: leakingCollections
           },
           before: {
