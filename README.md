@@ -361,15 +361,25 @@ One technique is to override the object's methods to check whenever it's called:
 
 ```js
 for (const prop of ['push', 'concat', 'unshift', 'splice']) {
-  const original = array[prop];
-  array[prop] = function () {
+  const original = obj[prop]; // `obj` is the array
+  obj[prop] = function () {
     debugger;
     return original.apply(this, arguments);
   };
 }
 ```
 
-For Maps you can override `set`, and for Sets you can override `add`. For plain Objects, the only solution I'm aware of is to call [`Object.freeze()`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/freeze) on the object and then set a breakpoint for when an error is thrown, using ["Pause on exceptions"](https://developers.google.com/web/updates/2015/05/automatically-pause-on-any-exception).
+For Maps you can override `set`, and for Sets you can override `add`. For plain Objects, you'll need a slightly more elaborate solution:
+
+```js
+// `obj` is the plain object
+Object.setPrototypeOf(obj, new Proxy(Object.create(null), {
+  set (obj, prop, val) {
+    debugger;
+    return (obj[prop] = val);
+  }
+}))
+```
 
 Note that not every leaking collection is a serious memory leak: for instance, your router may keep some metadata about past routes in an ever-growing stack. Or your analytics library may store some timings in an array that continually grows. These are generally not a concern unless the objects are huge, or contain closures that reference lots of memory.
 
