@@ -146,8 +146,6 @@ export async function * findLeaks (pageUrl, options = {}) {
           )
         )
 
-
-
         const result = {
           delta,
           deltaPerIteration,
