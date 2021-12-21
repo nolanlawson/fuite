@@ -1,5 +1,6 @@
 import { v4 as uuidV4 } from 'uuid'
 import { omit, pick } from './util.js'
+import { getAllDomNodes } from './browser/getAllDomNodes.js'
 
 // via https://stackoverflow.com/a/67030384
 export async function getEventListeners (page) {
@@ -7,7 +8,12 @@ export async function getEventListeners (page) {
   const cdpSession = await page.target().createCDPSession()
   try {
     const { result: { objectId } } = await cdpSession.send('Runtime.evaluate', {
-      expression: '[...document.querySelectorAll("*"), window, document]',
+      expression: `
+        (function () {
+          ${getAllDomNodes}
+          return [...getAllDomNodes(), window, document]
+        })()
+      `,
       objectGroup
     })
     // Using the returned remote object ID, actually get the list of descriptors
