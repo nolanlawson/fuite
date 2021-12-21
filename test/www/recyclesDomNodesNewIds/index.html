@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+</head>
+<body>
+<script src="../../../node_modules/navigo/lib/navigo.js"></script>
+<script type="module">
+  import { makeRouter } from '../basicRouter.js'
+
+  const router = makeRouter(['', 'about'])
+
+  const createRecycledElement = () => {
+    const el = document.createElement('span')
+    el.id = `rando-${btoa(Math.round(Math.random() * 1000000).toString())}`
+    el.addEventListener('mouseleave', function onMouseLeave () {})
+    return el
+  }
+
+  // do 3 iterations because our test will also do 3 iterations
+  const ITERATIONS = 3
+  for (let i = 0; i < ITERATIONS; i++) {
+    document.body.appendChild(createRecycledElement())
+  }
+
+  router.addAfterHook('/about', () => {
+    for (let i = 0; i < ITERATIONS; i++) {
+      document.body.removeChild(document.querySelector('span'))
+    }
+    for (let i = 0; i < ITERATIONS; i++) {
+      document.body.appendChild(createRecycledElement())
+    }
+  })
+</script>
+</body>
+</html>
