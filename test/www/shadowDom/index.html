@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+</head>
+<body>
+<div id="container"></div>
+<script src="../../../node_modules/navigo/lib/navigo.js"></script>
+<script type="module">
+  import { makeRouter } from '../basicRouter.js'
+
+  const router = makeRouter(['', 'info'])
+
+  const container = document.getElementById('container')
+  container.attachShadow({ mode: 'open' })
+  container.shadowRoot.innerHTML = `
+    <div class="inside-shadow"></div>
+    <div class="inside-shadow-leaks-listener"></div>
+  `
+
+  const leaksListener = container.shadowRoot.querySelector('.inside-shadow-leaks-listener')
+
+  router.addAfterHook('/info', () => {
+    leaksListener.addEventListener('mouseenter', function onMouseEnter() {})
+    const div = document.createElement('div')
+    div.className = 'inside-shadow'
+    container.shadowRoot.appendChild(div)
+  })
+</script>
+</body>
+</html>
