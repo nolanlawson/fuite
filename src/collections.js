@@ -97,6 +97,7 @@ export async function findLeakingCollections (page, weakMap, numIterations, debu
   }
 
   const leakingCollections = await page.evaluate((objects, weakMap, numIterations, debug) => {
+    const { isArray } = Array
     function getSize (obj) {
       try {
         if (obj instanceof Map || obj instanceof Set) {
@@ -119,13 +120,13 @@ export async function findLeakingCollections (page, weakMap, numIterations, debu
       if (obj instanceof Set) {
         return 'Set'
       }
-      if (Array.isArray(obj)) {
+      if (isArray(obj)) {
         return 'Array'
       }
       return 'Object'
     }
     function createPreviewOfValue (val) {
-      if (Array.isArray(val)) {
+      if (isArray(val)) {
         return 'Array'
       }
       if (typeof val === 'object' && val) {
@@ -150,7 +151,7 @@ export async function findLeakingCollections (page, weakMap, numIterations, debu
           firstItem = [...obj.entries()][0]
         } else if (obj instanceof Set) {
           firstItem = [...obj][0]
-        } else if (Array.isArray(obj)) {
+        } else if (isArray(obj)) {
           firstItem = obj[0]
         } else {
           keyValue = true
@@ -171,7 +172,7 @@ export async function findLeakingCollections (page, weakMap, numIterations, debu
       if (obj instanceof Set) {
         return `Set(${createPreviewOfFirstItem(obj)}, ...)`
       }
-      if (Array.isArray(obj)) {
+      if (isArray(obj)) {
         return `[${createPreviewOfFirstItem(obj)}, ...]`
       }
       return `{${createPreviewOfFirstItem(obj)}, ...}`
