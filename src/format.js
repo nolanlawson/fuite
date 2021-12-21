@@ -23,7 +23,7 @@ ${markdownTable(tableData)}
       `.trim() + '\n\n'
 }
 
-function formatLeakingEventListeners (listenerSummaries) {
+function formatLeakingEventListeners (listenerSummaries, eventListenersSummary) {
   const tableData = [[
     'Event',
     '# added',
@@ -41,18 +41,29 @@ function formatLeakingEventListeners (listenerSummaries) {
     ])
   }
   return `
-Leaking event listeners:
+Leaking event listeners (+${eventListenersSummary.deltaPerIteration} total):
 
 ${markdownTable(tableData)}
       `.trim() + '\n\n'
 }
 
 function formatLeakingDomNodes (domNodes) {
-  return `
-Leaking DOM nodes:
+  const tableData = [[
+    'Description',
+    '# added'
+  ]]
 
-DOM size grew by ${domNodes.deltaPerIteration} node(s)
-  `.trim() + '\n\n'
+  for (const { description, deltaPerIteration } of domNodes.nodes) {
+    tableData.push([
+      description,
+      deltaPerIteration
+    ])
+  }
+  return `
+Leaking DOM nodes (+${domNodes.deltaPerIteration} total):
+
+${markdownTable(tableData)}
+      `.trim() + '\n\n'
 }
 
 function formatLeakingCollections (leakingCollections) {
@@ -91,7 +102,7 @@ export function formatResult ({ test, result }) {
     leakTables += formatLeakingObjects(result.leaks.objects)
   }
   if (result.leaks.eventListeners.length) {
-    leakTables += formatLeakingEventListeners(result.leaks.eventListeners)
+    leakTables += formatLeakingEventListeners(result.leaks.eventListeners, result.leaks.eventListenersSummary)
   }
   if (result.leaks.domNodes.delta > 0) {
     leakTables += formatLeakingDomNodes(result.leaks.domNodes)
