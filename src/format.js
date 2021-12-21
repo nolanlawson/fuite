@@ -40,6 +40,11 @@ function formatLeakingEventListeners (listenerSummaries, eventListenersSummary) 
       nodesFormatted
     ])
   }
+
+  if (tableData.length === 1) { // no individual breakdowns, so just put the total
+    tableData.push(['Total', eventListenersSummary.deltaPerIteration, '(Unknown)'])
+  }
+
   return `
 Leaking event listeners (+${eventListenersSummary.deltaPerIteration} total):
 
@@ -59,6 +64,11 @@ function formatLeakingDomNodes (domNodes) {
       deltaPerIteration
     ])
   }
+
+  if (tableData.length === 1) { // no individual breakdowns, so just put the total
+    tableData.push(['Total', domNodes.deltaPerIteration])
+  }
+
   return `
 Leaking DOM nodes (+${domNodes.deltaPerIteration} total):
 
@@ -101,7 +111,7 @@ export function formatResult ({ test, result }) {
   if (result.leaks.objects.length) {
     leakTables += formatLeakingObjects(result.leaks.objects)
   }
-  if (result.leaks.eventListeners.length) {
+  if (result.leaks.eventListenersSummary.delta > 0) {
     leakTables += formatLeakingEventListeners(result.leaks.eventListeners, result.leaks.eventListenersSummary)
   }
   if (result.leaks.domNodes.delta > 0) {

@@ -135,8 +135,8 @@ export async function * findLeaks (pageUrl, options = {}) {
         const leaksDetected = Boolean(
           deltaPerIteration > 0 && (
             leakingObjects.length ||
-            leakingListeners.length ||
-            leakingDomNodes.length ||
+            (eventListenersSummary.delta > 0) ||
+            ((domNodesEnd.length - domNodesStart.length) > 0) ||
             leakingCollections.length
           )
         )

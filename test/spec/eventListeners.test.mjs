@@ -251,4 +251,26 @@ describe('event listeners', () => {
       deltaPerIteration: 0
     })
   })
+
+  it('can handle event listeners leaking where the name changes every time', async () => {
+    const results = await asyncIterableToArray(findLeaks('http://localhost:3000/test/www/listenersLeakWithNewNames/', {
+      iterations: 3
+    }))
+
+    expect(results.length).to.equal(1)
+    expect(results.map(_ => ({ href: _.test.data.href }))).to.deep.equal([
+      { href: 'about' }
+    ])
+    const result = results[0].result
+    expect(result.leaks.detected).to.equal(true)
+    expect(result.leaks.eventListeners).to.deep.equal([
+      // TODO: it would be great to have something here, but it's hard to summarize this situation
+    ])
+    expect(result.leaks.eventListenersSummary).to.deep.equal({
+      before: 4,
+      after: 7,
+      delta: 3,
+      deltaPerIteration: 1
+    })
+  })
 })

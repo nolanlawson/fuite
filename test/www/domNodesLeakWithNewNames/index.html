@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+</head>
+<body>
+<script src="../../../node_modules/navigo/lib/navigo.js"></script>
+<script type="module">
+  import { makeRouter } from '../basicRouter.js'
+
+  const router = makeRouter(['', 'about'])
+
+  router.addAfterHook('/about', () => {
+    const name = `fake-el${Math.round(Math.random() * 1000000).toString(16)}`
+    document.body.appendChild(document.createElement(name))
+  })
+</script>
+</body>
+</html>
