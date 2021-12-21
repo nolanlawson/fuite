@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+</head>
+<body>
+<script src="../../../node_modules/navigo/lib/navigo.js"></script>
+<script type="module">
+  import { makeRouter } from '../basicRouter.js'
+
+  const router = makeRouter(['', 'about'])
+
+  const cleanups = []
+
+  const createRecycledListener = () => {
+    const name = `fake-${btoa(Math.round(Math.random() * 1000000).toString())}`
+
+    const listener = () => {}
+    document.addEventListener(name, listener)
+    cleanups.push(() => document.removeEventListener(name, listener))
+  }
+
+  router.addAfterHook('/about', () => {
+    while (cleanups.length) {
+      cleanups.shift()()
+    }
+    for (let i = 0; i < 3; i++) { // do 3 iterations because that's how many the test does
+      createRecycledListener()
+    }
+  })
+</script>
+</body>
+</html>

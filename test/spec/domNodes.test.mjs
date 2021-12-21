@@ -46,4 +46,48 @@ describe('dom nodes', () => {
     expect(result.leaks.domNodes.deltaPerIteration).to.equal(0)
     expect(result.leaks.eventListeners).to.deep.equal([])
   })
+
+  it('can handle dom nodes with changing descriptions', async () => {
+    const results = await asyncIterableToArray(findLeaks('http://localhost:3000/test/www/recyclesDomNodesNewIds/', {
+      iterations: 3
+    }))
+
+    expect(results.length).to.equal(1)
+    expect(results.map(_ => ({ href: _.test.data.href }))).to.deep.equal([
+      { href: 'about' }
+    ])
+    const result = results[0].result
+    expect(result.leaks.detected).to.equal(false)
+    expect(result.leaks.domNodes.deltaPerIteration).to.equal(0)
+    expect(result.leaks.eventListeners).to.deep.equal([])
+  })
+
+  it('can ignore recycled nodes with changing ids and detect the real leak', async () => {
+    const results = await asyncIterableToArray(findLeaks('http://localhost:3000/test/www/recyclesDomNodesNewIdsAndActualLeak/', {
+      iterations: 3
+    }))
+
+    expect(results.length).to.equal(1)
+    expect(results.map(_ => ({ href: _.test.data.href }))).to.deep.equal([
+      { href: 'about' }
+    ])
+    const result = results[0].result
+    expect(result.leaks.detected).to.equal(true)
+    expect(result.leaks.domNodes.delta).to.equal(3)
+    expect(result.leaks.domNodes.deltaPerIteration).to.equal(1)
+
+    expect(result.before.domNodes.count).to.equal(15)
+    expect(result.after.domNodes.count).to.equal(18)
+
+    expect(result.leaks.domNodes.nodes).to.deep.equal([
+        {
+          description: 'div.actually-leaking',
+          before: 1,
+          after: 4,
+          delta: 3,
+          deltaPerIteration: 1
+        }
+      ]
+    )
+  })
 })

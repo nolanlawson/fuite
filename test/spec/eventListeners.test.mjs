@@ -211,4 +211,44 @@ describe('event listeners', () => {
       }
     ])
   })
+
+  it('can ignore recycled event listener names', async () => {
+    const results = await asyncIterableToArray(findLeaks('http://localhost:3000/test/www/recyclesEventListeners/', {
+      iterations: 3
+    }))
+
+    expect(results.length).to.equal(1)
+    expect(results.map(_ => ({ href: _.test.data.href }))).to.deep.equal([
+      { href: 'about' }
+    ])
+    const result = results[0].result
+    expect(result.leaks.detected).to.equal(false)
+    expect(result.leaks.eventListeners).to.deep.equal([])
+    expect(result.leaks.eventListenersSummary).to.deep.equal({
+      before: 6,
+      after: 6,
+      delta: 0,
+      deltaPerIteration: 0
+    })
+  })
+
+  it('can ignore recycled event listener names where the dom node is constantly changing IDs', async () => {
+    const results = await asyncIterableToArray(findLeaks('http://localhost:3000/test/www/recyclesEventListenersNewNodeIds/', {
+      iterations: 3
+    }))
+
+    expect(results.length).to.equal(1)
+    expect(results.map(_ => ({ href: _.test.data.href }))).to.deep.equal([
+      { href: 'about' }
+    ])
+    const result = results[0].result
+    expect(result.leaks.detected).to.equal(false)
+    expect(result.leaks.eventListeners).to.deep.equal([])
+    expect(result.leaks.eventListenersSummary).to.deep.equal({
+      before: 6,
+      after: 6,
+      delta: 0,
+      deltaPerIteration: 0
+    })
+  })
 })
