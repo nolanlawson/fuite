@@ -86,7 +86,7 @@ ${chalk.blue('Output')}    : ${outputFilename}
   let numResults = 0
   for await (const result of findLeaksIterable) {
     numResults++
-    console.log(formatResult(result))
+    console.log(await formatResult(result))
     console.log('\n' + '-'.repeat(20) + '\n')
     if (result.leaks && result.leaks.detected) {
       leaksDetected = true

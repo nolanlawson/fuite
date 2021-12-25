@@ -1,6 +1,16 @@
 import chalk from 'chalk'
 import prettyBytes from 'pretty-bytes'
-import { markdownTable } from 'markdown-table'
+import { table } from 'table'
+
+function formatStacktraces (stacktraces) {
+  if (!stacktraces || !stacktraces.length) {
+    return ''
+  }
+  // just show a preview of the stacktraces, the first one is good enough
+  const [stacktrace] = stacktraces
+  const { original, pretty } = stacktrace
+  return pretty || original || ''
+}
 
 function formatLeakingObjects (objects) {
   const tableData = [[
@@ -19,7 +29,7 @@ function formatLeakingObjects (objects) {
   return `
 Leaking objects:
 
-${markdownTable(tableData)}
+${table(tableData)}
       `.trim() + '\n\n'
 }
 
@@ -48,7 +58,7 @@ function formatLeakingEventListeners (listenerSummaries, eventListenersSummary) 
   return `
 Leaking event listeners (+${eventListenersSummary.deltaPerIteration} total):
 
-${markdownTable(tableData)}
+${table(tableData)}
       `.trim() + '\n\n'
 }
 
@@ -72,32 +82,34 @@ function formatLeakingDomNodes (domNodes) {
   return `
 Leaking DOM nodes (+${domNodes.deltaPerIteration} total):
 
-${markdownTable(tableData)}
+${table(tableData)}
       `.trim() + '\n\n'
 }
 
 function formatLeakingCollections (leakingCollections) {
   const tableData = [[
-    'Collection type',
-    'Size increase',
-    'Preview'
+    'Type',
+    'Change',
+    'Preview',
+    'Size increased at'
   ]]
 
-  for (const { type, deltaPerIteration, preview } of leakingCollections) {
+  for (const { type, deltaPerIteration, preview, stacktraces } of leakingCollections) {
     tableData.push([
       type,
-      deltaPerIteration,
-      preview
+      `+${deltaPerIteration}`,
+      preview,
+      formatStacktraces(stacktraces)
     ])
   }
   return `
 Leaking collections:
 
-${markdownTable(tableData)}
+${table(tableData)}
       `.trim() + '\n\n'
 }
 
-export function formatResult ({ test, result }) {
+export async function formatResult ({ test, result }) {
   let str = ''
 
   str += `Test         : ${chalk.blue(test.description)}\n`

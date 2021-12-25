@@ -1,4 +1,5 @@
 import { sortBy } from './util.js'
+import { prettifyStacktrace } from './prettifyStacktrace.js'
 
 export async function startTrackingCollections (page) {
   // The basic idea for this comes from
@@ -9,9 +10,9 @@ export async function startTrackingCollections (page) {
   const objects = await page.queryObjects(
     prototype
   )
-  const weakMap = await page.evaluateHandle(() => new WeakMap())
+  const collectionsToCountsMap = await page.evaluateHandle(() => new WeakMap())
   await page.evaluate(
-    (objects, weakMap) => {
+    (objects, collectionsToCountsMap) => {
       const { hasOwnProperty, toString } = Object.prototype
       const { isArray } = Array
 
@@ -64,19 +65,19 @@ export async function startTrackingCollections (page) {
       for (const obj of objects) {
         if (obj instanceof Map || obj instanceof Set || Array.isArray(obj) || isPlainObject(obj)) {
           const size = getSize(obj)
-          weakMap.set(obj, size)
+          collectionsToCountsMap.set(obj, size)
         }
       }
     },
     objects,
-    weakMap
+    collectionsToCountsMap
   )
 
   await Promise.all([prototype.dispose(), objects.dispose()])
-  return weakMap
+  return collectionsToCountsMap
 }
 
-export async function findLeakingCollections (page, weakMap, numIterations, debug) {
+export async function findLeakingCollections (page, collectionsToCountsMap, numIterations, debug) {
   const prototype = await page.evaluateHandle(() => {
     return Object.prototype
   })
@@ -84,19 +85,22 @@ export async function findLeakingCollections (page, weakMap, numIterations, debu
     prototype
   )
 
-  // Test if the weakMap is still available
+  // Test if the collectionsToCountsMap is still available
   try {
     await page.evaluate(() => {
       // no-op
-    }, weakMap)
+    }, collectionsToCountsMap)
   } catch (err) {
-    if (err.message.includes('JSHandles can be evaluated only in the context they were created')) {
-      return [] // multi-page app, not single-page app
+    // TODO: exception logging
+    // Assume this is a multi-page app, not a single-page app
+    return {
+      collections: []
     }
-    throw err
   }
 
-  const leakingCollections = await page.evaluate((objects, weakMap, numIterations, debug) => {
+  const trackedStacktraces = await page.evaluateHandle(() => ([]))
+
+  const leakingCollections = await page.evaluate((objects, collectionsToCountsMap, trackedStacktraces, numIterations, debug) => {
     const { isArray } = Array
     function getSize (obj) {
       try {
@@ -177,10 +181,49 @@ export async function findLeakingCollections (page, weakMap, numIterations, debu
       }
       return `{${createPreviewOfFirstItem(obj)}, ...}`
     }
+    function trackMethods (obj, stacktraces, methods) {
+      for (const method of methods) {
+        const oldMethod = obj[method]
+        obj[method] = function () {
+          if (method !== 'splice' || (arguments.length > 2)) { // splice is only an addition if args.length > 2
+            if (debug) {
+              // Detected someone adding to a collection that is suspected to leak
+              debugger // eslint-disable-line no-debugger
+            }
+            stacktraces.push(new Error().stack)
+          }
+          return oldMethod.apply(this, arguments)
+        }
+      }
+    }
+    function trackPlainObject (obj, stacktraces) {
+      Object.setPrototypeOf(obj, new Proxy(Object.create(null), {
+        set (obj, prop, val) {
+          if (debug) {
+            // Detected someone adding to a collection that is suspected to leak
+            debugger // eslint-disable-line no-debugger
+          }
+          stacktraces.push(new Error().stack)
+          return (obj[prop] = val)
+        }
+      }))
+    }
+    function trackSizeIncreases (obj, stacktraces) {
+      if (obj instanceof Map) {
+        trackMethods(obj, stacktraces, ['set'])
+      } else if (obj instanceof Set) {
+        trackMethods(obj, stacktraces, ['add'])
+      } else if (isArray(obj)) {
+        trackMethods(obj, stacktraces, ['push', 'concat', 'splice', 'unshift'])
+      } else { // plain object
+        trackPlainObject(obj, stacktraces)
+      }
+    }
     const result = []
+    let id = 0
     for (const obj of objects) {
-      if (weakMap.has(obj)) {
-        const sizeBefore = weakMap.get(obj)
+      if (collectionsToCountsMap.has(obj)) {
+        const sizeBefore = collectionsToCountsMap.get(obj)
         const sizeAfter = getSize(obj)
         const delta = sizeAfter - sizeBefore
         if (delta % numIterations === 0 && delta > 0) {
@@ -189,14 +232,27 @@ export async function findLeakingCollections (page, weakMap, numIterations, debu
           }
           const type = getType(obj)
           const preview = createPreview(obj)
-          result.push({
+          const details = {
+            id: id++,
             type,
             sizeBefore,
             sizeAfter,
             delta,
             deltaPerIteration: delta / numIterations,
             preview
+          }
+          result.push(details)
+          const stacktraces = []
+          trackedStacktraces.push({
+            id: details.id,
+            stacktraces
           })
+
+          try {
+            trackSizeIncreases(obj, stacktraces)
+          } catch (err) {
+            // ignore if this doesn't work for any reason
+          }
         }
       }
     }
@@ -204,12 +260,43 @@ export async function findLeakingCollections (page, weakMap, numIterations, debu
     return result
   },
   objects,
-  weakMap,
+  collectionsToCountsMap,
+  trackedStacktraces,
   numIterations,
   debug
   )
 
-  await Promise.all([prototype.dispose(), objects.dispose(), weakMap.dispose()])
+  await Promise.all([prototype.dispose(), objects.dispose(), collectionsToCountsMap.dispose()])
 
-  return sortBy(leakingCollections, ['type', 'delta'])
+  const collections = sortBy(leakingCollections, ['type', 'delta'])
+  return {
+    collections,
+    trackedStacktraces
+  }
+}
+
+export async function augmentLeakingCollectionsWithStacktraces (page, collections, trackedStacktraces) {
+  const trackedStacktracesArray = await page.evaluate((trackedStacktraces) => {
+    return trackedStacktraces
+  }, trackedStacktraces)
+
+  const idsToStacktraces = Object.fromEntries(trackedStacktracesArray.map(({ id, stacktraces }) => ([id, stacktraces])))
+
+  return (await Promise.all(collections.map(async collection => {
+    const res = { ...collection }
+    if (collection.id in idsToStacktraces) {
+      const stacktraces = idsToStacktraces[collection.id]
+      res.stacktraces = await Promise.all(stacktraces.map(async original => {
+        let pretty
+        try {
+          pretty = await prettifyStacktrace(original)
+        } catch (err) {
+          // ignore if this prettification fails for any reason
+          // TODO: log errors
+        }
+        return { original, pretty }
+      }))
+    }
+    return res
+  })))
 }
