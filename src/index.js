@@ -6,9 +6,14 @@ import { getDomNodesAndListeners } from './eventListeners.js'
 import fs from 'fs/promises'
 import { analyzeHeapSnapshots } from './analyzeHeapsnapshots.js'
 import { analyzeEventListeners, calculateEventListenersSummary } from './analyzeEventListeners.js'
-import { findLeakingCollections, startTrackingCollections } from './collections.js'
+import {
+  augmentLeakingCollectionsWithStacktraces,
+  findLeakingCollections,
+  startTrackingCollections
+} from './collections.js'
 import ora from 'ora'
 import { analyzeDomNodes } from './analyzeDomNodes.js'
+import { omit } from './util.js'
 
 export const DEFAULT_ITERATIONS = 7
 
@@ -103,7 +108,7 @@ export async function * findLeaks (pageUrl, options = {}) {
       await iteration(page, test.data) // one throwaway iteration to avoid measuring one-time setup costs
       onProgress('Taking start snapshot...')
       return (await runWithCdpSession(page, async cdpSession => {
-        const weakMap = await startTrackingCollections(page)
+        const collectionsToCountsMap = await startTrackingCollections(page)
         const { nodes: domNodesStart, listeners: eventListenersStart } = await getDomNodesAndListeners(page, cdpSession)
         const startSnapshotFilename = await takeHeapSnapshot(page, cdpSession)
         if (debug) {
@@ -117,11 +122,28 @@ export async function * findLeaks (pageUrl, options = {}) {
         onProgress('Taking end snapshot...')
         const endSnapshotFilename = await takeHeapSnapshot(page, cdpSession)
         const { nodes: domNodesEnd, listeners: eventListenersEnd } = await getDomNodesAndListeners(page, cdpSession)
-        const leakingCollections = await findLeakingCollections(page, weakMap, numIterations, debug)
+        let {
+          collections: leakingCollections,
+          trackedStacktraces
+        } = await findLeakingCollections(page, collectionsToCountsMap, numIterations, debug)
         if (debug) {
           // Point in time after running iterations
           debugger // eslint-disable-line no-debugger
         }
+
+        // Run one extra iteration to track additions to leaking collections
+        if (leakingCollections.length) {
+          try {
+            onProgress('Extra iteration to analyze collections...')
+            await iteration(page, test.data)
+            leakingCollections = await augmentLeakingCollectionsWithStacktraces(page, leakingCollections, trackedStacktraces)
+          } catch (err) {
+            // ignore if the tracking logic doesn't work for any reason
+            // TODO: error log
+          }
+        }
+        trackedStacktraces.dispose()
+        leakingCollections = leakingCollections.map(_ => omit(_, ['id']))
 
         onProgress('Analyzing snapshots...')
         const { leakingObjects, startStatistics, endStatistics } = await analyzeHeapSnapshots(
