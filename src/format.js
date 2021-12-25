@@ -2,6 +2,15 @@ import chalk from 'chalk'
 import prettyBytes from 'pretty-bytes'
 import { markdownTable } from 'markdown-table'
 
+function formatStacktraces(stacktraces) {
+  if (!stacktraces || !stacktraces.length) {
+    return ''
+  }
+  // just show a preview of the stacktraces
+  const [ stacktrace ] = stacktraces
+  return stacktrace.split('\n').slice(2).map(_ => _.replace(/^ +at /, ''))
+}
+
 function formatLeakingObjects (objects) {
   const tableData = [[
     'Object',
@@ -78,16 +87,18 @@ ${markdownTable(tableData)}
 
 function formatLeakingCollections (leakingCollections) {
   const tableData = [[
-    'Collection type',
-    'Size increase',
-    'Preview'
+    'Type',
+    'Change',
+    'Preview',
+    'Stacktrace'
   ]]
 
-  for (const { type, deltaPerIteration, preview } of leakingCollections) {
+  for (const { type, deltaPerIteration, preview, stacktraces } of leakingCollections) {
     tableData.push([
       type,
-      deltaPerIteration,
-      preview
+      `+${deltaPerIteration}`,
+      preview,
+      formatStacktraces(stacktraces)
     ])
   }
   return `

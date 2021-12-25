@@ -183,10 +183,10 @@ export async function findLeakingCollections (page, collectionsToCountsMap, numI
       for (const method of methods) {
         const oldMethod = obj[method]
         obj[method] = function () {
-          if (method !== 'splice' || (arguments.length > 2)) {// splice is only an addition if args.length > 2
+          if (method !== 'splice' || (arguments.length > 2)) { // splice is only an addition if args.length > 2
             if (debug) {
-              // Detected someone pushing to a collection that is suspected to leak
-              debugger
+              // Detected someone adding to a collection that is suspected to leak
+              debugger // eslint-disable-line no-debugger
             }
             stacktraces.push(new Error().stack)
           }
@@ -198,8 +198,8 @@ export async function findLeakingCollections (page, collectionsToCountsMap, numI
       Object.setPrototypeOf(obj, new Proxy(Object.create(null), {
         set (obj, prop, val) {
           if (debug) {
-            // Detected someone pushing to a collection that is suspected to leak
-            debugger
+            // Detected someone adding to a collection that is suspected to leak
+            debugger // eslint-disable-line no-debugger
           }
           stacktraces.push(new Error().stack)
           return (obj[prop] = val)
@@ -282,8 +282,8 @@ export async function augmentLeakingCollectionsWithStacktraces (page, collection
 
   return collections.map(collection => {
     const res = { ...collection }
-    if (idsToStacktraces.has(collection.id)) {
-      res.stacktraces = idsToStacktraces.get(collection.id)
+    if (collection.id in idsToStacktraces) {
+      res.stacktraces = idsToStacktraces[collection.id]
     }
     return res
   })
