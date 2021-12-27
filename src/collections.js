@@ -1,4 +1,5 @@
 import { sortBy } from './util.js'
+import StackTracey from 'stacktracey'
 
 export async function startTrackingCollections (page) {
   // The basic idea for this comes from
@@ -280,11 +281,24 @@ export async function augmentLeakingCollectionsWithStacktraces (page, collection
 
   const idsToStacktraces = Object.fromEntries(trackedStacktracesArray.map(({ id, stacktraces }) => ([id, stacktraces])))
 
-  return collections.map(collection => {
+  return (await Promise.all(collections.map(async collection => {
     const res = { ...collection }
     if (collection.id in idsToStacktraces) {
-      res.stacktraces = idsToStacktraces[collection.id]
+      const stacktraces = idsToStacktraces[collection.id]
+      res.stacktraces = await Promise.all(stacktraces.map(async original => {
+        let pretty
+        try {
+          pretty = (await new StackTracey(original).withSourcesAsync()).asTable({
+            maxColumnWidths: 80
+          })
+        } catch (err) {
+          console.error(err)
+          // ignore if this prettification fails for any reason
+          // TODO: log errors
+        }
+        return { original, pretty }
+      }))
     }
     return res
-  })
+  })))
 }

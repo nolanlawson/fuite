@@ -2,13 +2,20 @@ import chalk from 'chalk'
 import prettyBytes from 'pretty-bytes'
 import { markdownTable } from 'markdown-table'
 
-function formatStacktraces(stacktraces) {
+function formatStacktraces (stacktraces) {
   if (!stacktraces || !stacktraces.length) {
     return ''
   }
-  // just show a preview of the stacktraces
-  const [ stacktrace ] = stacktraces
-  return stacktrace.split('\n').slice(2).map(_ => _.replace(/^ +at /, ''))
+  // just show a preview of the stacktraces, the first line of the first one
+  const [stacktrace] = stacktraces
+  const { original, pretty } = stacktrace
+  let line
+  if (pretty) {
+    line = pretty.split('\n')[1] // ignore 1st line, which is puppeteer script
+  } else {
+    line = original.split('\n')[2] // ignore 'Error at' and puppeteer line after that
+  }
+  return (line || '').replace(/\s+/g, ' ').replace(/^at /, '')
 }
 
 function formatLeakingObjects (objects) {
@@ -108,7 +115,7 @@ ${markdownTable(tableData)}
       `.trim() + '\n\n'
 }
 
-export function formatResult ({ test, result }) {
+export async function formatResult ({ test, result }) {
   let str = ''
 
   str += `Test         : ${chalk.blue(test.description)}\n`

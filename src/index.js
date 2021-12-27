@@ -138,7 +138,6 @@ export async function * findLeaks (pageUrl, options = {}) {
             await iteration(page, test.data)
             leakingCollections = await augmentLeakingCollectionsWithStacktraces(page, leakingCollections, trackedStacktraces)
           } catch (err) {
-            debugger
             // ignore if the tracking logic doesn't work for any reason
             // TODO: error log
           }
