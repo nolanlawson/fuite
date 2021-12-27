@@ -1,6 +1,6 @@
 import chalk from 'chalk'
 import prettyBytes from 'pretty-bytes'
-import { markdownTable } from 'markdown-table'
+import { table } from 'table'
 
 function formatStacktraces (stacktraces) {
   if (!stacktraces || !stacktraces.length) {
@@ -9,13 +9,7 @@ function formatStacktraces (stacktraces) {
   // just show a preview of the stacktraces, the first line of the first one
   const [stacktrace] = stacktraces
   const { original, pretty } = stacktrace
-  let line
-  if (pretty) {
-    line = pretty.split('\n')[1] // ignore 1st line, which is puppeteer script
-  } else {
-    line = original.split('\n')[2] // ignore 'Error at' and puppeteer line after that
-  }
-  return (line || '').replace(/\s+/g, ' ').replace(/^at /, '')
+  return (pretty || original || '').replace(/(?<=\n|^)at /g, '') // remove " at " string
 }
 
 function formatLeakingObjects (objects) {
@@ -35,7 +29,7 @@ function formatLeakingObjects (objects) {
   return `
 Leaking objects:
 
-${markdownTable(tableData)}
+${table(tableData)}
       `.trim() + '\n\n'
 }
 
@@ -64,7 +58,7 @@ function formatLeakingEventListeners (listenerSummaries, eventListenersSummary) 
   return `
 Leaking event listeners (+${eventListenersSummary.deltaPerIteration} total):
 
-${markdownTable(tableData)}
+${table(tableData)}
       `.trim() + '\n\n'
 }
 
@@ -88,7 +82,7 @@ function formatLeakingDomNodes (domNodes) {
   return `
 Leaking DOM nodes (+${domNodes.deltaPerIteration} total):
 
-${markdownTable(tableData)}
+${table(tableData)}
       `.trim() + '\n\n'
 }
 
@@ -111,7 +105,7 @@ function formatLeakingCollections (leakingCollections) {
   return `
 Leaking collections:
 
-${markdownTable(tableData)}
+${table(tableData)}
       `.trim() + '\n\n'
 }
 
