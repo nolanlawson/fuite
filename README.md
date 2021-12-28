@@ -352,7 +352,7 @@ Use the `--output` command to output a JSON file, which will contain a list of e
 `fuite` will analyze your leaking collections and print out a stacktrace of which code caused the increase –
 for instance, `push`ing to an Array, or `set`ing a Map. So this is the first place to look.
 
-If you have sourcemaps, it will show the original source. Otherwise, it'll show the original stacktrace.
+If you have sourcemaps, it will show the original source. Otherwise, it'll show the raw stacktrace.
 
 Sometimes more than one thing is increasing the size, and not every increase is at fault (e.g. it deletes right after).
 In those cases, you should use `--output` and look at the JSON output to see the full list of stacktraces.
