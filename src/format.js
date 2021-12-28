@@ -1,6 +1,6 @@
 import chalk from 'chalk'
 import prettyBytes from 'pretty-bytes'
-import { table } from 'table'
+import { table as formatTable } from 'table'
 
 function formatStacktraces (stacktraces) {
   if (!stacktraces || !stacktraces.length) {
@@ -29,7 +29,7 @@ function formatLeakingObjects (objects) {
   return `
 Leaking objects:
 
-${table(tableData)}
+${formatTable(tableData)}
       `.trim() + '\n\n'
 }
 
@@ -58,7 +58,7 @@ function formatLeakingEventListeners (listenerSummaries, eventListenersSummary) 
   return `
 Leaking event listeners (+${eventListenersSummary.deltaPerIteration} total):
 
-${table(tableData)}
+${formatTable(tableData)}
       `.trim() + '\n\n'
 }
 
@@ -82,7 +82,7 @@ function formatLeakingDomNodes (domNodes) {
   return `
 Leaking DOM nodes (+${domNodes.deltaPerIteration} total):
 
-${table(tableData)}
+${formatTable(tableData)}
       `.trim() + '\n\n'
 }
 
@@ -105,11 +105,11 @@ function formatLeakingCollections (leakingCollections) {
   return `
 Leaking collections:
 
-${table(tableData)}
+${formatTable(tableData)}
       `.trim() + '\n\n'
 }
 
-export async function formatResult ({ test, result }) {
+export function formatResult ({ test, result }) {
   let str = ''
 
   str += `Test         : ${chalk.blue(test.description)}\n`
