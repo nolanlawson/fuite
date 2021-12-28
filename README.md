@@ -349,37 +349,27 @@ Use the `--output` command to output a JSON file, which will contain a list of e
 
 **How do I debug leaking collections?**
 
-Figuring out why an Array or Object is continually growing may be tricky. First, run `fuite` in debug mode:
+`fuite` will analyze your leaking collections and print out a stacktrace of which code caused the increase –
+for instance, `push`ing to an Array, or `set`ing a Map. So this is the first place to look.
+
+If you have sourcemaps, it will show the original source. Otherwise, it'll show the original stacktrace.
+
+Sometimes more than one thing is increasing the size, and not every increase is at fault (e.g. it deletes right after).
+In those cases, you should use `--output` and look at the JSON output to see the full list of stacktraces.
+
+In some other cases, `fuite` is not able to track increases to collections. (E.g. the object disallows modifications, or the code uses `Array.prototype.push.call()` instead of `.push()`ing directly.)
+
+In those cases, you may have to do a manual analysis. Below is how you can do that.
+
+First, run `fuite` in debug mode:
 
     NODE_OPTIONS=--inspect-brk fuite https://example.com --debug
 
-Then open `chrome:inspect` in Chrome and click "Open dedicated DevTools for Node." Then, when the breakpoint is hit, open the DevTools in Chrome and click the "Play" button to let the scenario keep running.
+Then open `chrome:inspect` in Chrome and click "Open dedicated DevTools for Node." Then, when the breakpoint is hit, open the DevTools in Chromium (the one running your website) and click the "Play" button to let the scenario keep running.
 
 Eventually `fuite` will give you a breakpoint in the Chrome DevTools itself, where you have access to the leaking collection (Array, Map, etc.) and can inspect it.
 
-One technique is to override the object's methods to check whenever it's called:
-
-```js
-for (const prop of ['push', 'concat', 'unshift', 'splice']) {
-  const original = obj[prop]; // `obj` is the array
-  obj[prop] = function () {
-    debugger;
-    return original.apply(this, arguments);
-  };
-}
-```
-
-For Maps you can override `set`, and for Sets you can override `add`. For plain Objects, you'll need a slightly more elaborate solution:
-
-```js
-// `obj` is the plain object
-Object.setPrototypeOf(obj, new Proxy(Object.create(null), {
-  set (obj, prop, val) {
-    debugger;
-    return (obj[prop] = val);
-  }
-}))
-```
+It will also give you `debugger` breakpoints on when the collection is increasing (e.g. `push`, `set`, etc.). For plain objects, it tries to override the prototype and spy on setters to accomplish this.
 
 Note that not every leaking collection is a serious memory leak: for instance, your router may keep some metadata about past routes in an ever-growing stack. Or your analytics library may store some timings in an array that continually grows. These are generally not a concern unless the objects are huge, or contain closures that reference lots of memory.
 

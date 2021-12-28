@@ -134,7 +134,7 @@ export async function * findLeaks (pageUrl, options = {}) {
         // Run one extra iteration to track additions to leaking collections
         if (leakingCollections.length) {
           try {
-            onProgress('Extra iteration to analyze collections...')
+            onProgress('Extra iteration for analysis...')
             await iteration(page, test.data)
             leakingCollections = await augmentLeakingCollectionsWithStacktraces(page, leakingCollections, trackedStacktraces)
           } catch (err) {
@@ -142,7 +142,9 @@ export async function * findLeaks (pageUrl, options = {}) {
             // TODO: error log
           }
         }
-        trackedStacktraces.dispose()
+        if (trackedStacktraces) {
+          trackedStacktraces.dispose()
+        }
         leakingCollections = leakingCollections.map(_ => omit(_, ['id']))
 
         onProgress('Analyzing snapshots...')

@@ -9,7 +9,7 @@ function formatStacktraces (stacktraces) {
   // just show a preview of the stacktraces, the first line of the first one
   const [stacktrace] = stacktraces
   const { original, pretty } = stacktrace
-  return (pretty || original || '').replace(/(?<=\n|^)at /g, '') // remove " at " string
+  return pretty || original || ''
 }
 
 function formatLeakingObjects (objects) {
@@ -91,7 +91,7 @@ function formatLeakingCollections (leakingCollections) {
     'Type',
     'Change',
     'Preview',
-    'Stacktrace'
+    'Size increased at'
   ]]
 
   for (const { type, deltaPerIteration, preview, stacktraces } of leakingCollections) {

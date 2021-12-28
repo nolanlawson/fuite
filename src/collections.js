@@ -92,7 +92,10 @@ export async function findLeakingCollections (page, collectionsToCountsMap, numI
     }, collectionsToCountsMap)
   } catch (err) {
     if (err.message.includes('JSHandles can be evaluated only in the context they were created')) {
-      return [] // multi-page app, not single-page app
+      // multi-page app, not single-page app
+      return {
+        collections: []
+      }
     }
     throw err
   }
@@ -281,22 +284,21 @@ export async function augmentLeakingCollectionsWithStacktraces (page, collection
 
   const idsToStacktraces = Object.fromEntries(trackedStacktracesArray.map(({ id, stacktraces }) => ([id, stacktraces])))
 
-  return collections.map(collection => {
+  return (await Promise.all(collections.map(async collection => {
     const res = { ...collection }
     if (collection.id in idsToStacktraces) {
       const stacktraces = idsToStacktraces[collection.id]
-      res.stacktraces = stacktraces.map(original => {
+      res.stacktraces = await Promise.all(stacktraces.map(async original => {
         let pretty
         try {
-          pretty = prettifyStacktrace(original)
+          pretty = await prettifyStacktrace(original)
         } catch (err) {
-          console.error(err)
           // ignore if this prettification fails for any reason
           // TODO: log errors
         }
         return { original, pretty }
-      })
+      }))
     }
     return res
-  })
+  })))
 }
