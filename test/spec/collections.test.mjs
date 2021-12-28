@@ -1,9 +1,12 @@
 import { findLeaks } from '../../src/index.js'
 import { expect } from 'chai'
 import { asyncIterableToArray } from './util.js'
+import { omit } from '../../src/util.js'
+
+const normalizeStackTrace = stacktrace => stacktrace.trim().split('\n').map(_ => _.trim())
 
 describe('collections', () => {
-  it('can detect leaking event listeners', async () => {
+  it('can detect leaking collections', async () => {
     const results = await asyncIterableToArray(findLeaks('http://localhost:3000/test/www/collections/', {
       iterations: 3
     }))
@@ -14,7 +17,7 @@ describe('collections', () => {
     ])
     const result = results[0].result
     expect(result.leaks.detected).to.equal(true)
-    expect(result.leaks.collections).to.deep.equal([
+    expect(result.leaks.collections.map(_ => omit(_, 'stacktraces'))).to.deep.equal([
       {
         type: 'Array',
         sizeBefore: 3,
@@ -46,6 +49,69 @@ describe('collections', () => {
         delta: 3,
         deltaPerIteration: 1,
         preview: 'Set(function setClosure () {}, ...)'
+      }
+    ])
+  })
+
+  it('stacktraces with source maps', async () => {
+    const results = await asyncIterableToArray(findLeaks('http://localhost:3000/test/www/collectionsWithSourceMaps/', {
+      iterations: 3
+    }))
+
+    const result = results[0].result
+    expect(result.leaks.detected).to.equal(true)
+    const expected = `
+push           http://localhost:3000/test/www/collectionsWithSourceMaps/script.js:35:8
+               webpack://navigo/src/middlewares/checkForAfterHook.ts:10:52
+Array.forEach  <anonymous>
+forEach        webpack://navigo/src/middlewares/checkForAfterHook.ts:10:36
+context        webpack://navigo/src/Q.ts:31:31
+next           webpack://navigo/src/Q.ts:34:10
+done           webpack://navigo/src/middlewares/callHandler.ts:9:2
+context        webpack://navigo/src/Q.ts:31:31
+next           webpack://navigo/src/Q.ts:34:10
+    `
+    const { pretty } = result.leaks.collections[0].stacktraces[0]
+    expect(normalizeStackTrace(pretty)).to.deep.equal(normalizeStackTrace(expected))
+  })
+
+  it('stacktraces with broken source maps', async () => {
+    const results = await asyncIterableToArray(findLeaks('http://localhost:3000/test/www/collectionsWithBrokenSourceMaps/', {
+      iterations: 3
+    }))
+
+    const result = results[0].result
+    expect(result.leaks.detected).to.equal(true)
+    const expected = `
+aboutHook      http://localhost:3000/test/www/collectionsWithBrokenSourceMaps/script.min.js:1:526
+               webpack://navigo/src/middlewares/checkForAfterHook.ts:10:52
+Array.forEach  <anonymous>
+forEach        webpack://navigo/src/middlewares/checkForAfterHook.ts:10:36
+context        webpack://navigo/src/Q.ts:31:31
+next           webpack://navigo/src/Q.ts:34:10
+done           webpack://navigo/src/middlewares/callHandler.ts:9:2
+context        webpack://navigo/src/Q.ts:31:31
+next           webpack://navigo/src/Q.ts:34:10
+    `
+    const { pretty } = result.leaks.collections[0].stacktraces[0]
+    expect(normalizeStackTrace(pretty)).to.deep.equal(normalizeStackTrace(expected))
+  })
+
+  it('no stacktraces when cannot spy on collection size increases', async () => {
+    const results = await asyncIterableToArray(findLeaks('http://localhost:3000/test/www/collectionsThatCannotBeTracked/', {
+      iterations: 3
+    }))
+    const result = results[0].result
+    expect(result.leaks.detected).to.equal(true)
+    expect(result.leaks.collections).to.deep.equal([
+      {
+        type: 'Set',
+        sizeBefore: 1,
+        sizeAfter: 4,
+        delta: 3,
+        deltaPerIteration: 1,
+        preview: 'Set(ArrayBuffer, ...)',
+        stacktraces: []
       }
     ])
   })
