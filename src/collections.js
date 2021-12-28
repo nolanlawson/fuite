@@ -100,6 +100,12 @@ export async function findLeakingCollections (page, collectionsToCountsMap, numI
 
   const trackedStacktraces = await page.evaluateHandle(() => ([]))
 
+  // At this point, we want to do two things:
+  // 1) Find all objects/arrays/etc that increased by exactly numIterations (or a multiple)
+  // 2) For those collections, start tracking what is increasing their size (push, concat, etc.)
+  // Because of the second case, we need to return a handle on the object that we are tracking, and then
+  // outside of this function we'll run an extra iteration and check the handle to see the stacktraces
+  // of whatever is pushing to the collection.
   const leakingCollections = await page.evaluate((objects, collectionsToCountsMap, trackedStacktraces, numIterations, debug) => {
     const { isArray } = Array
     function getSize (obj) {
@@ -185,9 +191,11 @@ export async function findLeakingCollections (page, collectionsToCountsMap, numI
       for (const method of methods) {
         const oldMethod = obj[method]
         obj[method] = function () {
-          if (method !== 'splice' || (arguments.length > 2)) { // splice is only an addition if args.length > 2
+          // `splice` is only an addition if args.length > 2
+          // The function signature is `splice(index, numToDelete, ...itemsToAdd)`
+          if (method !== 'splice' || (arguments.length > 2)) {
             if (debug) {
-              // Detected someone adding to a collection that is suspected to leak
+              // Detected that someone is adding to a collection that is suspected to leak
               debugger // eslint-disable-line no-debugger
             }
             stacktraces.push(new Error().stack)
@@ -200,7 +208,7 @@ export async function findLeakingCollections (page, collectionsToCountsMap, numI
       Object.setPrototypeOf(obj, new Proxy(Object.create(null), {
         set (obj, prop, val) {
           if (debug) {
-            // Detected someone adding to a collection that is suspected to leak
+            // Detected that someone is adding to a collection that is suspected to leak
             debugger // eslint-disable-line no-debugger
           }
           stacktraces.push(new Error().stack)
