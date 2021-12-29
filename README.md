@@ -22,7 +22,7 @@ By default, `fuite` will assume that the site is a client-rendered webapp, and i
 2. Press the browser back button
 3. Repeat to see if the scenario is leaking
 
-For other scenarios, see [scenarios](#scenarios).
+For other scenarios, see [scenarios](#scenario).
 
 # How it works
 
