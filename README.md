@@ -79,7 +79,7 @@ By default, `fuite` runs 7 iterations. But you can change this number.
 
 Why 7? Well, it's a nice, small, prime number. If you repeat an action 7 times and some object is leaking exactly 7 times, it's pretty unlikely to be unrelated. That said, on a very complex page, there may be enough noise that 7 is too small to cut through the noise – so you might try 13, 17, or 19 instead. Or 1 if you like to live dangerously.
 
-## Scenario
+## Scenarios
 
     --scenario <scenario>
 
