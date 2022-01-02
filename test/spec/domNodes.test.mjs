@@ -28,8 +28,18 @@ describe('dom nodes', () => {
         delta: 3,
         deltaPerIteration: 1
       }
-    ]
-    )
+    ])
+
+    expect(result.before.domNodes.count).to.equal(14)
+    expect(result.after.domNodes.count).to.equal(17)
+
+    expect(result.before.domNodes.nodes.length).to.equal(14)
+    expect(result.after.domNodes.nodes.length).to.equal(17)
+
+    // don't expose any keys except for className/description
+    for (const node of [...result.before.domNodes.nodes, ...result.after.domNodes.nodes]) {
+      expect(Object.keys(node).sort()).to.deep.equal(['className', 'description'])
+    }
   })
 
   it('the tool does not leak dom nodes itself', async () => {
