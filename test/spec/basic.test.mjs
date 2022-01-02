@@ -29,6 +29,15 @@ describe('basic test suite', () => {
     const leak = results[0].result.leaks.objects.find(_ => _.name === 'SomeBigObject')
     expect(leak.retainedSizeDeltaPerIteration).to.be.above(1000000)
     expect(leak.retainedSizeDeltaPerIteration).to.be.below(2000000)
+
+    expect(Object.keys(results[0].result.before.statistics).sort()).to.deep.equal([
+      'code', 'jsArrays', 'native', 'strings',
+      'system', 'total', 'v8heap'
+    ])
+    expect(Object.keys(results[0].result.after.statistics).sort()).to.deep.equal([
+      'code', 'jsArrays', 'native', 'strings',
+      'system', 'total', 'v8heap'
+    ])
   })
 
   it('works with invisible links', async () => {

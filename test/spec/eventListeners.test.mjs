@@ -144,6 +144,24 @@ describe('event listeners', () => {
         ]
       }
     ])
+
+    expect(result.before.eventListeners.length).to.equal(7)
+    expect(result.after.eventListeners.length).to.equal(7)
+
+    expect(result.before.eventListeners.map(_ => _.listeners).flat().length).to.equal(9)
+    expect(result.after.eventListeners.map(_ => _.listeners).flat().length).to.equal(21)
+
+    // ensure we only expose certain keys
+    for (const { node, listeners } of [...result.before.eventListeners, ...result.after.eventListeners]) {
+      expect(Object.keys(node).sort()).to.deep.equal(['className', 'description'])
+      for (const listener of listeners) {
+        expect(Object.keys(listener).sort()).to.deep.equal([
+          'columnNumber', 'handler', 'lineNumber', 'once',
+          'passive', 'scriptId', 'type', 'useCapture'
+        ])
+        expect(Object.keys(listener.handler).sort()).to.deep.equal(['className', 'description', 'type'])
+      }
+    }
   })
 
   it('can detect leaking event listeners in new nodes', async () => {
