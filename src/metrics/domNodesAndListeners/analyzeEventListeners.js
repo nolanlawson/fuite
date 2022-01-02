@@ -1,4 +1,4 @@
-import { pick, sortBy, sum } from './util.js'
+import { pick, sortBy, sum } from '../../util.js'
 
 function getSumForSummaryAndListenerType (summary, listenerType) {
   return summary.listeners.filter(_ => _.type === listenerType).length

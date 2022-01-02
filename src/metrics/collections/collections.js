@@ -1,5 +1,5 @@
-import { sortBy } from './util.js'
-import { prettifyStacktrace } from './prettifyStacktrace.js'
+import { sortBy } from '../../util.js'
+import { prettifyStacktrace } from '../../prettifyStacktrace.js'
 
 export async function startTrackingCollections (page) {
   // The basic idea for this comes from
