@@ -151,12 +151,17 @@ export async function * findLeaks (pageUrl, options = {}) {
           debugger // eslint-disable-line no-debugger
         }
 
-        if (metrics.some(metric => metric.needsExtraIteration?.())) {
-          onProgress('Extra iteration for analysis...')
-          await iteration(page, test.data)
-          for (const metric of metrics) {
-            await (metric.afterExtraIteration?.())
+        try {
+          if (metrics.some(metric => metric.needsExtraIteration?.())) {
+            onProgress('Extra iteration for analysis...')
+            await iteration(page, test.data)
+            for (const metric of metrics) {
+              await (metric.afterExtraIteration?.())
+            }
           }
+        } catch (err) {
+          // ignore if the extra iteration doesn't work for any reason; it's optional
+          // TODO: error log
         }
 
         onProgress('Analyzing snapshots...')
