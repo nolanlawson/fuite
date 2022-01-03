@@ -11,8 +11,8 @@ import { metric as heapsnapshotsMetric } from './metrics/heapsnapshots/index.js'
 // (in the "before" step) and before all the other ones (in the "after" step) to avoid capturing unnecessary
 // stuff in the heapsnapshot
 const metricFactories = [
-  domNodesAndListenersMetric,
   collectionsMetric,
+  domNodesAndListenersMetric,
   heapsnapshotsMetric
 ]
 
