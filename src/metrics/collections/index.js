@@ -27,12 +27,7 @@ export function collectionsMetric ({ page, numIterations, debug }) {
     },
 
     async afterExtraIteration () {
-      try {
-        leakingCollections = await augmentLeakingCollectionsWithStacktraces(page, leakingCollections, trackedStacktraces)
-      } catch (err) {
-        // ignore if the tracking logic doesn't work for any reason
-        // TODO: error log
-      }
+      leakingCollections = await augmentLeakingCollectionsWithStacktraces(page, leakingCollections, trackedStacktraces)
     },
 
     getResult () {
