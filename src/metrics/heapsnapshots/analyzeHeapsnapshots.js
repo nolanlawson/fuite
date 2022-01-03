@@ -1,5 +1,5 @@
-import * as HeapSnapshotModel from './thirdparty/devtools/heap_snapshot_worker/heap_snapshot_model.js'
-import { sortBy } from './util.js'
+import * as HeapSnapshotModel from '../../thirdparty/devtools/heap_snapshot_worker/heap_snapshot_model.js'
+import { sortBy } from '../../util.js'
 import { createHeapSnapshotModel } from './heapsnapshots.js'
 
 // Make the simplifying assumption that certain classes, especially browser-internal

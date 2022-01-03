@@ -1,7 +1,7 @@
 import { v4 as uuidV4 } from 'uuid'
-import { omit, pick } from './util.js'
-import { getDescriptors } from './getDescriptors.js'
-import { getAllDomNodes } from './browser/getAllDomNodes.js'
+import { omit, pick } from '../../util.js'
+import { getDescriptors } from '../../getDescriptors.js'
+import { getAllDomNodes } from '../../browser/getAllDomNodes.js'
 
 // via https://stackoverflow.com/a/67030384
 export async function getDomNodesAndListeners (page, cdpSession) {

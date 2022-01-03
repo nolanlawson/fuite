@@ -2,7 +2,7 @@ import path from 'path'
 import tempDir from 'temp-dir'
 import cryptoRandomString from 'crypto-random-string'
 import { createReadStream, createWriteStream } from 'fs'
-import * as HeapSnapshotWorker from './thirdparty/devtools/heap_snapshot_worker/heap_snapshot_worker.js'
+import * as HeapSnapshotWorker from '../../thirdparty/devtools/heap_snapshot_worker/heap_snapshot_worker.js'
 
 export async function takeHeapSnapshot (page, cdpSession) {
   const filename = path.join(tempDir, `fuite-${cryptoRandomString({ length: 8, type: 'alphanumeric' })}.heapsnapshot`)
