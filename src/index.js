@@ -3,9 +3,9 @@ import * as defaultScenario from './defaultScenario.js'
 import { waitForPageIdle } from './puppeteerUtil.js'
 import ora from 'ora'
 import { serial } from './util.js'
-import { metric as collectionsMetric } from './metrics/collections/index.js'
-import { metric as domNodesAndListenersMetric } from './metrics/domNodesAndListeners/index.js'
-import { metric as heapsnapshotsMetric } from './metrics/heapsnapshots/index.js'
+import { collectionsMetric } from './metrics/collections/index.js'
+import { domNodesAndListenersMetric } from './metrics/domNodesAndListeners/index.js'
+import { heapsnapshotsMetric } from './metrics/heapsnapshots/index.js'
 
 // it's important that heapsnapshotsMetric is the last one here, because we want to run it after all the other metrics
 // (in the "before" step) and before all the other ones (in the "after" step) to avoid capturing unnecessary

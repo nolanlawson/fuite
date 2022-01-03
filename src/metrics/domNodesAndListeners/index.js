@@ -2,7 +2,7 @@ import { getDomNodesAndListeners } from './eventListeners.js'
 import { analyzeEventListeners, calculateEventListenersSummary } from './analyzeEventListeners.js'
 import { analyzeDomNodes } from './analyzeDomNodes.js'
 
-export function metric ({ page, cdpSession, numIterations }) {
+export function domNodesAndListenersMetric ({ page, cdpSession, numIterations }) {
   let domNodesStart
   let domNodesEnd
   let eventListenersStart

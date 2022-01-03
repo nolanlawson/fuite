@@ -5,7 +5,7 @@ import {
 } from './collections.js'
 import { omit } from '../../util.js'
 
-export function metric ({ page, numIterations, debug }) {
+export function collectionsMetric ({ page, numIterations, debug }) {
   let collectionsToCountsMap
   let leakingCollections
   let trackedStacktraces

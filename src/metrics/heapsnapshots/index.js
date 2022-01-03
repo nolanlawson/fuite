@@ -2,7 +2,7 @@ import { takeHeapSnapshot } from './heapsnapshots.js'
 import fs from 'fs/promises'
 import { analyzeHeapSnapshots } from './analyzeHeapsnapshots.js'
 
-export function metric ({ page, cdpSession, numIterations, heapsnapshot }) {
+export function heapsnapshotsMetric ({ page, cdpSession, numIterations, heapsnapshot }) {
   let startSnapshotFilename
   let endSnapshotFilename
 
