@@ -6,6 +6,7 @@ import path from 'path'
 import { formatResult } from './format.js'
 import chalk from 'chalk'
 import { createWriteStream } from 'fs'
+import { pathToFileURL } from 'url'
 import { AbortController as AbortControllerPolyfill } from 'node-abort-controller'
 
 if (typeof AbortController !== 'function') {
@@ -38,13 +39,13 @@ async function main () {
   const { signal } = controller
   let scenario
   if (options.scenario) {
-    scenario = await import(path.resolve(process.cwd(), options.scenario))
+    scenario = await import(pathToFileURL(path.resolve(process.cwd(), options.scenario)))
   } else {
     scenario = defaultScenario
   }
   if (options.setup) {
     // override whatever setup function is defined on the scenario
-    const { setup } = await import(path.resolve(process.cwd(), options.setup))
+    const { setup } = await import(pathToFileURL(path.resolve(process.cwd(), options.setup)))
     scenario = {
       ...scenario,
       setup
