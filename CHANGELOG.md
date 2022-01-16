@@ -1,3 +1,17 @@
+# [1.4.0](https://github.com/nolanlawson/fuite/compare/v1.3.2...v1.4.0) (2022-01-16)
+
+
+### Bug Fixes
+
+* add changelog ([#43](https://github.com/nolanlawson/fuite/issues/43)) ([1bbf391](https://github.com/nolanlawson/fuite/commit/1bbf3910b2b3a6e62b394495e87c11defec35681)), closes [#38](https://github.com/nolanlawson/fuite/issues/38)
+
+
+### Features
+
+* add --browser-arg option ([#42](https://github.com/nolanlawson/fuite/issues/42)) ([2942208](https://github.com/nolanlawson/fuite/commit/2942208e75acc425a65df8e187979c1f22c94c53)), closes [#39](https://github.com/nolanlawson/fuite/issues/39)
+
+
+
 ## [1.3.2](https://github.com/nolanlawson/fuite/compare/v1.3.1...v1.3.2) (2022-01-13)
 
 
