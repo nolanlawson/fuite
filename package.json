@@ -18,7 +18,10 @@
     "test": "run-p --race test:serve test:mocha",
     "test:serve": "serve",
     "test:mocha": "mocha ./test/spec/",
-    "lint": "standard"
+    "lint": "standard",
+    "version": "run-s version:changelog version:add",
+    "version:changelog": "conventional-changelog -p angular -i CHANGELOG.md -s",
+    "version:add": "git add CHANGELOG.md"
   },
   "dependencies": {
     "as-table": "^1.0.55",
@@ -43,6 +46,7 @@
   },
   "devDependencies": {
     "chai": "^4.3.4",
+    "conventional-changelog-cli": "^2.2.2",
     "mocha": "^9.1.3",
     "navigo": "^8.11.1",
     "npm-run-all": "^4.1.5",
