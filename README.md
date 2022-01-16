@@ -53,6 +53,7 @@ Options:
   -H, --heapsnapshot         Save heapsnapshot files
   -d, --debug                Run in debug mode
   -p, --progress             Show progress spinner (use --no-progress to disable)
+  -b, --browser-arg <arg>    Arg(s) to pass when launching the browser
   -V, --version              output the version number
   -h, --help                 display help for command
 ```
@@ -213,6 +214,19 @@ This will launch Chrome in non-headless mode, and it will also automatically pau
 
 Enable or disable the progress spinner while the test runs. It's true by default, so you should use `--no-progress` to disable.
 
+## Browser args
+
+    -b, --browser-arg <arg>   Arg(s) to pass when launching the browser
+
+This allows you to pass args (aka flags) into Puppeteer when launching the browser. You can define multiple args,
+and they are passed ver batim to [Puppeteer's launch `args` option](https://pptr.dev/#?product=Puppeteer&version=v13.0.1&show=api-puppeteerlaunchoptions).
+
+For example:
+
+```shell
+fuite <url> -b --use-fake-device-for-media-stream -b --enable-experimental-web-platform-features
+```
+
 # JavaScript API
 
 `fuite` can also be used via a JavaScript API, which works similarly to the CLI:
@@ -225,7 +239,8 @@ const results = findLeaks('https://example.com', {
   iterations: 7,
   heapsnapshot: false,
   debug: false,
-  progress: true
+  progress: true,
+  browserArgs: ['--use-fake-device-for-media-stream']
 });
 for await (const result of results) {
   console.log(result);
