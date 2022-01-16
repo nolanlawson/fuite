@@ -18,6 +18,9 @@ const { version } = require('../package.json')
 
 const program = new Command()
 
+// Parse `-b foo -b baz` as ["foo", "baz"], or `-b foo` as ["foo"]
+const parseAsArray = (value, previousValue) => [...(previousValue || []), value]
+
 program
   .argument('<url>', 'URL to load in the browser and analyze')
   .option('-o, --output <file>', 'Write JSON output to a file')
@@ -27,6 +30,7 @@ program
   .option('-S, --setup <setup>', 'Setup function to run (e.g. in the default scenario)')
   .option('-d, --debug', 'Run in debug mode')
   .option('-p, --progress', 'Show progress spinner (--no-progress to disable)', true)
+  .option('-b, --browser-arg <arg>', 'Arg(s) to pass when launching the browser', parseAsArray)
   .version(version)
 program.parse(process.argv)
 const options = program.opts()
@@ -68,7 +72,7 @@ ${chalk.blue('Output')}    : ${outputFilename}
   console.log()
 
   const iterations = parseInt(options.iterations, 10)
-  const { debug, heapsnapshot, progress } = options
+  const { debug, heapsnapshot, progress, browserArg: browserArgs } = options
   console.log(chalk.blue('TEST RESULTS') + '\n\n' + '-'.repeat(20) + '\n')
   let writeCount = 0
   const writeStream = outputFilename && createWriteStream(outputFilename, 'utf8')
@@ -82,7 +86,8 @@ ${chalk.blue('Output')}    : ${outputFilename}
     iterations,
     scenario,
     signal,
-    progress
+    progress,
+    browserArgs
   })
   let numResults = 0
   for await (const result of findLeaksIterable) {

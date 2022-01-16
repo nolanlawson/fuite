@@ -37,9 +37,11 @@ async function runOnFreshPage (browser, pageUrl, setup, runnable) {
 
 async function analyzeOptions (options) {
   const { debug, heapsnapshot, progress } = options
+  const args = Array.isArray(options.browserArgs) ? options.browserArgs : []
   const browser = await puppeteer.launch({
     headless: !debug,
-    defaultViewport: { width: 1280, height: 800 }
+    defaultViewport: { width: 1280, height: 800 },
+    args
   })
   if (options.signal) {
     options.signal.addEventListener('abort', () => {
