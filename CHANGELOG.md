@@ -1,3 +1,10 @@
+## [1.4.1](https://github.com/nolanlawson/fuite/compare/v1.4.0...v1.4.1) (2022-03-18)
+
+### Chores
+
+* chore: update deps and fix typo ([#45](https://github.com/nolanlawson/fuite/issues/45)) ([d5f0955](https://github.com/nolanlawson/fuite/commit/d5f0955ec6bb8bb16d904610c3552d8349c64904))
+
+
 # [1.4.0](https://github.com/nolanlawson/fuite/compare/v1.3.2...v1.4.0) (2022-01-16)
 
 
