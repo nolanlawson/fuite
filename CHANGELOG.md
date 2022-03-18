@@ -1,3 +1,12 @@
+## [1.4.2](https://github.com/nolanlawson/fuite/compare/v1.4.1...v1.4.2) (2022-03-18)
+
+
+### Bug Fixes
+
+* remove source-map-resolve ([#46](https://github.com/nolanlawson/fuite/issues/46)) ([e897f0d](https://github.com/nolanlawson/fuite/commit/e897f0da55ebd25e5bb0e4def1e7d5fcec1afbe4))
+
+
+
 ## [1.4.1](https://github.com/nolanlawson/fuite/compare/v1.4.0...v1.4.1) (2022-03-18)
 
 ### Chores
