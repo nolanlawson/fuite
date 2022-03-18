@@ -25,6 +25,7 @@
   },
   "dependencies": {
     "as-table": "^1.0.55",
+    "atob": "^2.1.2",
     "chalk": "^5.0.1",
     "commander": "^9.0.0",
     "crypto-random-string": "^4.0.0",
@@ -38,7 +39,6 @@
     "puppeteer": "^13.5.1",
     "quick-lru": "^6.1.0",
     "source-map": "^0.7.3",
-    "source-map-resolve": "^0.6.0",
     "stacktrace-parser": "^0.1.10",
     "table": "^6.8.0",
     "temp-dir": "^2.0.0",
