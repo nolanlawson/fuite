@@ -36,7 +36,6 @@
     "ora": "^6.1.0",
     "please-upgrade-node": "^3.2.0",
     "pretty-bytes": "^6.0.0",
-    "puppeteer": "^13.5.1",
     "quick-lru": "^6.1.0",
     "source-map": "^0.7.3",
     "stacktrace-parser": "^0.1.10",
@@ -53,6 +52,18 @@
     "serve": "^13.0.2",
     "standard": "^16.0.4",
     "wait-for-localhost": "^4.0.0"
+  },
+  "peerDependencies": {
+    "playwright": "^1.22.0",
+    "puppeteer": "^13.5.1"
+  },
+  "peerDependenciesMeta": {
+    "playwright": {
+      "optional": true
+    },
+    "puppeteer": {
+      "optional": true
+    }
   },
   "keywords": [
     "memory",
