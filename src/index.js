@@ -1,11 +1,10 @@
-import puppeteer from 'puppeteer'
-import * as defaultScenario from './defaultScenario.js'
-import { waitForPageIdle } from './puppeteerUtil.js'
-import ora from 'ora'
-import { serial } from './util.js'
-import { collectionsMetric } from './metrics/collections/index.js'
-import { domNodesAndListenersMetric } from './metrics/domNodesAndListeners/index.js'
-import { heapsnapshotsMetric } from './metrics/heapsnapshots/index.js'
+import * as defaultScenario from "./defaultScenario.js";
+import { waitForPageIdle } from "./puppeteerUtil.js";
+import ora from "ora";
+import { serial } from "./util.js";
+import { collectionsMetric } from "./metrics/collections/index.js";
+import { domNodesAndListenersMetric } from "./metrics/domNodesAndListeners/index.js";
+import { heapsnapshotsMetric } from "./metrics/heapsnapshots/index.js";
 
 // it's important that heapsnapshotsMetric is the last one here, because we want to run it after all the other metrics
 // (in the "before" step) and before all the other ones (in the "after" step) to avoid capturing unnecessary
@@ -13,43 +12,53 @@ import { heapsnapshotsMetric } from './metrics/heapsnapshots/index.js'
 const metricFactories = [
   collectionsMetric,
   domNodesAndListenersMetric,
-  heapsnapshotsMetric
-]
+  heapsnapshotsMetric,
+];
 
-export const DEFAULT_ITERATIONS = 7
+export const DEFAULT_ITERATIONS = 7;
 
-async function runOnFreshPage (browser, pageUrl, setup, runnable) {
-  const page = await browser.newPage()
+async function runOnFreshPage(browser, pageUrl, setup, runnable) {
+  const page = await browser.newPage();
 
   try {
-    await page.goto(pageUrl)
-    await waitForPageIdle(page)
+    await page.goto(pageUrl);
+    await waitForPageIdle(page);
 
     if (setup) {
-      await setup(page)
-      await waitForPageIdle(page)
+      await setup(page);
+      await waitForPageIdle(page);
     }
-    return (await runnable(page))
+    return await runnable(page);
   } finally {
-    await page.close()
+    await page.close();
   }
 }
 
-async function analyzeOptions (options) {
-  const { debug, heapsnapshot, progress } = options
-  const args = Array.isArray(options.browserArgs) ? options.browserArgs : []
+async function analyzeOptions(options) {
+  let puppeteer;
+  try {
+    puppeteer = await import("puppeteer");
+  } catch (error) {
+    const playwright = await import("playwright");
+    puppeteer = playwright.chromium;
+  }
+  const { debug, heapsnapshot, progress } = options;
+  const args = Array.isArray(options.browserArgs) ? options.browserArgs : [];
   const browser = await puppeteer.launch({
     headless: !debug,
     defaultViewport: { width: 1280, height: 800 },
-    args
-  })
+    args,
+  });
   if (options.signal) {
-    options.signal.addEventListener('abort', () => {
-      browser.close()
-    })
+    options.signal.addEventListener("abort", () => {
+      browser.close();
+    });
   }
-  const scenario = options.scenario || defaultScenario
-  const numIterations = typeof options.iterations === 'number' ? options.iterations : DEFAULT_ITERATIONS
+  const scenario = options.scenario || defaultScenario;
+  const numIterations =
+    typeof options.iterations === "number"
+      ? options.iterations
+      : DEFAULT_ITERATIONS;
 
   return {
     scenario,
@@ -57,108 +66,122 @@ async function analyzeOptions (options) {
     progress,
     debug,
     heapsnapshot,
-    browser
-  }
+    browser,
+  };
 }
 
-async function runWithSpinner (enableSpinner, runnable) {
-  const spinner = enableSpinner && ora().start()
+async function runWithSpinner(enableSpinner, runnable) {
+  const spinner = enableSpinner && ora().start();
   try {
-    return (await runnable(text => {
+    return await runnable((text) => {
       if (spinner) {
-        spinner.text = text
+        spinner.text = text;
       }
-    }))
+    });
   } finally {
     if (spinner) {
-      spinner.stop()
+      spinner.stop();
     }
   }
 }
 
-function massagePageUrl (pageUrl) {
+function massagePageUrl(pageUrl) {
   // add the scheme if necessary
   if (!/^https?:\/\//.test(pageUrl)) {
     // use insecure for localhost
-    if (pageUrl.startsWith('localhost') || pageUrl.startsWith('127.0.0.1')) {
-      return `http://${pageUrl}`
+    if (pageUrl.startsWith("localhost") || pageUrl.startsWith("127.0.0.1")) {
+      return `http://${pageUrl}`;
     }
     // use secure everywhere else
-    return `https://${pageUrl}`
+    return `https://${pageUrl}`;
   }
-  return pageUrl
+  return pageUrl;
 }
 
-async function runWithCdpSession (page, runnable) {
-  const cdpSession = await page.target().createCDPSession()
+async function runWithCdpSession(page, runnable) {
+  let cdpSession;
+  if (page.target) {
+    cdpSession = await page.target().createCDPSession();
+  } else {
+    cdpSession = await page.context().newCDPSession(page);
+  }
   try {
-    return (await runnable(cdpSession))
+    return await runnable(cdpSession);
   } finally {
-    await cdpSession.detach()
+    await cdpSession.detach();
   }
 }
 
-function mergeResults (results, numIterations) {
+function mergeResults(results, numIterations) {
   const result = {
-    leaks: Object.assign({}, ...results.map(_ => _.leaks)),
-    before: Object.assign({}, ...results.map(_ => _.before)),
-    after: Object.assign({}, ...results.map(_ => _.after))
-  }
+    leaks: Object.assign({}, ...results.map((_) => _.leaks)),
+    before: Object.assign({}, ...results.map((_) => _.before)),
+    after: Object.assign({}, ...results.map((_) => _.after)),
+  };
 
   // This data comes from the heap snapshot metric. The current heuristic is to only
   // report "leaks detected" if the deltaPerIteration is >0 and any metric reported something
   // detected. This is to avoid saying "leaks detected" when the deltaPerIteration is below
   // zero, which would probably be confusing.
-  const delta = result.after.statistics.total - result.before.statistics.total
-  const deltaPerIteration = Math.round(delta / numIterations)
-  const leaksDetected = deltaPerIteration > 0 && results.some(_ => _.leaksDetected)
+  const delta = result.after.statistics.total - result.before.statistics.total;
+  const deltaPerIteration = Math.round(delta / numIterations);
+  const leaksDetected =
+    deltaPerIteration > 0 && results.some((_) => _.leaksDetected);
 
-  result.delta = delta
-  result.deltaPerIteration = deltaPerIteration
-  result.leaks.detected = leaksDetected
+  result.delta = delta;
+  result.deltaPerIteration = deltaPerIteration;
+  result.leaks.detected = leaksDetected;
 
-  return result
+  return result;
 }
 
-export async function * findLeaks (pageUrl, options = {}) {
-  const {
-    scenario, numIterations, progress, debug, heapsnapshot, browser
-  } = await analyzeOptions(options)
-  const { setup, createTests, iteration } = scenario
+export async function* findLeaks(pageUrl, options = {}) {
+  const { scenario, numIterations, progress, debug, heapsnapshot, browser } =
+    await analyzeOptions(options);
+  const { setup, createTests, iteration } = scenario;
 
-  pageUrl = massagePageUrl(pageUrl)
+  pageUrl = massagePageUrl(pageUrl);
 
   const runIterationOnPage = async (onProgress, test) => {
-    return (await runOnFreshPage(browser, pageUrl, setup, async page => {
-      await iteration(page, test.data) // one throwaway iteration to avoid measuring one-time setup costs
-      return (await runWithCdpSession(page, async cdpSession => {
-        const metrics = metricFactories.map(_ => _({ page, cdpSession, heapsnapshot, debug, numIterations }))
+    return await runOnFreshPage(browser, pageUrl, setup, async (page) => {
+      await iteration(page, test.data); // one throwaway iteration to avoid measuring one-time setup costs
+      return await runWithCdpSession(page, async (cdpSession) => {
+        const metrics = metricFactories
+          .filter(
+            (factory) => page.queryObjects || factory !== collectionsMetric
+          )
+          .map((_) =>
+            _({ page, cdpSession, heapsnapshot, debug, numIterations })
+          );
 
-        onProgress('Taking start snapshot...')
+        onProgress("Taking start snapshot...");
         for (const metric of metrics) {
-          await metric.beforeIterations()
+          await metric.beforeIterations();
         }
-        if (debug) { // Point in time before running any iterations
-          debugger // eslint-disable-line no-debugger
+        if (debug) {
+          // Point in time before running any iterations
+          debugger; // eslint-disable-line no-debugger
         }
         for (let i = 0; i < numIterations; i++) {
-          onProgress(`Iteration ${i + 1}/${numIterations}...`)
-          await iteration(page, test.data)
+          onProgress(`Iteration ${i + 1}/${numIterations}...`);
+          await iteration(page, test.data);
         }
-        onProgress('Taking end snapshot...')
-        for (const metric of [...metrics].reverse()) { // run in reverse order to ensure heapsnapshot happens first
-          await metric.afterIterations()
+        onProgress("Taking end snapshot...");
+        for (const metric of [...metrics].reverse()) {
+          // run in reverse order to ensure heapsnapshot happens first
+          await metric.afterIterations();
         }
-        if (debug) { // Point in time after running iterations
-          debugger // eslint-disable-line no-debugger
+        if (debug) {
+          // Point in time after running iterations
+          debugger; // eslint-disable-line no-debugger
         }
 
         try {
-          if (metrics.some(metric => metric.needsExtraIteration?.())) {
-            onProgress('Extra iteration for analysis...')
-            await iteration(page, test.data)
+          if (metrics.some((metric) => metric.needsExtraIteration?.())) {
+            onProgress("Extra iteration for analysis...");
+            await iteration(page, test.data);
             for (const metric of metrics) {
-              await (metric.afterExtraIteration?.())
+              await metric.afterExtraIteration?.();
             }
           }
         } catch (err) {
@@ -166,57 +189,61 @@ export async function * findLeaks (pageUrl, options = {}) {
           // TODO: error log
         }
 
-        onProgress('Analyzing snapshots...')
+        onProgress("Analyzing snapshots...");
         // Run in serial just in case something consumes a lot of memory (e.g. heap snapshot analysis)
-        const results = await serial(metrics.map(metric => () => metric.getResult()))
-        const result = mergeResults(results, numIterations)
+        const results = await serial(
+          metrics.map((metric) => () => metric.getResult())
+        );
+        const result = mergeResults(results, numIterations);
 
         // Assume cleanup code can run in parallel
-        await Promise.all(metrics.map(metric => metric.cleanup?.()))
+        await Promise.all(metrics.map((metric) => metric.cleanup?.()));
 
-        return { test, result }
-      }))
-    }))
-  }
+        return { test, result };
+      });
+    });
+  };
 
   const runIteration = async (test, i, numTests) => {
     try {
-      const prefix = `Test ${i + 1}/${numTests}${test.description ? ` - ${test.description}` : ''} -`
-      return (await runWithSpinner(progress, async (onProgress) => {
-        const onProgressWithPrefix = message => {
-          onProgress(`${prefix} ${message}`)
-        }
-        onProgressWithPrefix('Setup...')
-        return (await runIterationOnPage(onProgressWithPrefix, test))
-      }))
+      const prefix = `Test ${i + 1}/${numTests}${
+        test.description ? ` - ${test.description}` : ""
+      } -`;
+      return await runWithSpinner(progress, async (onProgress) => {
+        const onProgressWithPrefix = (message) => {
+          onProgress(`${prefix} ${message}`);
+        };
+        onProgressWithPrefix("Setup...");
+        return await runIterationOnPage(onProgressWithPrefix, test);
+      });
     } catch (error) {
       return {
         test,
-        result: { failed: true, error }
-      }
+        result: { failed: true, error },
+      };
     }
-  }
+  };
 
   try {
-    let tests
+    let tests;
     if (createTests) {
-      tests = await runWithSpinner(progress, async onProgress => {
-        onProgress('Gathering tests...')
-        return (await runOnFreshPage(browser, pageUrl, setup, async page => {
-          return createTests(page)
-        }))
-      })
+      tests = await runWithSpinner(progress, async (onProgress) => {
+        onProgress("Gathering tests...");
+        return await runOnFreshPage(browser, pageUrl, setup, async (page) => {
+          return createTests(page);
+        });
+      });
     } else {
-      tests = [{}] // default - one test with empty data
+      tests = [{}]; // default - one test with empty data
     }
     for (let i = 0; i < tests.length; i++) {
-      const test = tests[i]
-      const result = (await runIteration(test, i, tests.length))
-      yield result
+      const test = tests[i];
+      const result = await runIteration(test, i, tests.length);
+      yield result;
     }
   } finally {
-    await browser.close()
+    await browser.close();
   }
 }
 
-export { defaultScenario }
+export { defaultScenario };
