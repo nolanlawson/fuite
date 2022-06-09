@@ -103,6 +103,10 @@ export async function createTests(page) {
 export async function iteration(page, data) {
   // Run a single iteration against a page – e.g., click a link and then go back
 }
+
+export async function teardown(page) {
+  // Optional teardown code to run after each test
+}
 ```
 
 Your `myScenario.mjs` can export several `async function`s. Here's what they do:
@@ -159,6 +163,12 @@ Inside of an `iteration`, you want to run the core test logic that you want to t
 - Etc.
 
 The iteration assumes that whatever page it starts at, it ends up at that same page. If you test a multi-page app in this way, then it's extremely unlikely you'll detect any leaks, since multi-page apps don't leak memory in the same way that SPAs do when navigating between routes.
+
+### `teardown` function
+
+The `teardown` function takes a Puppeteer [Page][] as input and returns undefined. It runs after each `iteration`, or after `createTests`.
+
+If this function is not defined, then no teardown code will be run.
 
 ## Setup
 
@@ -280,7 +290,8 @@ For the JavaScript API, you can pass in a custom scenario as a plain object. Fir
 const myScenario = {
   async setup(page) { /* ... */ },
   async createTests(page) { /* ... */ },
-  async iteration(page, data) { /* ... */ }
+  async iteration(page, data) { /* ... */ },
+  async teardown(page) { /* ... */ }
 };
 ```
 

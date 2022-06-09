@@ -18,7 +18,7 @@ const metricFactories = [
 
 export const DEFAULT_ITERATIONS = 7
 
-async function runOnFreshPage (browser, pageUrl, setup, runnable) {
+async function runOnFreshPage (browser, pageUrl, setup, runnable, teardown) {
   const page = await browser.newPage()
 
   try {
@@ -29,7 +29,14 @@ async function runOnFreshPage (browser, pageUrl, setup, runnable) {
       await setup(page)
       await waitForPageIdle(page)
     }
-    return (await runnable(page))
+    try {
+      return await runnable(page);
+    } finally {
+      if (teardown) {
+        await waitForPageIdle(page);
+        await teardown(page);
+      }
+    }
   } finally {
     await page.close()
   }
@@ -124,7 +131,7 @@ export async function * findLeaks (pageUrl, options = {}) {
   const {
     scenario, numIterations, progress, debug, heapsnapshot, browser
   } = await analyzeOptions(options)
-  const { setup, createTests, iteration } = scenario
+  const { setup, createTests, iteration, teardown } = scenario
 
   pageUrl = massagePageUrl(pageUrl)
 
@@ -176,7 +183,7 @@ export async function * findLeaks (pageUrl, options = {}) {
 
         return { test, result }
       }))
-    }))
+    }, teardown))
   }
 
   const runIteration = async (test, i, numTests) => {
@@ -204,7 +211,7 @@ export async function * findLeaks (pageUrl, options = {}) {
         onProgress('Gathering tests...')
         return (await runOnFreshPage(browser, pageUrl, setup, async page => {
           return createTests(page)
-        }))
+        }, teardown))
       })
     } else {
       tests = [{}] // default - one test with empty data

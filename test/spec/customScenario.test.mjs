@@ -55,4 +55,27 @@ describe('custom scenario', () => {
     expect(leak.retainedSizeDeltaPerIteration).to.be.above(1000000)
     expect(leak.retainedSizeDeltaPerIteration).to.be.below(2000000)
   })
+
+  it('can do a custom scenario with teardown', async () => {
+    let teardownCalled = false;
+    const scenario = {
+      async iteration (page) {
+        await page.click('a[href="info"]')
+        await page.evaluate(() => new Promise((resolve) => window.requestIdleCallback(resolve)))
+        await page.goBack()
+        await page.evaluate(() => new Promise((resolve) => window.requestIdleCallback(resolve)))
+      },
+      teardown (page) {
+        teardownCalled = true;
+        return Promise.resolve();
+      }
+    }
+
+    const results = await asyncIterableToArray(findLeaks('http://localhost:3000/test/www/minimal/', {
+      iterations: 3,
+      scenario
+    }))
+
+    expect(teardownCalled).to.equal(true);
+  })
 })
