@@ -11,6 +11,6 @@ jobs:
         with:
           node-version: '14.14.0' # minimum supported node version, per package.json "engines" field
           cache: 'yarn'
-      - run: yarn --immutable
+      - run: yarn --frozen-lockfile
       - run: yarn lint
       - run: yarn test
