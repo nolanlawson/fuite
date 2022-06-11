@@ -19,6 +19,7 @@ export declare type Scenario<T> = {
     setup?: (page: Page) => Promise<void>;
     createTests?: (page: Page) => Promise<Array<T>>;
     iteration: (page: Page, options: T) => Promise<void>;
+    teardown?: (page: Page) => Promise<void>;
 };
 export declare type Options = {
     debug?: boolean;
