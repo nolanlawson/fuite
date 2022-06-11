@@ -1,3 +1,12 @@
+# [1.5.0](https://github.com/nolanlawson/fuite/compare/v1.4.2...v1.5.0) (2022-06-11)
+
+
+### Features
+
+* add optional teardown to scenario ([#48](https://github.com/nolanlawson/fuite/issues/48)) ([0f08c4a](https://github.com/nolanlawson/fuite/commit/0f08c4a80f5238181c5afff76a08f0eb08e790ca))
+
+
+
 ## [1.4.2](https://github.com/nolanlawson/fuite/compare/v1.4.1...v1.4.2) (2022-03-18)
 
 
