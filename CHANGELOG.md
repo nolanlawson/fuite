@@ -1,3 +1,12 @@
+## [1.5.1](https://github.com/nolanlawson/fuite/compare/v1.5.0...v1.5.1) (2022-06-11)
+
+
+### Bug Fixes
+
+* update puppeteer ([#52](https://github.com/nolanlawson/fuite/issues/52)) ([afefdd5](https://github.com/nolanlawson/fuite/commit/afefdd5392da2cde189ad75dab99b556a6ee3656))
+
+
+
 # [1.5.0](https://github.com/nolanlawson/fuite/compare/v1.4.2...v1.5.0) (2022-06-11)
 
 
