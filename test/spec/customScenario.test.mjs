@@ -57,7 +57,7 @@ describe('custom scenario', () => {
   })
 
   it('can do a custom scenario with teardown', async () => {
-    let teardownCalled = false;
+    let teardownCalled = false
     const scenario = {
       async iteration (page) {
         await page.click('a[href="info"]')
@@ -66,8 +66,8 @@ describe('custom scenario', () => {
         await page.evaluate(() => new Promise((resolve) => window.requestIdleCallback(resolve)))
       },
       teardown (page) {
-        teardownCalled = true;
-        return Promise.resolve();
+        teardownCalled = true
+        return Promise.resolve()
       }
     }
 
@@ -76,6 +76,7 @@ describe('custom scenario', () => {
       scenario
     }))
 
-    expect(teardownCalled).to.equal(true);
+    expect(results.length).to.equal(1)
+    expect(teardownCalled).to.equal(true)
   })
 })

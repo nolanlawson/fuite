@@ -30,11 +30,11 @@ async function runOnFreshPage (browser, pageUrl, setup, runnable, teardown) {
       await waitForPageIdle(page)
     }
     try {
-      return await runnable(page);
+      return await runnable(page)
     } finally {
       if (teardown) {
-        await waitForPageIdle(page);
-        await teardown(page);
+        await waitForPageIdle(page)
+        await teardown(page)
       }
     }
   } finally {
