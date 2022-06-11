@@ -13,6 +13,7 @@ const browserInternalClasses = new Set([
   '(array)',
   '(compiled code)',
   '(concatenated string)',
+  '(object shape)',
   '(number)',
   '(sliced string)',
   '(string)',
