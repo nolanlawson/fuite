@@ -92,20 +92,34 @@ fuite --scenario ./myScenario.mjs https://example.com
 
 ```js
 // myScenario.mjs
+
+/**
+ * Setup code to run before each test (optional)
+ * @param { import("puppeteer").Page } page
+*/
 export async function setup(page) {
-  // Setup code to run before each test
 }
 
+/**
+ * Code to run once on the page to determine which tests to run (optional)
+ * @param { import("puppeteer").Page } page
+ */
 export async function createTests(page) {
-  // Code to run once on the page to determine which tests to run
 }
 
+/**
+ * Run a single iteration against a page – e.g., click a link and then go back
+ * @param { import("puppeteer").Page } page
+ * @param { any } data
+ */
 export async function iteration(page, data) {
-  // Run a single iteration against a page – e.g., click a link and then go back
 }
 
+/**
+ * Teardown code to run after each test (optional)
+ * @param { import("puppeteer").Page } page
+ */
 export async function teardown(page) {
-  // Optional teardown code to run after each test
 }
 ```
 
