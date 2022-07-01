@@ -203,6 +203,15 @@ for every web app. So you can override the default behavior here.
 
 If this function is not defined, then the default idle check is used.
 
+Here is an example:
+
+```js
+export async function waitForIdle(page) {
+  await new Promise(resolve => setTimeout(resolve, 2000)) // wait 2 seconds
+  await page.waitForSelector('#my-element') // wait for element
+}
+```
+
 ## Setup
 
     --setup <setup>
