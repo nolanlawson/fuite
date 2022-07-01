@@ -1,5 +1,6 @@
-import { waitForPageIdle } from './puppeteerUtil.js'
+import { defaultWaitForPageIdle } from './puppeteerUtil.js'
 import { ono } from 'ono'
+import { WAIT_FOR_IDLE } from './constants.js'
 
 function urlsAreEqual (url1, url2) {
   for (const prop of ['protocol', 'hostname', 'port', 'pathname', 'search']) {
@@ -81,9 +82,12 @@ export async function createTests (page) {
   })
 }
 
-export async function iteration (page, { href }) {
+export async function iteration (page, iterationData) {
+  const { href } = iterationData
+  const waitForIdle = iterationData[WAIT_FOR_IDLE] || defaultWaitForPageIdle
+
   await clickFirstVisible(page, `a[href=${JSON.stringify(href)}]`)
-  await waitForPageIdle(page)
+  await waitForIdle(page)
   await page.goBack()
-  await waitForPageIdle(page)
+  await waitForIdle(page)
 }

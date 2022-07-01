@@ -17,7 +17,7 @@ async function waitForMainThreadIdle (page) {
   }
 }
 
-export async function waitForPageIdle (page) {
+export async function defaultWaitForPageIdle (page) {
   await waitForMainThreadIdle(page)
   try {
     await page.waitForNetworkIdle()

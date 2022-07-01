@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+</head>
+<body>
+<script src="../../../node_modules/navigo/lib/navigo.js"></script>
+<script type="module">
+  import { makeRouter } from '../basicRouter.js'
+
+  const router = makeRouter(['', 'info'])
+
+  class SomeBigObject {
+    data = new ArrayBuffer(1000000)
+  }
+
+  const objects = []
+
+  const markDone = () => {
+    const div = document.createElement('div')
+    div.id = 'done'
+    document.body.appendChild(div)
+  }
+
+  router.addAfterHook('/info', () => {
+    document.getElementById('done').remove()
+    setTimeout(() => {
+      objects.push(new SomeBigObject())
+      markDone()
+    }, 200)
+  })
+
+  markDone()
+</script>
+</body>
+</html>

@@ -90,6 +90,8 @@ The default scenario is to find all internal links on the page, click them, and 
 fuite --scenario ./myScenario.mjs https://example.com
 ```
 
+Here is a template you can use to define your own scenario:
+
 ```js
 // myScenario.mjs
 
@@ -121,11 +123,18 @@ export async function iteration(page, data) {
  */
 export async function teardown(page) {
 }
+
+/**
+ * Code to wait asynchronously for the page to become idle (optional)
+ * @param { import("puppeteer").Page } page
+ */
+export async function waitForIdle(page) {
+}
 ```
 
-Your `myScenario.mjs` can export several `async function`s. Here's what they do:
+Your `myScenario.mjs` can export several `async function`s, most of which are optional. Here's what they do:
 
-### `setup` function
+### `setup` function (optional)
 
 The `setup` function takes a Puppeteer [Page][] as input and returns undefined. It runs before each `iteration`, or before `createTests`. This is a good place to log in, if your webapp requires a login.
 
@@ -133,9 +142,9 @@ If this function is not defined, then no setup code will be run.
 
 Note that there is also a [`--setup` flag](#setup). If defined, it will override the `setup` function defined in a scenario.
 
-### `createTests` function
+### `createTests` function (optional)
 
-The `createTests` function takes a Puppeteer [Page][] as input and returns an array of _test data objects_ representing the tests to run, and the data to pass for each one. This is useful if you want to dynamically determine what tests to run against a page (for instance, which links to click).
+The async `createTests` function takes a Puppeteer [Page][] as input and returns an array of _test data objects_ representing the tests to run, and the data to pass for each one. This is useful if you want to dynamically determine what tests to run against a page (for instance, which links to click).
 
 If `createTests` is not defined, then the default tests are `[{}]` (a single test with empty data).
 
@@ -167,7 +176,7 @@ For instance, your `createTests` might return:
 
 ### `iteration` function
 
-The `iteration` function takes a Puppeteer [Page][] and _iteration data_ as input and returns undefined. It runs for each iteration of the memory leak test. The _iteration data_ is a plain object and comes from the `createTests` function, so by default it is just an empty object: `{}`.
+The async `iteration` function takes a Puppeteer [Page][] and _iteration data_ as input and returns undefined. It runs for each iteration of the memory leak test. The _iteration data_ is a plain object and comes from the `createTests` function, so by default it is just an empty object: `{}`.
 
 Inside of an `iteration`, you want to run the core test logic that you want to test for leaks. The idea is that, at the beginning of the iteration and at the end, the memory _should_ be the same.  So an iteration might do things like:
 
@@ -178,11 +187,21 @@ Inside of an `iteration`, you want to run the core test logic that you want to t
 
 The iteration assumes that whatever page it starts at, it ends up at that same page. If you test a multi-page app in this way, then it's extremely unlikely you'll detect any leaks, since multi-page apps don't leak memory in the same way that SPAs do when navigating between routes.
 
-### `teardown` function
+### `teardown` function (optional)
 
-The `teardown` function takes a Puppeteer [Page][] as input and returns undefined. It runs after each `iteration`, or after `createTests`.
+The async `teardown` function takes a Puppeteer [Page][] as input and returns undefined. It runs after each `iteration`, or after `createTests`.
 
 If this function is not defined, then no teardown code will be run.
+
+### `waitForIdle` function (optional)
+
+The async `waitForIdle` function takes a Puppeteer [Page][] and should resolve when the page is considered "idle."
+
+By default,
+`fuite` has some heuristics to determine that the page is idle (based on both network idle and main thread idle), but this may not work
+for every web app. So you can override the default behavior here.
+
+If this function is not defined, then the default idle check is used.
 
 ## Setup
 
