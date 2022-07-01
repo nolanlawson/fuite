@@ -28,5 +28,4 @@ describe('custom idle logic', () => {
     expect(leak.retainedSizeDeltaPerIteration).to.be.above(1000000)
     expect(leak.retainedSizeDeltaPerIteration).to.be.below(2000000)
   })
-
 })
