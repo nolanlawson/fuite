@@ -6,7 +6,7 @@ import { serial } from './util.js'
 import { collectionsMetric } from './metrics/collections/index.js'
 import { domNodesAndListenersMetric } from './metrics/domNodesAndListeners/index.js'
 import { heapsnapshotsMetric } from './metrics/heapsnapshots/index.js'
-import { WAIT_FOR_IDLE } from './constants.js'
+import { setCustomWaitForPageIdle } from './customWaitForPageIdle.js'
 
 // it's important that heapsnapshotsMetric is the last one here, because we want to run it after all the other metrics
 // (in the "before" step) and before all the other ones (in the "after" step) to avoid capturing unnecessary
@@ -140,9 +140,7 @@ export async function * findLeaks (pageUrl, options = {}) {
 
   const runIterationOnPage = async (onProgress, test) => {
     return (await runOnFreshPage(browser, pageUrl, setup, teardown, waitForIdle, async page => {
-      // Use a Symbol to sneak in a reference to the waitForIdle function in an undetectable way
-      const iterationData = { ...test.data, [WAIT_FOR_IDLE]: waitForIdle }
-      await iteration(page, iterationData) // one throwaway iteration to avoid measuring one-time setup costs
+      await iteration(page, test.data) // one throwaway iteration to avoid measuring one-time setup costs
       return (await runWithCdpSession(page, async cdpSession => {
         const metrics = metricFactories.map(_ => _({ page, cdpSession, heapsnapshot, debug, numIterations }))
 
@@ -155,7 +153,7 @@ export async function * findLeaks (pageUrl, options = {}) {
         }
         for (let i = 0; i < numIterations; i++) {
           onProgress(`Iteration ${i + 1}/${numIterations}...`)
-          await iteration(page, iterationData)
+          await iteration(page, test.data)
         }
         onProgress('Taking end snapshot...')
         for (const metric of [...metrics].reverse()) { // run in reverse order to ensure heapsnapshot happens first
@@ -168,7 +166,7 @@ export async function * findLeaks (pageUrl, options = {}) {
         try {
           if (metrics.some(metric => metric.needsExtraIteration?.())) {
             onProgress('Extra iteration for analysis...')
-            await iteration(page, iterationData)
+            await iteration(page, test.data)
             for (const metric of metrics) {
               await (metric.afterExtraIteration?.())
             }
@@ -209,24 +207,25 @@ export async function * findLeaks (pageUrl, options = {}) {
     }
   }
 
+  const doCreateTests = async () => {
+    return (await runWithSpinner(progress, async onProgress => {
+      onProgress('Gathering tests...')
+      return (await runOnFreshPage(browser, pageUrl, setup, teardown, waitForIdle, page => createTests(page)))
+    }))
+  }
+
   try {
-    let tests
-    if (createTests) {
-      tests = await runWithSpinner(progress, async onProgress => {
-        onProgress('Gathering tests...')
-        return (await runOnFreshPage(browser, pageUrl, setup, teardown, waitForIdle, async page => {
-          return createTests(page)
-        }))
-      })
-    } else {
-      tests = [{}] // default - one test with empty data
-    }
+    setCustomWaitForPageIdle(waitForIdle) // communicate with defaultScenario.js about how to check for idle
+    const tests = createTests
+      ? (await doCreateTests())
+      : [{}] // default - one test with empty data
     for (let i = 0; i < tests.length; i++) {
       const test = tests[i]
       const result = (await runIteration(test, i, tests.length))
       yield result
     }
   } finally {
+    setCustomWaitForPageIdle(undefined) // revert to default
     await browser.close()
   }
 }
