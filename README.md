@@ -134,7 +134,7 @@ export async function waitForIdle(page) {
 }
 ```
 
-You can delete any optional function you don't need.
+You can delete any optional functions you don't need.
 
 Note that your scenario file can also [extend the default scenario](#extending-the-default-scenario).
 
