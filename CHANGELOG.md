@@ -1,3 +1,12 @@
+# [1.6.0](https://github.com/nolanlawson/fuite/compare/v1.5.1...v1.6.0) (2022-07-02)
+
+
+### Features
+
+* add custom idle hook ([#56](https://github.com/nolanlawson/fuite/issues/56)) ([a449da8](https://github.com/nolanlawson/fuite/commit/a449da82ff55740ef0047eae377101ff689ded18))
+
+
+
 ## [1.5.1](https://github.com/nolanlawson/fuite/compare/v1.5.0...v1.5.1) (2022-06-11)
 
 
