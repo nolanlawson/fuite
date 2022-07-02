@@ -1,11 +1,12 @@
 import puppeteer from 'puppeteer'
 import * as defaultScenario from './defaultScenario.js'
-import { waitForPageIdle } from './puppeteerUtil.js'
+import { defaultWaitForPageIdle } from './puppeteerUtil.js'
 import ora from 'ora'
 import { serial } from './util.js'
 import { collectionsMetric } from './metrics/collections/index.js'
 import { domNodesAndListenersMetric } from './metrics/domNodesAndListeners/index.js'
 import { heapsnapshotsMetric } from './metrics/heapsnapshots/index.js'
+import { setCustomWaitForPageIdle } from './customWaitForPageIdle.js'
 
 // it's important that heapsnapshotsMetric is the last one here, because we want to run it after all the other metrics
 // (in the "before" step) and before all the other ones (in the "after" step) to avoid capturing unnecessary
@@ -18,22 +19,24 @@ const metricFactories = [
 
 export const DEFAULT_ITERATIONS = 7
 
-async function runOnFreshPage (browser, pageUrl, setup, runnable, teardown) {
+async function runOnFreshPage (browser, pageUrl, setup, teardown, waitForIdle, runnable) {
   const page = await browser.newPage()
+
+  const doWaitForIdle = waitForIdle || defaultWaitForPageIdle
 
   try {
     await page.goto(pageUrl)
-    await waitForPageIdle(page)
+    await doWaitForIdle(page)
 
     if (setup) {
       await setup(page)
-      await waitForPageIdle(page)
+      await doWaitForIdle(page)
     }
     try {
       return await runnable(page)
     } finally {
       if (teardown) {
-        await waitForPageIdle(page)
+        await doWaitForIdle(page)
         await teardown(page)
       }
     }
@@ -131,12 +134,12 @@ export async function * findLeaks (pageUrl, options = {}) {
   const {
     scenario, numIterations, progress, debug, heapsnapshot, browser
   } = await analyzeOptions(options)
-  const { setup, createTests, iteration, teardown } = scenario
+  const { setup, createTests, iteration, teardown, waitForIdle } = scenario
 
   pageUrl = massagePageUrl(pageUrl)
 
   const runIterationOnPage = async (onProgress, test) => {
-    return (await runOnFreshPage(browser, pageUrl, setup, async page => {
+    return (await runOnFreshPage(browser, pageUrl, setup, teardown, waitForIdle, async page => {
       await iteration(page, test.data) // one throwaway iteration to avoid measuring one-time setup costs
       return (await runWithCdpSession(page, async cdpSession => {
         const metrics = metricFactories.map(_ => _({ page, cdpSession, heapsnapshot, debug, numIterations }))
@@ -183,7 +186,7 @@ export async function * findLeaks (pageUrl, options = {}) {
 
         return { test, result }
       }))
-    }, teardown))
+    }))
   }
 
   const runIteration = async (test, i, numTests) => {
@@ -204,24 +207,25 @@ export async function * findLeaks (pageUrl, options = {}) {
     }
   }
 
+  const doCreateTests = async () => {
+    return (await runWithSpinner(progress, async onProgress => {
+      onProgress('Gathering tests...')
+      return (await runOnFreshPage(browser, pageUrl, setup, teardown, waitForIdle, page => createTests(page)))
+    }))
+  }
+
   try {
-    let tests
-    if (createTests) {
-      tests = await runWithSpinner(progress, async onProgress => {
-        onProgress('Gathering tests...')
-        return (await runOnFreshPage(browser, pageUrl, setup, async page => {
-          return createTests(page)
-        }, teardown))
-      })
-    } else {
-      tests = [{}] // default - one test with empty data
-    }
+    setCustomWaitForPageIdle(waitForIdle) // communicate with defaultScenario.js about how to check for idle
+    const tests = createTests
+      ? (await doCreateTests())
+      : [{}] // default - one test with empty data
     for (let i = 0; i < tests.length; i++) {
       const test = tests[i]
       const result = (await runIteration(test, i, tests.length))
       yield result
     }
   } finally {
+    setCustomWaitForPageIdle(undefined) // revert to default
     await browser.close()
   }
 }
