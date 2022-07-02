@@ -90,27 +90,29 @@ The default scenario is to find all internal links on the page, click them, and 
 fuite --scenario ./myScenario.mjs https://example.com
 ```
 
-Here is a template you can use to define your own scenario:
+Your `myScenario.mjs` can export several `async function`s, most of which are optional.
+
+Here is a template (delete any optional functions you don't need):
 
 ```js
 // myScenario.mjs
 
 /**
- * Setup code to run before each test (optional)
+ * OPTIONAL: Setup code to run before each test
  * @param { import("puppeteer").Page } page
 */
 export async function setup(page) {
 }
 
 /**
- * Code to run once on the page to determine which tests to run (optional)
+ * OPTIONAL: Code to run once on the page to determine which tests to run
  * @param { import("puppeteer").Page } page
  */
 export async function createTests(page) {
 }
 
 /**
- * Run a single iteration against a page – e.g., click a link and then go back
+ * REQUIRED: Run a single iteration against a page – e.g., click a link and then go back
  * @param { import("puppeteer").Page } page
  * @param { any } data
  */
@@ -118,25 +120,27 @@ export async function iteration(page, data) {
 }
 
 /**
- * Teardown code to run after each test (optional)
+ * OPTIONAL: Teardown code to run after each test
  * @param { import("puppeteer").Page } page
  */
 export async function teardown(page) {
 }
 
 /**
- * Code to wait asynchronously for the page to become idle (optional)
+ * OPTIONAL: Code to wait asynchronously for the page to become idle
  * @param { import("puppeteer").Page } page
  */
 export async function waitForIdle(page) {
 }
 ```
 
-Your `myScenario.mjs` can export several `async function`s, most of which are optional. Here's what they do:
+Note that your scenario file can also [extend the default scenario](#extending-the-default-scenario).
+
+Here is what each `async function` does:
 
 ### `setup` function (optional)
 
-The `setup` function takes a Puppeteer [Page][] as input and returns undefined. It runs before each `iteration`, or before `createTests`. This is a good place to log in, if your webapp requires a login.
+The async `setup` function takes a Puppeteer [Page][] as input and returns undefined. It runs before each `iteration`, or before `createTests`. This is a good place to log in, if your webapp requires a login.
 
 If this function is not defined, then no setup code will be run.
 
@@ -174,7 +178,7 @@ For instance, your `createTests` might return:
 ]
 ```
 
-### `iteration` function
+### `iteration` function (required)
 
 The async `iteration` function takes a Puppeteer [Page][] and _iteration data_ as input and returns undefined. It runs for each iteration of the memory leak test. The _iteration data_ is a plain object and comes from the `createTests` function, so by default it is just an empty object: `{}`.
 
@@ -197,13 +201,7 @@ If this function is not defined, then no teardown code will be run.
 
 The async `waitForIdle` function takes a Puppeteer [Page][] and should resolve when the page is considered "idle."
 
-By default,
-`fuite` has some heuristics to determine that the page is idle (based on both network idle and main thread idle), but this may not work
-for every web app. So you can override the default behavior here.
-
-If this function is not defined, then the default idle check is used.
-
-Here is an example:
+Here is an example idle check:
 
 ```js
 export async function waitForIdle(page) {
@@ -211,6 +209,8 @@ export async function waitForIdle(page) {
   await page.waitForSelector('#my-element') // wait for element
 }
 ```
+
+If this function is not defined, then the default idle check is used. The default is based on heuristics, using the network idle and main thread idle.
 
 ## Setup
 
@@ -234,7 +234,7 @@ Then pass it in:
 npx fuite https://example.com --setup ./mySetup.mjs
 ```
 
-The [`setup` function](#setup-function) defined here is the same one that you can define in a custom scenario using [`--scenario`](#scenario) (i.e. it takes a Puppeteer [Page][] as input).
+The [`setup` function](#setup-function-optional) defined here is the same one that you can define in a custom scenario using [`--scenario`](#scenario) (i.e. it takes a Puppeteer [Page][] as input).
 
 If both `--scenario` and `--setup` are defined, then `--setup` will override the `setup` function in the scenario.
 
