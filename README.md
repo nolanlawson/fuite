@@ -92,7 +92,7 @@ fuite --scenario ./myScenario.mjs https://example.com
 
 Your `myScenario.mjs` can export several `async function`s, most of which are optional.
 
-Here is a template (delete any optional functions you don't need):
+Here is a template:
 
 ```js
 // myScenario.mjs
@@ -134,9 +134,9 @@ export async function waitForIdle(page) {
 }
 ```
 
-Note that your scenario file can also [extend the default scenario](#extending-the-default-scenario).
+You can delete any optional function you don't need.
 
-Here is what each `async function` does:
+Note that your scenario file can also [extend the default scenario](#extending-the-default-scenario).
 
 ### `setup` function (optional)
 
