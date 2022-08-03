@@ -68,7 +68,7 @@ The URL to load. This should be whatever landing page you want to start at. Note
 
     -o, --output <file>
 
-`fuite` generates a lot of data, but not all of it is shown in the CLI output. To dig deeper, use the `--output` option to create a JSON file containing `fuite`'s anlaysis. This contains additional information such as the line of code that an event listener was declared on.
+`fuite` generates a lot of data, but not all of it is shown in the CLI output. To dig deeper, use the `--output` option to create a JSON file containing `fuite`'s analysis. This contains additional information such as the line of code that an event listener was declared on.
 
 Anything that you see in the CLI, you can also find in the output JSON file.
 
@@ -382,7 +382,7 @@ Note that the above works if you're using the JavaScript API. For the CLI, you p
 
 Similarly, `fuite` measures the JavaScript heap size of the page, corresponding to what you see in the Chrome DevTool's Memory tab. It ignores the size of native browser objects.
 
-`fuite` works best when your source code is unminified. Otherwise the class names will show as the minified versions, which can be hard to debug.
+`fuite` works best when your source code is unminified. Otherwise, the class names will show as the minified versions, which can be hard to debug.
 
 `fuite` may use a lot of memory itself to analyze large heap snapshot files. If you find that Node.js is running out of memory, you can run something like:
 
@@ -425,7 +425,7 @@ If you have sourcemaps, it will show the original source. Otherwise, it'll show 
 Sometimes more than one thing is increasing the size, and not every increase is at fault (e.g. it deletes right after).
 In those cases, you should use `--output` and look at the JSON output to see the full list of stacktraces.
 
-In some other cases, `fuite` is not able to track increases to collections. (E.g. the object disallows modifications, or the code uses `Array.prototype.push.call()` instead of `.push()`ing directly.)
+In some other cases, `fuite` is not able to track increases in collections. (E.g. the object disallows modifications, or the code uses `Array.prototype.push.call()` instead of `.push()`ing directly.)
 
 In those cases, you may have to do a manual analysis. Below is how you can do that.
 
