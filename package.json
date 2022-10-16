@@ -26,7 +26,7 @@
   "dependencies": {
     "as-table": "^1.0.55",
     "atob": "^2.1.2",
-    "chalk": "^5.0.1",
+    "chalk": "^5.1.2",
     "commander": "^9.3.0",
     "crypto-random-string": "^4.0.0",
     "exit-hook": "^3.0.0",
