@@ -29,7 +29,7 @@
     "chalk": "^5.1.2",
     "commander": "^9.4.1",
     "crypto-random-string": "^4.0.0",
-    "exit-hook": "^3.0.0",
+    "exit-hook": "3.0.0",
     "node-abort-controller": "^3.0.1",
     "node-fetch": "^3.2.10",
     "ono": "^7.1.3",
