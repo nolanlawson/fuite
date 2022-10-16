@@ -41,7 +41,7 @@
     "source-map": "^0.7.4",
     "stacktrace-parser": "^0.1.10",
     "table": "^6.8.0",
-    "temp-dir": "^2.0.0",
+    "temp-dir": "^3.0.0",
     "uuid": "^9.0.0"
   },
   "devDependencies": {
