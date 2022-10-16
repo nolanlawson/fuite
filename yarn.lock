@@ -1238,10 +1238,10 @@ execa@^1.0.0:
     signal-exit "^3.0.0"
     strip-eof "^1.0.0"
 
-exit-hook@^3.0.0:
-  version "3.0.0"
-  resolved "https://registry.yarnpkg.com/exit-hook/-/exit-hook-3.0.0.tgz#367d132735a24b96569327806cfbf0eb081af7b5"
-  integrity sha512-ElRvnoj3dvOc5WjnQx0CF66rS0xehV6eZdcmqZX17uOLPy3me43frl8UD73Frkx5Aq5kgziMDECjDJR2X1oBFQ==
+exit-hook@^3.1.0:
+  version "3.1.0"
+  resolved "https://registry.yarnpkg.com/exit-hook/-/exit-hook-3.1.0.tgz#0ba691facf29637930ead13e727cdc61860331b9"
+  integrity sha512-KiF9SiLZsKhSutx4V9sG2InYb0v1+2sfKlGD18et8/aGg2m4ij6MJbUHy/cnqJf4ncE7rWjqchE2SNIi4Lgg4A==
 
 extract-zip@2.0.1:
   version "2.0.1"
