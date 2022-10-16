@@ -3501,10 +3501,10 @@ vary@~1.1.2:
   resolved "https://registry.yarnpkg.com/vary/-/vary-1.1.2.tgz#2299f02c6ded30d4a5961b0b9f74524a18f634fc"
   integrity sha1-IpnwLG3tMNSllhsLn3RSShj2NPw=
 
-wait-for-localhost@^4.0.0:
-  version "4.0.0"
-  resolved "https://registry.yarnpkg.com/wait-for-localhost/-/wait-for-localhost-4.0.0.tgz#87ea0331a656c818186d2cab8c3da27eb937deaa"
-  integrity sha512-XkP+FzzqJC1zVaB5xK4Z9/IErtszPsns232opPlMaskmBHVudmpSZxv8cTtw6FkXCk78Vw0236Prv35YOwGvfg==
+wait-for-localhost@^4.0.1:
+  version "4.0.1"
+  resolved "https://registry.yarnpkg.com/wait-for-localhost/-/wait-for-localhost-4.0.1.tgz#cb1dbfc5d070057700ea50c3e36d1b1abe864d51"
+  integrity sha512-/q7fnGj3ATD4myCqlH3ZB/soX3cFZAztMvZgxOv0bZ7+8MsBUQrxIVrUkLsmro0qZAI5L9/QLGhJ0RsTfCmIbQ==
 
 wcwidth@^1.0.1:
   version "1.0.1"
