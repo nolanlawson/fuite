@@ -75,7 +75,7 @@ export async function createTests (page) {
     return {
       data: {
         href: originalHref,
-        fullHref: fullHref
+        fullHref
       },
       description: `Go to ${url.pathname + url.search + url.hash} and back`
     }
