@@ -1,3 +1,17 @@
+# [2.0.0](https://github.com/nolanlawson/fuite/compare/v1.6.1...v2.0.0) (2023-03-11)
+
+
+### Bug Fixes
+
+* require Node 14.17+, update dependencies (BREAKING CHANGE) ([#74](https://github.com/nolanlawson/fuite/issues/74)) ([1cfc903](https://github.com/nolanlawson/fuite/commit/1cfc9034008e4042dcabb71b95360b009817636a))
+
+
+### BREAKING CHANGES
+
+* Require Node v14.17+
+
+
+
 ## [1.6.1](https://github.com/nolanlawson/fuite/compare/v1.6.0...v1.6.1) (2022-10-16)
 
 * update dependencies
