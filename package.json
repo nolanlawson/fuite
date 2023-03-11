@@ -30,6 +30,7 @@
     "commander": "^10.0.0",
     "crypto-random-string": "^5.0.0",
     "exit-hook": "3.2.0",
+    "node-abort-controller": "^3.0.1",
     "node-fetch": "^3.3.1",
     "ono": "^7.1.3",
     "ora": "^6.1.2",
@@ -70,10 +71,10 @@
   "homepage": "https://github.com/nolanlawson/fuite#readme",
   "//": "Require Node 14 and ES modules: https://git.io/JMbBG",
   "engines": {
-    "node": ">= 16.0.0"
+    "node": ">= 14.17.0"
   },
   "volta": {
-    "node": "16.15.1",
+    "node": "16.19.1",
     "yarn": "1.22.19"
   },
   "standard": {
