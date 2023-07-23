@@ -1,3 +1,13 @@
+## [2.0.1](https://github.com/nolanlawson/fuite/compare/v2.0.0...v2.0.1) (2023-07-23)
+
+
+### Bug Fixes
+
+* result should have numIterations ([#79](https://github.com/nolanlawson/fuite/issues/79)) ([23f51a7](https://github.com/nolanlawson/fuite/commit/23f51a7765b17830bf2d2fde3665f034c66d77bd))
+* update deps, use puppeteer headless=new ([#78](https://github.com/nolanlawson/fuite/issues/78)) ([fe91b6c](https://github.com/nolanlawson/fuite/commit/fe91b6ca512eb74cb0a922ede62fe2b8354e550f))
+
+
+
 # [2.0.0](https://github.com/nolanlawson/fuite/compare/v1.6.1...v2.0.0) (2023-03-11)
 
 
