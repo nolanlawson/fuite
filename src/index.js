@@ -49,7 +49,7 @@ async function analyzeOptions (options) {
   const { debug, heapsnapshot, progress } = options
   const args = Array.isArray(options.browserArgs) ? options.browserArgs : []
   const browser = await puppeteer.launch({
-    headless: !debug,
+    headless: debug ? false : 'new',
     defaultViewport: { width: 1280, height: 800 },
     args
   })
