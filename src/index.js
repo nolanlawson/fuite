@@ -126,6 +126,7 @@ function mergeResults (results, numIterations) {
   result.delta = delta
   result.deltaPerIteration = deltaPerIteration
   result.leaks.detected = leaksDetected
+  result.numIterations = numIterations
 
   return result
 }

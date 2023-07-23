@@ -15,6 +15,7 @@ describe('basic test suite', () => {
       { href: 'contact' }
     ])
     expect(results.map(_ => _.result.leaks.detected)).to.deep.equal([true, false, false])
+    expect(results.map(_ => _.result.numIterations)).to.deep.equal([3, 3, 3])
 
     const deltas = results.map(_ => _.result.deltaPerIteration)
     expect(deltas[0]).to.be.above(1000000)
