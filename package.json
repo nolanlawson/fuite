@@ -16,7 +16,7 @@
   ],
   "scripts": {
     "test": "run-p --race test:serve test:mocha",
-    "test:serve": "serve",
+    "test:serve": "serve --no-request-logging",
     "test:mocha": "mocha ./test/spec/",
     "lint": "standard",
     "version": "run-s version:changelog version:add",
@@ -27,16 +27,15 @@
     "as-table": "^1.0.55",
     "atob": "^2.1.2",
     "chalk": "^5.3.0",
-    "commander": "^10.0.1",
+    "commander": "^11.0.0",
     "crypto-random-string": "^5.0.0",
     "exit-hook": "3.2.0",
-    "node-abort-controller": "^3.0.1",
     "node-fetch": "^3.3.1",
     "ono": "^7.1.3",
-    "ora": "^6.3.1",
+    "ora": "^7.0.1",
     "please-upgrade-node": "^3.2.0",
     "pretty-bytes": "^6.1.1",
-    "puppeteer": "^19.11.1",
+    "puppeteer": "^21.0.1",
     "quick-lru": "^6.1.1",
     "source-map": "^0.7.4",
     "stacktrace-parser": "^0.1.10",
@@ -69,9 +68,8 @@
     "url": "https://github.com/nolanlawson/fuite/issues"
   },
   "homepage": "https://github.com/nolanlawson/fuite#readme",
-  "//": "Require Node 14 and ES modules: https://git.io/JMbBG",
   "engines": {
-    "node": ">= 14.17.0"
+    "node": ">= 16.3.0"
   },
   "volta": {
     "node": "16.20.1",

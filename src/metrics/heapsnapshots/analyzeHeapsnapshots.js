@@ -19,6 +19,7 @@ const browserInternalClasses = new Set([
   '(string)',
   '(system)',
   'InternalNode',
+  'DOMRectReadOnly', // used by LayoutShift/LayoutShiftAttribution, gBCR returns DOMRect
   'LayoutShift',
   'LayoutShiftAttribution',
   'PerformanceEntry',

@@ -3,7 +3,11 @@ import { expect } from 'chai'
 import { asyncIterableToArray } from './util.js'
 import { omit } from '../../src/util.js'
 
-const normalizeStackTrace = stacktrace => stacktrace.trim().split('\n').map(_ => _.trim())
+const normalizeStackTrace = stacktrace => {
+  return stacktrace.trim()
+    .split('\n')
+    .map(_ => _.trim().split(/\s+/))
+}
 
 describe('collections', () => {
   it('can detect leaking collections', async () => {
