@@ -68,7 +68,6 @@
     "url": "https://github.com/nolanlawson/fuite/issues"
   },
   "homepage": "https://github.com/nolanlawson/fuite#readme",
-  "//": "Require Node 14 and ES modules: https://git.io/JMbBG",
   "engines": {
     "node": ">= 16.3.0"
   },
