@@ -6,7 +6,13 @@ import asTable from 'as-table'
 export async function prettifyStacktrace (stacktrace) {
   const parsed = stackTraceParser.parse(stacktrace)
     // remove the puppeteer code itself; this is confusing for devs since we wrote this code, not them
-    .filter(({ file }) => !(file && file.includes('__puppeteer_evaluation_script__')))
+    .filter(({ file, methodName }) => {
+      return !(
+        file && file.includes('__puppeteer_evaluation_script__')
+      ) && !(
+        methodName && methodName.includes('pptr:evaluate')
+      )
+    })
   const parsedWithSourceMaps = await Promise.all(parsed.map(async (original) => {
     const { lineNumber, methodName, file, column } = original
     if (/^https?:\/\//.test(original.file)) { // looks like a URL we can fetch

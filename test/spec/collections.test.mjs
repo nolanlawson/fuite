@@ -65,7 +65,6 @@ describe('collections', () => {
     const result = results[0].result
     expect(result.leaks.detected).to.equal(true)
     const expected = `
-obj.<computed> [as push] (pptr:evaluate;findLeakingCollections%20 file%3A%2F%2F%2Fhome%2Fnolan%2Fworkspace%2Ffuite%2Fsrc%2Fmetrics%2Fcollections%2Fcollections.js%3A109%3A41):93:30
 push           http://localhost:3000/test/www/collectionsWithSourceMaps/script.js:35:8
                webpack://navigo/src/middlewares/checkForAfterHook.ts:10:52
 Array.forEach  <anonymous>
@@ -88,7 +87,6 @@ next           webpack://navigo/src/Q.ts:34:10
     const result = results[0].result
     expect(result.leaks.detected).to.equal(true)
     const expected = `
-obj.<computed> [as push] (pptr:evaluate;findLeakingCollections%20 file%3A%2F%2F%2Fhome%2Fnolan%2Fworkspace%2Ffuite%2Fsrc%2Fmetrics%2Fcollections%2Fcollections.js%3A109%3A41):93:30
 aboutHook      http://localhost:3000/test/www/collectionsWithBrokenSourceMaps/script.min.js:1:526
                webpack://navigo/src/middlewares/checkForAfterHook.ts:10:52
 Array.forEach  <anonymous>
