@@ -1,6 +1,6 @@
 {
   "name": "fuite",
-  "version": "2.0.1",
+  "version": "3.0.0",
   "description": "A tool for finding memory leaks in web apps",
   "type": "module",
   "main": "./src/index.js",

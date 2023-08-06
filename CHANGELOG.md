@@ -1,3 +1,17 @@
+# [3.0.0](https://github.com/nolanlawson/fuite/compare/v2.0.1...v3.0.0) (2023-08-06)
+
+
+### Bug Fixes
+
+* update deps, drop node 14 support (BREAKING CHANGE) ([#80](https://github.com/nolanlawson/fuite/issues/80)) ([6f22ba0](https://github.com/nolanlawson/fuite/commit/6f22ba0adea774447315271931f0c4ba7d19d275))
+
+
+### BREAKING CHANGES
+
+* Require Node v16.3.0+
+
+
+
 ## [2.0.1](https://github.com/nolanlawson/fuite/compare/v2.0.0...v2.0.1) (2023-07-23)
 
 
