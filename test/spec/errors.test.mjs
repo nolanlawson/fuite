@@ -14,7 +14,7 @@ describe('errors', () => {
 
   it('multi-page URL', async () => {
     const results = await asyncIterableToArray(findLeaks('http://localhost:3000/test/www/multiPage/a', {
-      iterations: 3
+      iterations: 17 // avoid false positives
     }))
     expect(results.length).to.equal(1)
     const { result } = results[0]
