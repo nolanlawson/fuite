@@ -1,3 +1,17 @@
+# [4.0.0](https://github.com/nolanlawson/fuite/compare/v3.0.0...v4.0.0) (2023-12-17)
+
+
+### chore
+
+* update dependencies, require node 18 ([#83](https://github.com/nolanlawson/fuite/issues/83)) ([5ec9977](https://github.com/nolanlawson/fuite/commit/5ec99777b908d1126447a17732043b3c785e34ce))
+
+
+### BREAKING CHANGES
+
+* require node 18+
+
+
+
 # [3.0.0](https://github.com/nolanlawson/fuite/compare/v2.0.1...v3.0.0) (2023-08-06)
 
 
