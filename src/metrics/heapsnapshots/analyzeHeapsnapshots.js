@@ -24,6 +24,7 @@ const browserInternalClasses = new Set([
   'LayoutShiftAttribution',
   'PerformanceEntry',
   'PerformanceEventTiming',
+  'PerformanceLongAnimationFrameTiming',
   'PerformanceLongTaskTiming',
   'PerformanceNavigation',
   'PerformanceNavigationTiming',
