@@ -119,4 +119,10 @@ next           webpack://navigo/src/Q.ts:34:10
       }
     ])
   })
+
+  it('tons of leaking collections', async () => {
+    await asyncIterableToArray(findLeaks('http://localhost:3000/test/www/lotsOfLeakingCollections/', {
+      iterations: 7
+    }))
+  })
 })
