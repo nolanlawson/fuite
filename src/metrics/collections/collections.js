@@ -1,5 +1,8 @@
 import { sortBy } from '../../util.js'
 import { prettifyStacktrace } from '../../prettifyStacktrace.js'
+import { promisePool } from '../../promisePool.js'
+
+const PROMISE_POOL_SIZE = 100 // avoid OOMs when lots of collections are leaking
 
 export async function startTrackingCollections (page) {
   // The basic idea for this comes from
@@ -290,19 +293,36 @@ export async function augmentLeakingCollectionsWithStacktraces (page, collection
 
   const idsToStacktraces = Object.fromEntries(trackedStacktracesArray.map(({ id, stacktraces }) => ([id, stacktraces])))
 
-  return (await Promise.all(collections.map(async collection => {
+  const cachedStacktraces = new Map()
+
+  // Create an object like { original, pretty } but avoid creating excessive objects for repeated stacktraces.
+  // This especially occurs with identical leaking collections.
+  async function getStacktraceWithOriginalAndPretty (original) {
+    let result = cachedStacktraces.get(original)
+    if (!result) {
+      let pretty
+      try {
+        pretty = await prettifyStacktrace(original)
+      } catch (err) {
+        // ignore if this prettification fails for any reason
+        // TODO: log errors
+      }
+      // check once more since the map may have changed asynchronously
+      result = cachedStacktraces.get(original)
+      if (!result) {
+        result = { original, pretty }
+        cachedStacktraces.set(original, result)
+      }
+    }
+    return result
+  }
+
+  return (await promisePool(PROMISE_POOL_SIZE, collections.map(collection => async () => {
     const res = { ...collection }
     if (collection.id in idsToStacktraces) {
       const stacktraces = idsToStacktraces[collection.id]
-      res.stacktraces = await Promise.all(stacktraces.map(async original => {
-        let pretty
-        try {
-          pretty = await prettifyStacktrace(original)
-        } catch (err) {
-          // ignore if this prettification fails for any reason
-          // TODO: log errors
-        }
-        return { original, pretty }
+      res.stacktraces = await Promise.all(stacktraces.map(async stacktrace => {
+        return getStacktraceWithOriginalAndPretty(stacktrace)
       }))
     }
     return res
