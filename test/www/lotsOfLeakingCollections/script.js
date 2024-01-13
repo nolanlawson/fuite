@@ -2,7 +2,7 @@ import { makeRouter } from '../basicRouter.js'
 
 const router = makeRouter(['', 'about'])
 
-const collections = Array(10000).fill().map(_ => [])
+const collections = Array(5000).fill().map(_ => [])
 
 router.addAfterHook('/about', function aboutHook () {
   for (const collection of collections) {

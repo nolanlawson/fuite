@@ -2,6 +2,8 @@ import chalk from 'chalk'
 import prettyBytes from 'pretty-bytes'
 import { table as formatTable } from 'table'
 
+const MAX_COLLECTIONS_TO_SHOW = 100 // avoid overwhelming the console if there are lots of leaking collections
+
 function formatStacktraces (stacktraces) {
   if (!stacktraces || !stacktraces.length) {
     return ''
@@ -130,7 +132,10 @@ export function formatResult ({ test, result }) {
     leakTables += formatLeakingDomNodes(result.leaks.domNodes)
   }
   if (result.leaks.collections.length) {
-    leakTables += formatLeakingCollections(result.leaks.collections)
+    leakTables += formatLeakingCollections(result.leaks.collections.slice(0, MAX_COLLECTIONS_TO_SHOW))
+    if (result.leaks.collections.length > MAX_COLLECTIONS_TO_SHOW) {
+      leakTables += `\n(Truncated to ${MAX_COLLECTIONS_TO_SHOW} leaking collections; ${result.leaks.collections.length} leaking collections total.)`
+    }
   }
 
   let snapshots = ''

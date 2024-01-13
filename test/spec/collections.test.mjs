@@ -120,9 +120,52 @@ next           webpack://navigo/src/Q.ts:34:10
     ])
   })
 
-  it('tons of leaking collections', async () => {
-    await asyncIterableToArray(findLeaks('http://localhost:3000/test/www/lotsOfLeakingCollections/', {
-      iterations: 7
+  it('lots of leaking collections', async () => {
+    const results = await asyncIterableToArray(findLeaks('http://localhost:3000/test/www/lotsOfLeakingCollections/', {
+      iterations: 3
     }))
+
+    const result = results[0].result
+    expect(result.leaks.detected).to.equal(true)
+    expect(result.leaks.collections.length).to.equal(5000)
+
+    const firstCollection = result.leaks.collections[0]
+    const {
+      delta,
+      deltaPerIteration,
+      preview,
+      sizeAfter,
+      sizeBefore,
+      type
+    } = firstCollection
+    expect({
+      delta,
+      deltaPerIteration,
+      preview,
+      sizeAfter,
+      sizeBefore,
+      type
+    }).to.deep.equal({
+      "delta": 3,
+      "deltaPerIteration": 1,
+      "preview": "[0, ...]",
+      "sizeAfter": 4,
+      "sizeBefore": 1,
+      "type": "Array"
+    })
+
+    const expected = `
+aboutHook      http://localhost:3000/test/www/lotsOfLeakingCollections/script.js:9:16
+               webpack://navigo/src/middlewares/checkForAfterHook.ts:10:52
+Array.forEach  <anonymous>
+forEach        webpack://navigo/src/middlewares/checkForAfterHook.ts:10:36
+context        webpack://navigo/src/Q.ts:31:31
+next           webpack://navigo/src/Q.ts:34:10
+done           webpack://navigo/src/middlewares/callHandler.ts:9:2
+context        webpack://navigo/src/Q.ts:31:31
+next           webpack://navigo/src/Q.ts:34:10
+    `
+    const { pretty } = firstCollection.stacktraces[0]
+    expect(normalizeStackTrace(pretty)).to.deep.equal(normalizeStackTrace(expected))
   })
 })
