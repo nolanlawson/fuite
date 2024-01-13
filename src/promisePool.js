@@ -1,10 +1,10 @@
 // basic promise pool to replace Promise.all for memory-sensitive cases
 
-export async function promisePool(size, promiseFactories) {
+export async function promisePool (size, promiseFactories) {
   const results = Array(promiseFactories.length).fill()
   let current = 0
 
-  async function promiseChain() {
+  async function promiseChain () {
     while (current !== promiseFactories.length) {
       const index = current
       current++

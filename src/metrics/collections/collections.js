@@ -297,7 +297,7 @@ export async function augmentLeakingCollectionsWithStacktraces (page, collection
 
   // Create an object like { original, pretty } but avoid creating excessive objects for repeated stacktraces.
   // This especially occurs with identical leaking collections.
-  async function getStacktraceWithOriginalAndPretty(original) {
+  async function getStacktraceWithOriginalAndPretty (original) {
     let result = cachedStacktraces.get(original)
     if (!result) {
       let pretty

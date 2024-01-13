@@ -146,12 +146,12 @@ next           webpack://navigo/src/Q.ts:34:10
       sizeBefore,
       type
     }).to.deep.equal({
-      "delta": 3,
-      "deltaPerIteration": 1,
-      "preview": "[0, ...]",
-      "sizeAfter": 4,
-      "sizeBefore": 1,
-      "type": "Array"
+      delta: 3,
+      deltaPerIteration: 1,
+      preview: '[0, ...]',
+      sizeAfter: 4,
+      sizeBefore: 1,
+      type: 'Array'
     })
 
     const expected = `
