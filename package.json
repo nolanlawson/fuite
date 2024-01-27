@@ -35,7 +35,7 @@
     "ora": "^8.0.1",
     "please-upgrade-node": "^3.2.0",
     "pretty-bytes": "^6.1.1",
-    "puppeteer": "^21.7.0",
+    "puppeteer": "^21.9.0",
     "quick-lru": "^7.0.0",
     "source-map": "^0.7.4",
     "stacktrace-parser": "^0.1.10",
@@ -44,7 +44,7 @@
     "uuid": "^9.0.1"
   },
   "devDependencies": {
-    "chai": "^5.0.0",
+    "chai": "^5.0.3",
     "conventional-changelog-cli": "^2.2.2",
     "mocha": "^10.2.0",
     "navigo": "^8.11.1",
