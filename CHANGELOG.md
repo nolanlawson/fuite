@@ -1,3 +1,12 @@
+## [4.0.3](https://github.com/nolanlawson/fuite/compare/v4.0.2...v4.0.3) (2024-01-27)
+
+
+### Bug Fixes
+
+* fix OOM when collections leak multiple times ([#90](https://github.com/nolanlawson/fuite/issues/90)) ([f115a74](https://github.com/nolanlawson/fuite/commit/f115a746f78097434a98d4d28e1dc85ffc0694c3)), closes [#89](https://github.com/nolanlawson/fuite/issues/89)
+
+
+
 ## [4.0.2](https://github.com/nolanlawson/fuite/compare/v4.0.1...v4.0.2) (2024-01-13)
 
 
