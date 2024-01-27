@@ -2,7 +2,8 @@ import { sortBy } from '../../util.js'
 import { prettifyStacktrace } from '../../prettifyStacktrace.js'
 import { promisePool } from '../../promisePool.js'
 
-const PROMISE_POOL_SIZE = 100 // avoid OOMs when lots of collections are leaking
+const COLLECTIONS_PROMISE_POOL_SIZE = 100 // avoid OOMs when lots of collections are leaking
+const STACKTRACES_PROMISE_POOL_SIZE = 10 // avoid OOMs when collections are leaking in multiple places
 
 export async function startTrackingCollections (page) {
   // The basic idea for this comes from
@@ -317,13 +318,13 @@ export async function augmentLeakingCollectionsWithStacktraces (page, collection
     return result
   }
 
-  return (await promisePool(PROMISE_POOL_SIZE, collections.map(collection => async () => {
+  return (await promisePool(COLLECTIONS_PROMISE_POOL_SIZE, collections.map(collection => async () => {
     const res = { ...collection }
     if (collection.id in idsToStacktraces) {
       const stacktraces = idsToStacktraces[collection.id]
-      res.stacktraces = await Promise.all(stacktraces.map(async stacktrace => {
+      res.stacktraces = (await promisePool(STACKTRACES_PROMISE_POOL_SIZE, stacktraces.map(stacktrace => async () => {
         return getStacktraceWithOriginalAndPretty(stacktrace)
-      }))
+      })))
     }
     return res
   })))
