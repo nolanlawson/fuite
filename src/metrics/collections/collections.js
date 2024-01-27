@@ -322,9 +322,9 @@ export async function augmentLeakingCollectionsWithStacktraces (page, collection
     const res = { ...collection }
     if (collection.id in idsToStacktraces) {
       const stacktraces = idsToStacktraces[collection.id]
-      res.stacktraces = (await promisePool(STACKTRACES_PROMISE_POOL_SIZE, stacktraces.map(stacktrace => async () => {
+      res.stacktraces = await promisePool(STACKTRACES_PROMISE_POOL_SIZE, stacktraces.map(stacktrace => async () => {
         return (await getStacktraceWithOriginalAndPretty(stacktrace))
-      })))
+      }))
     }
     return res
   })))
