@@ -1,3 +1,12 @@
+## [4.0.4](https://github.com/nolanlawson/fuite/compare/v4.0.3...v4.0.4) (2024-01-30)
+
+
+### Bug Fixes
+
+* pin puppeteer for now ([#93](https://github.com/nolanlawson/fuite/issues/93)) ([cea1fb2](https://github.com/nolanlawson/fuite/commit/cea1fb25ee034dbf106cdb6224ab7ac168c942e7)), closes [#92](https://github.com/nolanlawson/fuite/issues/92)
+
+
+
 ## [4.0.3](https://github.com/nolanlawson/fuite/compare/v4.0.2...v4.0.3) (2024-01-27)
 
 
