@@ -1043,10 +1043,10 @@ degenerator@^5.0.0:
     escodegen "^2.1.0"
     esprima "^4.0.1"
 
-devtools-protocol@0.0.1232444:
-  version "0.0.1232444"
-  resolved "https://registry.yarnpkg.com/devtools-protocol/-/devtools-protocol-0.0.1232444.tgz#406345a90a871ba852c530d73482275234936eed"
-  integrity sha512-pM27vqEfxSxRkTMnF+XCmxSEb6duO5R+t8A9DEEJgy4Wz2RVanje2mmj99B6A3zv2r/qGfYlOvYznUhuokizmg==
+devtools-protocol@0.0.1213968:
+  version "0.0.1213968"
+  resolved "https://registry.yarnpkg.com/devtools-protocol/-/devtools-protocol-0.0.1213968.tgz#b2b4ab2ea412bdc30d7a843aedf97b5646e12e6f"
+  integrity sha512-o4n/beY+3CcZwFctYapjGelKptR4AuQT5gXS1Kvgbig+ArwkxK7f8wDVuD1wsoswiJWCwV6OK+Qb7vhNzNmABQ==
 
 diff@5.0.0:
   version "5.0.0"
@@ -3123,26 +3123,26 @@ punycode@^2.1.0:
   resolved "https://registry.yarnpkg.com/punycode/-/punycode-2.3.1.tgz#027422e2faec0b25e1549c3e1bd8309b9133b6e5"
   integrity sha512-vYt7UD1U9Wg6138shLtLOvdAu+8DsC/ilFtEVHcH+wydcSpNE20AfSOduf6MkRFahL5FY7X1oU7nKVZFtfq8Fg==
 
-puppeteer-core@21.9.0:
-  version "21.9.0"
-  resolved "https://registry.yarnpkg.com/puppeteer-core/-/puppeteer-core-21.9.0.tgz#7462d5dd0571cd1e0580cc3729d7951cc6fe2505"
-  integrity sha512-QgowcczLAoLWlV38s3y3VuEvjJGfKU5rR6Q23GUbiGOaiQi+QpaWQ+aXdzP9LHVSUPmHdAaWhcvMztYSw3f8gQ==
+puppeteer-core@21.8.0:
+  version "21.8.0"
+  resolved "https://registry.yarnpkg.com/puppeteer-core/-/puppeteer-core-21.8.0.tgz#16853ef69a1bc81ed8369631120cf47501192399"
+  integrity sha512-lRw1zXsrFE/COEAmupE0nSF+RSOJ+3rI12ZmMydkr6yXaAvfnYAoqND+HXXiRuzB+YM3IgsWekAMhNZCJOkbTA==
   dependencies:
     "@puppeteer/browsers" "1.9.1"
     chromium-bidi "0.5.4"
     cross-fetch "4.0.0"
     debug "4.3.4"
-    devtools-protocol "0.0.1232444"
+    devtools-protocol "0.0.1213968"
     ws "8.16.0"
 
-puppeteer@^21.9.0:
-  version "21.9.0"
-  resolved "https://registry.yarnpkg.com/puppeteer/-/puppeteer-21.9.0.tgz#ff6cb321f6d43c1f39ba74bbdfccf2b5ef0121af"
-  integrity sha512-vcLR81Rp+MBrgqhiXZfpwEBbyKTa88Hd+8Al3+emWzcJb9evLLSfUYli0QUqhofPFrXsO2A/dAF9OunyOivL6w==
+puppeteer@21.8.0:
+  version "21.8.0"
+  resolved "https://registry.yarnpkg.com/puppeteer/-/puppeteer-21.8.0.tgz#e001097402b6f4e924674da887e414862a183820"
+  integrity sha512-TFUTJd4Cg8dWEDOk0J4HjqL49BsAiVSeS85aWvt9XPs7+RileaVzCJTUmV6lJag4CV+O0RuRch2iG1qZ2mJWfg==
   dependencies:
     "@puppeteer/browsers" "1.9.1"
     cosmiconfig "9.0.0"
-    puppeteer-core "21.9.0"
+    puppeteer-core "21.8.0"
 
 q@^1.5.1:
   version "1.5.1"

@@ -19,8 +19,7 @@ describe('errors', () => {
     expect(results.length).to.equal(1)
     const { result } = results[0]
 
-    // TODO: Chromium started reporting true here https://github.com/nolanlawson/fuite/issues/92
-    // expect(result.leaks.detected).to.equal(false)
+    expect(result.leaks.detected).to.equal(false)
     expect(result.leaks.collections.length).to.equal(0)
     expect(result.leaks.domNodes.deltaPerIteration).to.equal(0)
     expect(result.leaks.eventListeners.length).to.equal(0)
