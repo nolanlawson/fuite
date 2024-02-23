@@ -1,3 +1,12 @@
+## [4.0.5](https://github.com/nolanlawson/fuite/compare/v4.0.4...v4.0.5) (2024-02-23)
+
+
+### Bug Fixes
+
+* bump puppeteer to 22.2.0 ([#97](https://github.com/nolanlawson/fuite/issues/97)) ([2718a21](https://github.com/nolanlawson/fuite/commit/2718a21cd12679e2704300174e2b8ca92ee03306))
+
+
+
 ## [4.0.4](https://github.com/nolanlawson/fuite/compare/v4.0.3...v4.0.4) (2024-01-30)
 
 
