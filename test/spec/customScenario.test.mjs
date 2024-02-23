@@ -4,7 +4,7 @@ import { expect } from 'chai'
 import { asyncIterableToArray } from './util.js'
 
 describe('custom scenario', () => {
-  it.only('can do a custom version of the default scenario', async () => {
+  it('can do a custom version of the default scenario', async () => {
     const scenario = {
       async setup (page) {
         await (await page.$('#username')).type('myusername')
