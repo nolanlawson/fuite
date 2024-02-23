@@ -9,7 +9,7 @@ describe('custom scenario', () => {
       async setup (page) {
         await (await page.$('#username')).type('myusername')
         // This password has to be random or else Chrome will pop up a "you have an unsafe password" modal
-        await (await page.$('#password')).type(`${Math.floor(Math.random() * Number.MAX_SAFE_INTEGER).toString(16)}`)
+        await (await page.$('#password')).type(Math.floor(Math.random() * Number.MAX_SAFE_INTEGER).toString(16))
         await (await page.$('#submit')).click()
       },
       createTests: defaultScenario.createTests,
