@@ -2,6 +2,9 @@ import { createTempFile, runCli } from './util.js'
 import { expect } from 'chai'
 import fs from 'fs/promises'
 
+// This password has to be random or else Chrome will pop up a "you have an unsafe password" modal
+const randoPassword = () => Array(5).fill().map(() => Math.floor(Math.random() * 1000000).toString(16)).join('-')
+
 describe('cli test suite', () => {
   it('minimal cli test', async () => {
     const results = await runCli(['http://localhost:3000/test/www/minimal/'])
@@ -23,7 +26,7 @@ describe('cli test suite', () => {
     const fileContents = `
       export async function setup(page) {
         await (await page.$('#username')).type('myusername')
-        await (await page.$('#password')).type('mypassword')
+        await (await page.$('#password')).type('${randoPassword()}')
         await (await page.$('#submit')).click()
       }
     `
@@ -48,7 +51,8 @@ describe('cli test suite', () => {
     const fileContents = `
         export async function setup(page) {
           await page.type('#username', 'myusername')
-          await page.type('#password', 'mypassword')
+          // This password has to be random or else Chrome will pop up a "you have an unsafe password" modal
+          await page.type('#password', '${randoPassword()}')
           await page.click('#submit')
         }
         
