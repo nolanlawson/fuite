@@ -4,11 +4,12 @@ import { expect } from 'chai'
 import { asyncIterableToArray } from './util.js'
 
 describe('custom scenario', () => {
-  it('can do a custom version of the default scenario', async () => {
+  it.only('can do a custom version of the default scenario', async () => {
     const scenario = {
       async setup (page) {
         await (await page.$('#username')).type('myusername')
-        await (await page.$('#password')).type('mypassword')
+        // This password has to be random or else Chrome will pop up a "you have an unsafe password" modal
+        await (await page.$('#password')).type(`${Math.floor(Math.random() * Number.MAX_SAFE_INTEGER).toString(16)}`)
         await (await page.$('#submit')).click()
       },
       createTests: defaultScenario.createTests,

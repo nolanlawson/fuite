@@ -23,7 +23,7 @@ describe('cli test suite', () => {
     const fileContents = `
       export async function setup(page) {
         await (await page.$('#username')).type('myusername')
-        await (await page.$('#password')).type('mypassword')
+        await (await page.$('#password')).type('${Math.floor(Math.random() * Number.MAX_SAFE_INTEGER).toString(16)}')
         await (await page.$('#submit')).click()
       }
     `
@@ -48,7 +48,8 @@ describe('cli test suite', () => {
     const fileContents = `
         export async function setup(page) {
           await page.type('#username', 'myusername')
-          await page.type('#password', 'mypassword')
+          // This password has to be random or else Chrome will pop up a "you have an unsafe password" modal
+          await page.type('#password', '${Math.floor(Math.random() * Number.MAX_SAFE_INTEGER).toString(16)}')
           await page.click('#submit')
         }
         
