@@ -25,6 +25,7 @@ async function clickFirstVisible (page, selector) {
       return el.target === '' &&
         // quick and dirty visibility check
         window.getComputedStyle(el).getPropertyValue('display') !== 'none' &&
+        window.getComputedStyle(el).getPropertyValue('visibility') !== 'hidden' &&
         el.offsetHeight > 0 &&
         el.offsetWidth > 0
     })[0]
@@ -50,6 +51,7 @@ export async function createTests (page) {
         return el.target === '' &&
           // quick and dirty visibility check
           window.getComputedStyle(el).getPropertyValue('display') !== 'none' &&
+          window.getComputedStyle(el).getPropertyValue('visibility') !== 'hidden' &&
           el.offsetHeight > 0 &&
           el.offsetWidth > 0
       })
