@@ -1,3 +1,12 @@
+## [4.0.6](https://github.com/nolanlawson/fuite/compare/v4.0.5...v4.0.6) (2024-03-03)
+
+
+### Bug Fixes
+
+* check for element visibility in defaultScenario ([#99](https://github.com/nolanlawson/fuite/issues/99)) ([1d57167](https://github.com/nolanlawson/fuite/commit/1d57167f0814f4cc6d5581c7a625bf97d362ebd6))
+
+
+
 ## [4.0.5](https://github.com/nolanlawson/fuite/compare/v4.0.4...v4.0.5) (2024-02-23)
 
 
