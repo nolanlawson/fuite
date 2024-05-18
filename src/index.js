@@ -8,6 +8,9 @@ import { domNodesAndListenersMetric } from './metrics/domNodesAndListeners/index
 import { heapsnapshotsMetric } from './metrics/heapsnapshots/index.js'
 import { setCustomWaitForPageIdle } from './customWaitForPageIdle.js'
 
+// Maximum 32-bit signed integer, for sending CDP a high enough timeout
+const MAX_SIGNED_INT32 = Math.pow(2, 31) - 1
+
 // it's important that heapsnapshotsMetric is the last one here, because we want to run it after all the other metrics
 // (in the "before" step) and before all the other ones (in the "after" step) to avoid capturing unnecessary
 // stuff in the heapsnapshot
@@ -51,7 +54,8 @@ async function analyzeOptions (options) {
   const browser = await puppeteer.launch({
     headless: !debug,
     defaultViewport: { width: 1280, height: 800 },
-    args
+    args,
+    ...(debug && { protocolTimeout: MAX_SIGNED_INT32 }) // avoid timeouts when you're trying to debug
   })
   if (options.signal) {
     options.signal.addEventListener('abort', () => {
