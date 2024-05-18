@@ -10,7 +10,7 @@ jobs:
     strategy:
       matrix:
         # The lowest one should be the minimum supported node version, per package.json "engines" field
-        node: [ "18.17.0", "20", "22" ]
+        node: [ "18.0.0", "20", "22" ]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
