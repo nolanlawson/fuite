@@ -1,7 +1,7 @@
 import typescript from '@rollup/plugin-typescript'
 import virtual from '@rollup/plugin-virtual'
 import replace from '@rollup/plugin-replace'
-import strip from '@rollup/plugin-strip';
+import strip from '@rollup/plugin-strip'
 
 export default {
   input: '__entry__',
