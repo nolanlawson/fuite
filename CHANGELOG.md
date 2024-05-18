@@ -1,3 +1,12 @@
+## [4.0.7](https://github.com/nolanlawson/fuite/compare/v4.0.6...v4.0.7) (2024-05-18)
+
+
+### Bug Fixes
+
+* increase protocolTimeout in debug mode ([#101](https://github.com/nolanlawson/fuite/issues/101)) ([50a9fef](https://github.com/nolanlawson/fuite/commit/50a9fef9ffb95b8e4ffa66b2b7dbf215ecaf2a5f))
+
+
+
 ## [4.0.6](https://github.com/nolanlawson/fuite/compare/v4.0.5...v4.0.6) (2024-03-03)
 
 
