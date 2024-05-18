@@ -8,13 +8,13 @@ jobs:
     strategy:
       matrix:
         # The lowest one should be the minimum supported node version, per package.json "engines" field
-        node: [ "18.0.0", "20" ]
+        node: [ "18.0.0", "20", "22" ]
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node }}
-          cache: 'yarn'
-      - run: yarn --frozen-lockfile
-      - run: yarn lint
-      - run: yarn test
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm test
