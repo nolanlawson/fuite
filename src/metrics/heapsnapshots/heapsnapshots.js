@@ -2,7 +2,7 @@ import path from 'path'
 import tempDir from 'temp-dir'
 import cryptoRandomString from 'crypto-random-string'
 import { createReadStream, createWriteStream } from 'fs'
-import * as HeapSnapshotWorker from '../../thirdparty/devtools/heap_snapshot_worker/heap_snapshot_worker.js'
+import { HeapSnapshotLoader } from '../../thirdparty/devtools-frontend/index.js'
 
 export async function takeHeapSnapshot (page, cdpSession) {
   const filename = path.join(tempDir, `fuite-${cryptoRandomString({ length: 8, type: 'alphanumeric' })}.heapsnapshot`)
@@ -37,9 +37,10 @@ export async function takeHeapSnapshot (page, cdpSession) {
 export async function createHeapSnapshotModel (filename) {
   let loader
   const loaderPromise = new Promise(resolve => {
-    loader = new HeapSnapshotWorker.HeapSnapshotLoader.HeapSnapshotLoader({
+    loader = new HeapSnapshotLoader.HeapSnapshotLoader({
       sendEvent (type, message) {
-        if (message === 'Parsing strings…') {
+        const parsedMessage = JSON.parse(message)
+        if (type === 'ProgressUpdate' && parsedMessage.string === 'Parsing strings…') {
           // queue microtask to wait for data to truly be written
           Promise.resolve().then(resolve)
         }
