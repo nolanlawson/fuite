@@ -51,7 +51,8 @@ async function analyzeOptions (options) {
   const browser = await puppeteer.launch({
     headless: !debug,
     defaultViewport: { width: 1280, height: 800 },
-    args
+    args,
+    ...(debug && { protocolTimeout: 0 }) // avoid timeouts when you're trying to debug
   })
   if (options.signal) {
     options.signal.addEventListener('abort', () => {
