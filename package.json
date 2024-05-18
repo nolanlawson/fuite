@@ -27,7 +27,7 @@
     "as-table": "^1.0.55",
     "atob": "^2.1.2",
     "chalk": "^5.3.0",
-    "commander": "^12.0.0",
+    "commander": "^12.1.0",
     "crypto-random-string": "^5.0.0",
     "exit-hook": "4.0.0",
     "node-fetch": "^3.3.2",
@@ -35,23 +35,23 @@
     "ora": "^8.0.1",
     "please-upgrade-node": "^3.2.0",
     "pretty-bytes": "^6.1.1",
-    "puppeteer": "^22.3.0",
+    "puppeteer": "^22.9.0",
     "quick-lru": "^7.0.0",
     "source-map": "^0.7.4",
     "stacktrace-parser": "^0.1.10",
-    "table": "^6.8.1",
+    "table": "^6.8.2",
     "temp-dir": "^3.0.0",
     "uuid": "^9.0.1"
   },
   "devDependencies": {
-    "chai": "^5.1.0",
-    "conventional-changelog-cli": "^4.1.0",
-    "mocha": "^10.3.0",
+    "chai": "^5.1.1",
+    "conventional-changelog-cli": "^5.0.0",
+    "mocha": "^10.4.0",
     "navigo": "^8.11.1",
     "npm-run-all": "^4.1.5",
-    "serve": "^14.2.1",
+    "serve": "^14.2.3",
     "standard": "^17.1.0",
-    "wait-for-localhost": "^4.0.1"
+    "wait-for-localhost": "^4.1.0"
   },
   "keywords": [
     "memory",
@@ -71,10 +71,6 @@
   "engines": {
     "node": ">= 18.0.0"
   },
-  "volta": {
-    "node": "18.18.0",
-    "yarn": "1.22.19"
-  },
   "standard": {
     "ignore": [
       "thirdparty"
@@ -88,5 +84,6 @@
       "it",
       "AbortController"
     ]
-  }
+  },
+  "packageManager": "pnpm@9.1.1+sha512.14e915759c11f77eac07faba4d019c193ec8637229e62ec99eefb7cf3c3b75c64447882b7c485142451ee3a6b408059cdfb7b7fa0341b975f12d0f7629c71195"
 }
