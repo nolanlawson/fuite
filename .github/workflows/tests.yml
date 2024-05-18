@@ -2,6 +2,8 @@ name: Tests
 on:
   pull_request:
     branches: [ master ]
+  push:
+    branches: [ master ]
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -10,8 +12,9 @@ jobs:
         # The lowest one should be the minimum supported node version, per package.json "engines" field
         node: [ "18.0.0", "20", "22" ]
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
+      - uses: actions/checkout@v4
+      - run: corepack enable
+      - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node }}
           cache: 'pnpm'
