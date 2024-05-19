@@ -9,17 +9,6 @@ const makeStub = (...names) => names
   .join('\n')
 
 const noop = 'export default function noop() {}'
-const intlMessageFormatStub = makeStub('IntlMessageFormat')
-const colorConverterStub = makeStub('ColorConverter')
-const codemirrorStub = makeStub('cssStreamParser', 'StringStream')
-
-const localesStub = `
-  export const LOCALES = ['en-GB']
-  export const BUNDLED_LOCALES = ['en-GB']
-  export const DEFAULT_LOCALE =  'en-GB'
-  export const REMOTE_FETCH_PATTERN = ''
-  export const LOCAL_FETCH_PATTERN = ''
-`
 
 export default {
   input: '__entry__',
@@ -33,13 +22,16 @@ export default {
     virtual({
       './Color.js': noop,
       './ResourceType.js': noop,
-      './ColorConverter.js': colorConverterStub,
-      '../intl-messageformat/intl-messageformat.js': intlMessageFormatStub,
-      './package/intl-messageformat.esm.js': intlMessageFormatStub,
-      '../../third_party/codemirror.next/codemirror.next.js': codemirrorStub,
-      '../../third_party/codemirror.next/codemirror.next.ts': codemirrorStub,
-      './chunk/codemirror.js': codemirrorStub,
-      './locales.js': localesStub,
+      './ColorConverter.js': makeStub('ColorConverter'),
+      '../intl-messageformat/intl-messageformat.js': makeStub('IntlMessageFormat'),
+      '../../third_party/codemirror.next/codemirror.next.js': makeStub('cssStreamParser', 'StringStream'),
+      './locales.js': `
+        export const LOCALES = ['en-GB']
+        export const BUNDLED_LOCALES = ['en-GB']
+        export const DEFAULT_LOCALE =  'en-GB'
+        export const REMOTE_FETCH_PATTERN = ''
+        export const LOCAL_FETCH_PATTERN = ''
+      `,
       __entry__: `
         export { HeapSnapshotLoader } from './front_end/entrypoints/heap_snapshot_worker/heap_snapshot_worker.ts'
         export { HeapSnapshotModel } from './front_end/models/heap_snapshot_model/heap_snapshot_model.ts'
