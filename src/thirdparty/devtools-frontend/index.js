@@ -4418,4 +4418,3 @@ var HeapSnapshotLoader$1 = /*#__PURE__*/Object.freeze({
 });
 
 export { HeapSnapshotLoader$1 as HeapSnapshotLoader, HeapSnapshotModel };
-//# sourceMappingURL=index.js.map

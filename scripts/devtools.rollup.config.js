@@ -8,7 +8,7 @@ const makeStub = (...names) => names
   .map(_ => `export function ${_} () { throw new Error("not implemented"); }`)
   .join('\n')
 
-const noop = makeStub('noop')
+const noop = 'export default function noop() {}'
 const intlMessageFormatStub = makeStub('IntlMessageFormat')
 const colorConverterStub = makeStub('ColorConverter')
 const codemirrorStub = makeStub('cssStreamParser', 'StringStream')
@@ -26,8 +26,8 @@ export default {
   output: {
     format: 'esm',
     file: '../fuite/src/thirdparty/devtools-frontend/index.js',
-    sourcemap: true,
-    banner: '/* Generated from devtools-frontend via build-devtools-frontend.sh */'
+    banner: '/* Generated from devtools-frontend via build-devtools-frontend.sh */',
+    sourcemap: false
   },
   plugins: [
     virtual({
