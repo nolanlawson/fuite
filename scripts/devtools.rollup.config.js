@@ -47,7 +47,7 @@ export default {
     }),
     typescript({
       compilerOptions: {
-        lib: ['esnext', 'dom', "dom.iterable", 'webworker', 'webworker.iterable'],
+        lib: ['esnext', 'dom', 'dom.iterable', 'webworker', 'webworker.iterable'],
         target: 'esnext'
       },
       noEmitOnError: false
