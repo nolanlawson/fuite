@@ -1,3 +1,12 @@
+## [4.0.8](https://github.com/nolanlawson/fuite/compare/v4.0.7...v4.0.8) (2024-05-19)
+
+
+### Bug Fixes
+
+* bump to latest devtools-frontend ([#102](https://github.com/nolanlawson/fuite/issues/102)) ([e63428d](https://github.com/nolanlawson/fuite/commit/e63428d3822e97af53ddfc8f2f13b5a6d4d9f4be))
+
+
+
 ## [4.0.7](https://github.com/nolanlawson/fuite/compare/v4.0.6...v4.0.7) (2024-05-18)
 
 
