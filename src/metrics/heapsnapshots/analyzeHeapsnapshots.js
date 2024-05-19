@@ -1,4 +1,4 @@
-import * as HeapSnapshotModel from '../../thirdparty/devtools/heap_snapshot_worker/heap_snapshot_model.js'
+import { HeapSnapshotModel } from '../../thirdparty/devtools-frontend/index.js'
 import { sortBy } from '../../util.js'
 import { createHeapSnapshotModel } from './heapsnapshots.js'
 
@@ -39,13 +39,13 @@ export async function analyzeHeapSnapshots (startSnapshotFilename, endSnapshotFi
   // Read in snapshots serially to avoid using too much memory at once
   let startSnapshot = await createHeapSnapshotModel(startSnapshotFilename)
   const startSnapshotUid = startSnapshot.uid
-  const startStatistics = { ...startSnapshot.statistics }
+  const startStatistics = { ...startSnapshot.getStatistics() }
   const aggregatesForDiff = await startSnapshot.aggregatesForDiff()
-  const startAggregates = startSnapshot.aggregatesWithFilter(new HeapSnapshotModel.HeapSnapshotModel.NodeFilter())
+  const startAggregates = startSnapshot.aggregatesWithFilter(new HeapSnapshotModel.NodeFilter())
   startSnapshot = undefined // free memory
 
   const endSnapshot = await createHeapSnapshotModel(endSnapshotFilename)
-  const endStatistics = { ...endSnapshot.statistics }
+  const endStatistics = { ...endSnapshot.getStatistics() }
 
   const diffByClassName = await endSnapshot.calculateSnapshotDiff(startSnapshotUid, aggregatesForDiff)
   const suspiciousObjects = Object.entries(diffByClassName).filter(([name, diff]) => {
@@ -53,7 +53,7 @@ export async function analyzeHeapSnapshots (startSnapshotFilename, endSnapshotFi
     return diff.countDelta % numIterations === 0 && diff.countDelta > 0
   })
 
-  const endAggregates = endSnapshot.aggregatesWithFilter(new HeapSnapshotModel.HeapSnapshotModel.NodeFilter())
+  const endAggregates = endSnapshot.aggregatesWithFilter(new HeapSnapshotModel.NodeFilter())
 
   let leakingObjects = suspiciousObjects
     // filter browser internals
