@@ -1,5 +1,5 @@
 import { takeHeapSnapshot } from './heapsnapshots.js'
-import fs from 'fs/promises'
+import fs from 'node:fs/promises'
 import { analyzeHeapSnapshots } from './analyzeHeapsnapshots.js'
 
 export function heapsnapshotsMetric ({ page, cdpSession, numIterations, heapsnapshot }) {

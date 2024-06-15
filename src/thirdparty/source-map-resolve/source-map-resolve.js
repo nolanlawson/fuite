@@ -1,7 +1,6 @@
 // Via https://github.com/lydell/source-map-resolve/blob/942b555ea00d10ddd71c894ec1bcda8b49c68be7/index.js
 
-import atob from 'atob'
-import urlLib from 'url'
+import urlLib from 'node:url'
 
 function resolveUrl(/* ...urls */) {
   return Array.prototype.reduce.call(arguments, function(resolved, nextUrl) {
