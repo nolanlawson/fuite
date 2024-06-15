@@ -2,11 +2,11 @@ import exitHook from 'exit-hook'
 import { DEFAULT_ITERATIONS, defaultScenario, findLeaks } from './index.js'
 import { Command } from 'commander'
 import { createRequire } from 'module'
-import path from 'path'
+import path from 'node:path'
 import { formatResult } from './format.js'
 import chalk from 'chalk'
-import { createWriteStream } from 'fs'
-import { pathToFileURL } from 'url'
+import { createWriteStream } from 'node:fs'
+import { pathToFileURL } from 'node:url'
 
 const require = createRequire(import.meta.url)
 const { version } = require('../package.json')

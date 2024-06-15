@@ -1,7 +1,6 @@
 import { resolve } from './thirdparty/source-map-resolve/source-map-resolve.js'
 import { SourceMapConsumer } from 'source-map'
 import { promisify } from 'util'
-import fetch from 'node-fetch'
 import QuickLRU from 'quick-lru'
 
 const resolveSourceMap = promisify(resolve)

@@ -1,8 +1,12 @@
-import path from 'path'
-import tempDir from 'temp-dir'
+import path from 'node:path'
 import cryptoRandomString from 'crypto-random-string'
-import { createReadStream, createWriteStream } from 'fs'
+import { createReadStream, createWriteStream } from 'node:fs'
+import { realpath } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
 import { HeapSnapshotLoader } from '../../thirdparty/devtools-frontend/index.js'
+
+// via https://github.com/sindresorhus/temp-dir/blob/437937c/index.js#L4
+const tempDir = await realpath(tmpdir())
 
 export async function takeHeapSnapshot (page, cdpSession) {
   const filename = path.join(tempDir, `fuite-${cryptoRandomString({ length: 8, type: 'alphanumeric' })}.heapsnapshot`)

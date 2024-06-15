@@ -1,9 +1,12 @@
-import { spawn } from 'child_process'
-import path from 'path'
-import url from 'url'
-import tempDir from 'temp-dir'
-import cryptoRandomString from 'crypto-random-string'
-import fs from 'fs/promises'
+import { spawn } from 'node:child_process'
+import path from 'node:path'
+import url from 'node:url'
+import fs from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { randomUUID } from 'node:crypto'
+
+// via https://github.com/sindresorhus/temp-dir/blob/437937c/index.js#L4
+const tempDir = await fs.realpath(tmpdir())
 
 const __dirname = path.dirname(url.fileURLToPath(import.meta.url))
 
@@ -16,7 +19,7 @@ export async function asyncIterableToArray (iterable) {
 }
 
 export function createTempFile (extension) {
-  return path.join(tempDir, `fuite-tmp-${cryptoRandomString({ length: 8, type: 'alphanumeric' })}.${extension}`)
+  return path.join(tempDir, `fuite-tmp-${randomUUID()}.${extension}`)
 }
 
 export async function runCli (args) {
