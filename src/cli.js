@@ -1,7 +1,7 @@
 import exitHook from 'exit-hook'
 import { DEFAULT_ITERATIONS, defaultScenario, findLeaks } from './index.js'
 import { Command } from 'commander'
-import { createRequire } from 'module'
+import { createRequire } from 'node:module'
 import path from 'node:path'
 import { formatResult } from './format.js'
 import chalk from 'chalk'
