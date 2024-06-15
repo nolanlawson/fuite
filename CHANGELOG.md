@@ -1,3 +1,14 @@
+## [4.0.9](https://github.com/nolanlawson/fuite/compare/v4.0.8...v4.0.9) (2024-06-15)
+
+
+### Bug Fixes
+
+* remove more dependencies in favor of Node built-ins ([#107](https://github.com/nolanlawson/fuite/issues/107)) ([3b2dab9](https://github.com/nolanlawson/fuite/commit/3b2dab9fad91fe00a9a838a2ad61263099c9f20c))
+* update dependencies ([#105](https://github.com/nolanlawson/fuite/issues/105)) ([a2a4e8e](https://github.com/nolanlawson/fuite/commit/a2a4e8e4268f7af67e82704953bcb245d40236b2))
+* use built-in crypto.randomUUID ([#106](https://github.com/nolanlawson/fuite/issues/106)) ([b8b1715](https://github.com/nolanlawson/fuite/commit/b8b1715a3141f9cf87ade4682cba1f84351dbfbc))
+
+
+
 ## [4.0.8](https://github.com/nolanlawson/fuite/compare/v4.0.7...v4.0.8) (2024-05-19)
 
 
