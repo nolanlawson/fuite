@@ -1,11 +1,11 @@
-import { v4 as uuidV4 } from 'uuid'
+import { randomUUID } from 'node:crypto'
 import { omit, pick } from '../../util.js'
 import { getDescriptors } from '../../getDescriptors.js'
 import { getAllDomNodes } from '../../browser/getAllDomNodes.js'
 
 // via https://stackoverflow.com/a/67030384
 export async function getDomNodesAndListeners (page, cdpSession) {
-  const objectGroup = uuidV4()
+  const objectGroup = randomUUID()
   const { result: { objectId } } = await cdpSession.send('Runtime.evaluate', {
     expression: `
         (function () {
