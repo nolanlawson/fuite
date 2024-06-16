@@ -2,6 +2,8 @@ import { findLeaks } from '../../src/index.js'
 import { expect } from 'chai'
 import { asyncIterableToArray } from './util.js'
 import { omit } from '../../src/util.js'
+import { before, describe, it } from 'node:test'
+import waitForLocalhost from 'wait-for-localhost'
 
 const normalizeStackTrace = stacktrace => {
   return stacktrace.trim()
@@ -10,6 +12,9 @@ const normalizeStackTrace = stacktrace => {
 }
 
 describe('collections', () => {
+  before(async () => {
+    await waitForLocalhost({ port: 3000 })
+  })
   it('can detect leaking collections', async () => {
     const results = await asyncIterableToArray(findLeaks('http://localhost:3000/test/www/collections/', {
       iterations: 3

@@ -1,11 +1,16 @@
 import { createTempFile, runCli } from './util.js'
 import { expect } from 'chai'
 import fs from 'fs/promises'
+import { before, describe, it } from 'node:test'
+import waitForLocalhost from 'wait-for-localhost'
 
 // This password has to be random or else Chrome will pop up a "you have an unsafe password" modal
 const randoPassword = () => Array(5).fill().map(() => Math.floor(Math.random() * 1000000).toString(16)).join('-')
 
 describe('cli test suite', () => {
+  before(async () => {
+    await waitForLocalhost({ port: 3000 })
+  })
   it('minimal cli test', async () => {
     const results = await runCli(['http://localhost:3000/test/www/minimal/'])
 

@@ -1,7 +1,13 @@
 import { findLeaks } from '../../src/index.js'
 import { expect } from 'chai'
 import { asyncIterableToArray } from './util.js'
+import { before, describe, it } from 'node:test'
+import waitForLocalhost from 'wait-for-localhost'
+
 describe('errors', () => {
+  before(async () => {
+    await waitForLocalhost({ port: 3000 })
+  })
   it('bad URL', async () => {
     try {
       await asyncIterableToArray(findLeaks('http://localhost:52313'))
