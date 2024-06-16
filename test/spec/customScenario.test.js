@@ -2,11 +2,16 @@ import { findLeaks } from '../../src/index.js'
 import * as defaultScenario from '../../src/defaultScenario.js'
 import { expect } from 'chai'
 import { asyncIterableToArray } from './util.js'
+import { before, describe, it } from 'node:test'
+import waitForLocalhost from 'wait-for-localhost'
 
 // This password has to be random or else Chrome will pop up a "you have an unsafe password" modal
 const randoPassword = () => Array(5).fill().map(() => Math.floor(Math.random() * 1000000).toString(16)).join('-')
 
 describe('custom scenario', () => {
+  before(async () => {
+    await waitForLocalhost({ port: 3000 })
+  })
   it('can do a custom version of the default scenario', async () => {
     const scenario = {
       async setup (page) {

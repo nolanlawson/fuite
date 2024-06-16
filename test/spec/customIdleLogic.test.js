@@ -2,8 +2,13 @@ import { findLeaks } from '../../src/index.js'
 import * as defaultScenario from '../../src/defaultScenario.js'
 import { expect } from 'chai'
 import { asyncIterableToArray } from './util.js'
+import { before, describe, it } from 'node:test'
+import waitForLocalhost from 'wait-for-localhost'
 
 describe('custom idle logic', () => {
+  before(async () => {
+    await waitForLocalhost({ port: 3000 })
+  })
   it('can get custom idle logic from a scenario', async () => {
     const scenario = {
       createTests: defaultScenario.createTests,

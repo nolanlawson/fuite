@@ -2,8 +2,13 @@ import { findLeaks } from '../../src/index.js'
 import { expect } from 'chai'
 import { asyncIterableToArray } from './util.js'
 import fs from 'fs/promises'
+import { before, describe, it } from 'node:test'
+import waitForLocalhost from 'wait-for-localhost'
 
 describe('heapsnapshots', () => {
+  before(async () => {
+    await waitForLocalhost({ port: 3000 })
+  })
   it('heapsnapshot option is false', async () => {
     const results = await asyncIterableToArray(findLeaks('http://localhost:3000/test/www/minimal/', {
       iterations: 3

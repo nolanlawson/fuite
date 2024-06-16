@@ -1,5 +1,6 @@
 import { promisePool } from '../../src/promisePool.js'
 import { expect } from 'chai'
+import { describe, it } from 'node:test'
 
 describe('promisePool', () => {
   it('basic test', async () => {

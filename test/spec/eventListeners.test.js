@@ -1,8 +1,13 @@
 import { findLeaks } from '../../src/index.js'
 import { expect } from 'chai'
 import { asyncIterableToArray } from './util.js'
+import { before, describe, it } from 'node:test'
+import waitForLocalhost from 'wait-for-localhost'
 
 describe('event listeners', () => {
+  before(async () => {
+    await waitForLocalhost({ port: 3000 })
+  })
   it('can detect leaking event listeners', async () => {
     const results = await asyncIterableToArray(findLeaks('http://localhost:3000/test/www/eventListeners/', {
       iterations: 3
