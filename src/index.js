@@ -153,7 +153,10 @@ export async function * findLeaks (pageUrl, options = {}) {
         for (const metric of metrics) {
           await metric.beforeIterations()
         }
-        if (debug) { // Point in time before running any iterations
+        if (debug) {
+          // Point in time after the first throwaway iteration but before the main loop of iterations.
+          // If you're paused here, this is a good time to open the *browser* DevTools and take a manual heap snapshot.
+          // (Memory -> heap snapshot -> take snapshot)
           debugger // eslint-disable-line no-debugger
         }
         for (let i = 0; i < numIterations; i++) {
@@ -161,10 +164,14 @@ export async function * findLeaks (pageUrl, options = {}) {
           await iteration(page, test.data)
         }
         onProgress('Taking end snapshot...')
-        for (const metric of [...metrics].reverse()) { // run in reverse order to ensure heapsnapshot happens first
+        for (const metric of [...metrics].reverse()) { // run in reverse order to ensure heap snapshot happens first
           await metric.afterIterations()
         }
-        if (debug) { // Point in time after running iterations
+        if (debug) {
+          // Point in time after running the main loop of iterations.
+          // If you're paused here, this is a good time to open the *browser* DevTools, so you can:
+          //   1. take a second heap snapshot to compare with the first, and/or
+          //   2. wait for more debugger statements if you're trying to debug leaking collections.
           debugger // eslint-disable-line no-debugger
         }
 
