@@ -797,6 +797,12 @@ class I18n {
     registerLocaleData(locale, messages) {
         this.localeData.set(locale, messages);
     }
+    hasLocaleDataForTest(locale) {
+        return this.localeData.has(locale);
+    }
+    resetLocaleDataForTest() {
+        this.localeData.clear();
+    }
     registerFileStrings(filename, stringStructure) {
         return new RegisteredFileStrings(filename, stringStructure, this.localeData);
     }
@@ -977,7 +983,7 @@ const createPlainTextSearchRegex = function (query, flags) {
         }
         regex += c;
     }
-    return new RegExp(regex, flags );
+    return new RegExp(regex, flags);
 };
 
 // Copyright 2024 The Chromium Authors. All rights reserved.
@@ -1085,6 +1091,47 @@ class ExpandableBigUint32ArrayImpl extends Array {
     }
     asArrayOrFail() {
         return this;
+    }
+}
+function createBitVector(length) {
+    return new BitVectorImpl(length);
+}
+class BitVectorImpl extends Uint8Array {
+    constructor(length) {
+        super(Math.ceil(length / 8));
+    }
+    getBit(index) {
+        const value = this[index >> 3] & (1 << (index & 7));
+        return value !== 0;
+    }
+    setBit(index) {
+        this[index >> 3] |= (1 << (index & 7));
+    }
+    clearBit(index) {
+        this[index >> 3] &= ~(1 << (index & 7));
+    }
+    previous(index) {
+        // First, check for more bits in the current byte.
+        while (index !== ((index >> 3) << 3)) {
+            --index;
+            if (this.getBit(index)) {
+                return index;
+            }
+        }
+        // Next, iterate by bytes to skip over ranges of zeros.
+        let byteIndex;
+        for (byteIndex = (index >> 3) - 1; byteIndex >= 0 && this[byteIndex] === 0; --byteIndex) {
+        }
+        if (byteIndex < 0) {
+            return -1;
+        }
+        // Finally, iterate the nonzero byte to find the highest bit.
+        for (index = (byteIndex << 3) + 7; index >= (byteIndex << 3); --index) {
+            if (this.getBit(index)) {
+                return index;
+            }
+        }
+        throw new Error('Unreachable');
     }
 }
 
@@ -1252,6 +1299,9 @@ class HeapSnapshotEdge {
     getValueForSorting(_fieldName) {
         throw new Error('Not implemented');
     }
+    nameIndex() {
+        throw new Error('Not implemented');
+    }
 }
 class HeapSnapshotNodeIndexProvider {
     #node;
@@ -1322,6 +1372,9 @@ class HeapSnapshotRetainerEdge {
     }
     name() {
         return this.edge().name();
+    }
+    nameIndex() {
+        return this.edge().nameIndex();
     }
     node() {
         return this.nodeInternal();
@@ -1707,6 +1760,8 @@ class HeapSnapshot {
     #ignoredNodesInRetainersView;
     #ignoredEdgesInRetainersView;
     #nodeDistancesForRetainersView;
+    #edgeNamesThatAreNotWeakMaps;
+    #syntheticClassNames;
     constructor(profile, progress) {
         this.nodes = profile.nodes;
         this.containmentEdges = profile.edges;
@@ -1727,6 +1782,8 @@ class HeapSnapshot {
         this.#profile = profile;
         this.#ignoredNodesInRetainersView = new Set();
         this.#ignoredEdgesInRetainersView = new Set();
+        this.#edgeNamesThatAreNotWeakMaps = createBitVector(this.strings.length);
+        this.#syntheticClassNames = new Map();
     }
     initialize() {
         const meta = this.#metaNode;
@@ -1995,14 +2052,10 @@ class HeapSnapshot {
     createNamedFilter(filterName) {
         // Allocate an array with a single bit per node, which can be used by each
         // specific filter implemented below.
-        const bitmap = new Uint8Array(Math.ceil(this.nodeCount / 8));
+        const bitmap = createBitVector(this.nodeCount);
         const getBit = (node) => {
             const ordinal = node.nodeIndex / this.nodeFieldCount;
-            const value = bitmap[ordinal >> 3] & (1 << (ordinal & 7));
-            return value !== 0;
-        };
-        const setBit = (nodeOrdinal) => {
-            bitmap[nodeOrdinal >> 3] |= (1 << (nodeOrdinal & 7));
+            return bitmap.getBit(ordinal);
         };
         // Traverses the graph in breadth-first order with the given filter, and
         // sets the bit in `bitmap` for every visited node.
@@ -2018,14 +2071,14 @@ class HeapSnapshot {
             this.bfs(nodesToVisit, nodesToVisitLength, distances, filter);
             for (let i = 0; i < this.nodeCount; ++i) {
                 if (distances[i] !== this.#noDistance) {
-                    setBit(i);
+                    bitmap.setBit(i);
                 }
             }
         };
         const markUnreachableNodes = () => {
             for (let i = 0; i < this.nodeCount; ++i) {
                 if (this.nodeDistances[i] === this.#noDistance) {
-                    setBit(i);
+                    bitmap.setBit(i);
                 }
             }
         };
@@ -2066,8 +2119,8 @@ class HeapSnapshot {
                             stringToNodeIndexMap.set(name, node.nodeIndex);
                         }
                         else {
-                            setBit(alreadyVisitedNodeIndex / this.nodeFieldCount);
-                            setBit(node.nodeIndex / this.nodeFieldCount);
+                            bitmap.setBit(alreadyVisitedNodeIndex / this.nodeFieldCount);
+                            bitmap.setBit(node.nodeIndex / this.nodeFieldCount);
                         }
                     }
                 }
@@ -2246,7 +2299,7 @@ class HeapSnapshot {
                     self: selfSize,
                     maxRet: 0,
                     type: nodeType,
-                    name: nameMatters ? node.name() : null,
+                    name: nameMatters ? node.className() : null,
                     idxs: [nodeIndex],
                 };
                 aggregates[classIndex] = value;
@@ -2323,10 +2376,19 @@ class HeapSnapshot {
             });
         }
     }
-    static tryParseWeakMapEdgeName(edgeName) {
+    tryParseWeakMapEdgeName(edgeNameIndex) {
+        const previousResult = this.#edgeNamesThatAreNotWeakMaps.getBit(edgeNameIndex);
+        if (previousResult) {
+            return undefined;
+        }
+        const edgeName = this.strings[edgeNameIndex];
         const ephemeronNameRegex = /^\d+(?<duplicatedPart> \/ part of key \(.*? @\d+\) -> value \(.*? @\d+\) pair in WeakMap \(table @(?<tableId>\d+)\))$/;
         const match = edgeName.match(ephemeronNameRegex);
-        return match ? match.groups : undefined;
+        if (!match) {
+            this.#edgeNamesThatAreNotWeakMaps.setBit(edgeNameIndex);
+            return undefined;
+        }
+        return match.groups;
     }
     /**
      * The function checks is the edge should be considered during building
@@ -2340,8 +2402,8 @@ class HeapSnapshot {
         // dominators. We've found that the edge from the key generally produces
         // more useful results, so here we skip the edge from the table.
         if (edgeType === this.edgeInternalType) {
-            const edgeName = this.strings[this.containmentEdges.getValue(edgeIndex + this.edgeNameOffset)];
-            const match = HeapSnapshot.tryParseWeakMapEdgeName(edgeName);
+            const edgeNameIndex = this.containmentEdges.getValue(edgeIndex + this.edgeNameOffset);
+            const match = this.tryParseWeakMapEdgeName(edgeNameIndex);
             if (match) {
                 const nodeId = this.nodes.getValue(nodeIndex + this.nodeIdOffset);
                 return nodeId !== parseInt(match.tableId, 10);
@@ -2503,7 +2565,7 @@ class HeapSnapshot {
         dominators[rootPostOrderedIndex] = rootPostOrderedIndex;
         // The affected array is used to mark entries which dominators
         // have to be recalculated because of changes in their retainers.
-        const affected = new Uint8Array(nodesCount);
+        const affected = createBitVector(nodesCount);
         let nodeOrdinal;
         { // Mark the root direct children as affected.
             nodeOrdinal = this.rootNodeIndexInternal / nodeFieldCount;
@@ -2513,17 +2575,14 @@ class HeapSnapshot {
                     continue;
                 }
                 const childNodeOrdinal = containmentEdges.getValue(edgeIndex + edgeToNodeOffset) / nodeFieldCount;
-                affected[nodeOrdinal2PostOrderIndex[childNodeOrdinal]] = 1;
+                affected.setBit(nodeOrdinal2PostOrderIndex[childNodeOrdinal]);
             }
         }
         let changed = true;
         while (changed) {
             changed = false;
-            for (let postOrderIndex = rootPostOrderedIndex - 1; postOrderIndex >= 0; --postOrderIndex) {
-                if (affected[postOrderIndex] === 0) {
-                    continue;
-                }
-                affected[postOrderIndex] = 0;
+            for (let postOrderIndex = affected.previous(rootPostOrderedIndex); postOrderIndex >= 0; postOrderIndex = affected.previous(postOrderIndex)) {
+                affected.clearBit(postOrderIndex);
                 // If dominator of the entry has already been set to root,
                 // then it can't propagate any further.
                 if (dominators[postOrderIndex] === rootPostOrderedIndex) {
@@ -2583,7 +2642,7 @@ class HeapSnapshot {
                     const endEdgeToNodeFieldIndex = firstEdgeIndexes[nodeOrdinal + 1];
                     for (let toNodeFieldIndex = beginEdgeToNodeFieldIndex; toNodeFieldIndex < endEdgeToNodeFieldIndex; toNodeFieldIndex += edgeFieldsCount) {
                         const childNodeOrdinal = containmentEdges.getValue(toNodeFieldIndex) / nodeFieldCount;
-                        affected[nodeOrdinal2PostOrderIndex[childNodeOrdinal]] = 1;
+                        affected.setBit(nodeOrdinal2PostOrderIndex[childNodeOrdinal]);
                     }
                 }
             }
@@ -3037,8 +3096,7 @@ class HeapSnapshot {
                 if (!edge.isInternal()) {
                     continue;
                 }
-                const edgeName = edge.name();
-                const match = HeapSnapshot.tryParseWeakMapEdgeName(edgeName);
+                const match = this.tryParseWeakMapEdgeName(edge.nameIndex());
                 if (match) {
                     unreachableWeakMapEdges.set(edge.nodeIndex(), match.duplicatedPart);
                 }
@@ -3053,7 +3111,7 @@ class HeapSnapshot {
                 if (!reverseEdge.isInternal()) {
                     continue;
                 }
-                const match = HeapSnapshot.tryParseWeakMapEdgeName(reverseEdge.name());
+                const match = this.tryParseWeakMapEdgeName(reverseEdge.nameIndex());
                 if (match && unreachableWeakMapEdges.hasValue(targetNodeIndex, match.duplicatedPart)) {
                     const forwardEdgeIndex = this.retainingEdges[reverseEdge.itemIndex()];
                     this.#ignoredEdgesInRetainersView.add(forwardEdgeIndex);
@@ -3081,6 +3139,14 @@ class HeapSnapshot {
     }
     isEdgeIgnoredInRetainersView(edgeIndex) {
         return this.#ignoredEdgesInRetainersView.has(edgeIndex);
+    }
+    getIndexForSyntheticClassName(className) {
+        let index = this.#syntheticClassNames.get(className);
+        if (index === undefined) {
+            index = this.addString(className);
+            this.#syntheticClassNames.set(className, index);
+        }
+        return index;
     }
 }
 class HeapSnapshotItemProvider {
@@ -3337,8 +3403,7 @@ class JSHeapSnapshot extends HeapSnapshot {
     lazyStringCache;
     flags;
     #statistics;
-    #options;
-    constructor(profile, progress, options) {
+    constructor(profile, progress) {
         super(profile, progress);
         this.nodeFlags = {
             // bit flags
@@ -3347,7 +3412,6 @@ class JSHeapSnapshot extends HeapSnapshot {
             pageObject: 4, // The idea is to track separately the objects owned by the page and the objects owned by debugger.
         };
         this.lazyStringCache = {};
-        this.#options = options ?? { heapSnapshotTreatBackingStoreAsContainingObject: false };
         this.initialize();
     }
     createNode(nodeIndex) {
@@ -3375,10 +3439,22 @@ class JSHeapSnapshot extends HeapSnapshot {
         this.markQueriableHeapObjects();
         this.markPageOwnedNodes();
     }
+    #hasUserRoots() {
+        for (let iter = this.rootNode().edges(); iter.hasNext(); iter.next()) {
+            if (this.isUserRoot(iter.edge.node())) {
+                return true;
+            }
+        }
+        return false;
+    }
     // Updates the shallow sizes for "owned" objects of types kArray or kHidden to
     // zero, and add their sizes to the "owner" object instead.
     calculateShallowSizes() {
-        if (!this.#options.heapSnapshotTreatBackingStoreAsContainingObject) {
+        // If there are no user roots, then that means the snapshot was produced with
+        // the "expose internals" option enabled. In that case, we should faithfully
+        // represent the actual memory allocations rather than attempting to make the
+        // output more understandable to web developers.
+        if (!this.#hasUserRoots()) {
             return;
         }
         const { nodeCount, nodes, nodeFieldCount, nodeSelfSizeOffset } = this;
@@ -3454,8 +3530,8 @@ class JSHeapSnapshot extends HeapSnapshot {
                     const ownedNodeIndex = i * nodeFieldCount;
                     const ownerNodeIndex = ownerId * nodeFieldCount;
                     node.nodeIndex = ownerNodeIndex;
-                    if (node.isSynthetic()) {
-                        // Adding shallow size to synthetic nodes is not useful.
+                    if (node.isSynthetic() || node.isRoot()) {
+                        // Adding shallow size to synthetic or root nodes is not useful.
                         break;
                     }
                     const sizeToTransfer = nodes.getValue(ownedNodeIndex + nodeSelfSizeOffset);
@@ -3468,6 +3544,7 @@ class JSHeapSnapshot extends HeapSnapshot {
     }
     calculateDistances(isForRetainersView) {
         const pendingEphemeronEdges = new Set();
+        const snapshot = this;
         function filter(node, edge) {
             if (node.isHidden() && edge.name() === 'sloppy_function_map' && node.rawName() === 'system / NativeContext') {
                 return false;
@@ -3497,7 +3574,7 @@ class JSHeapSnapshot extends HeapSnapshot {
                 // part of the filter skips the first edge in the matched pair of edges,
                 // so that the distance gets set based on the second, which should be
                 // greater or equal due to traversal order.
-                const match = HeapSnapshot.tryParseWeakMapEdgeName(edge.name());
+                const match = snapshot.tryParseWeakMapEdgeName(edge.nameIndex());
                 if (match) {
                     if (!pendingEphemeronEdges.delete(match.duplicatedPart)) {
                         pendingEphemeronEdges.add(match.duplicatedPart);
@@ -3793,8 +3870,22 @@ class JSHeapSnapshotNode extends HeapSnapshotNode {
             case 'hidden':
                 return '(system)';
             case 'object':
-            case 'native':
-                return this.name();
+            case 'native': {
+                let name = this.name();
+                if (name.startsWith('<')) {
+                    const firstSpace = name.indexOf(' ');
+                    if (firstSpace !== -1) {
+                        name = name.substring(0, firstSpace) + '>';
+                    }
+                }
+                else if (name.startsWith('Detached <')) {
+                    const firstSpace = name.indexOf(' ', 10);
+                    if (firstSpace !== -1) {
+                        name = name.substring(0, firstSpace) + '>';
+                    }
+                }
+                return name;
+            }
             case 'code':
                 return '(compiled code)';
             case 'closure':
@@ -3810,7 +3901,10 @@ class JSHeapSnapshotNode extends HeapSnapshotNode {
         const nodes = snapshot.nodes;
         const type = nodes.getValue(this.nodeIndex + snapshot.nodeTypeOffset);
         if (type === snapshot.nodeObjectType || type === snapshot.nodeNativeType) {
-            return nodes.getValue(this.nodeIndex + snapshot.nodeNameOffset);
+            const name = this.name();
+            const useSyntheticClassName = name.startsWith('<') || name.startsWith('Detached <');
+            return useSyntheticClassName ? snapshot.getIndexForSyntheticClassName(this.className()) :
+                nodes.getValue(this.nodeIndex + snapshot.nodeNameOffset);
         }
         return -1 - type;
     }
@@ -3924,6 +4018,12 @@ class JSHeapSnapshotEdge extends HeapSnapshotEdge {
     }
     rawType() {
         return this.edges.getValue(this.edgeIndex + this.snapshot.edgeTypeOffset);
+    }
+    nameIndex() {
+        if (!this.hasStringNameInternal()) {
+            throw new Error('Edge does not have string name');
+        }
+        return this.nameOrIndex();
     }
 }
 class JSHeapSnapshotRetainerEdge extends HeapSnapshotRetainerEdge {
@@ -4110,6 +4210,17 @@ const i18nLazyString = getLazilyComputedLocalizedString.bind(undefined, str_$1);
     MEMORY_INSPECTOR_PANEL: i18nLazyString(UIStrings$1.memoryInspectorPanel),
 });
 
+// Copyright 2014 The Chromium Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+var FrontendMessageSource;
+(function (FrontendMessageSource) {
+    FrontendMessageSource["CSS"] = "css";
+    FrontendMessageSource["ConsoleAPI"] = "console-api";
+    FrontendMessageSource["IssuePanel"] = "issue-panel";
+    FrontendMessageSource["SelfXss"] = "self-xss";
+})(FrontendMessageSource || (FrontendMessageSource = {}));
+
 // Copyright 2020 The Chromium Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
@@ -4244,10 +4355,10 @@ class HeapSnapshotLoader {
             this.#dataCallback('');
         }
     }
-    buildSnapshot(options) {
+    buildSnapshot() {
         this.#snapshot = this.#snapshot || {};
         this.#progress.updateStatus('Processing snapshot…');
-        const result = new JSHeapSnapshot(this.#snapshot, this.#progress, options);
+        const result = new JSHeapSnapshot(this.#snapshot, this.#progress);
         this.#reset();
         return result;
     }
