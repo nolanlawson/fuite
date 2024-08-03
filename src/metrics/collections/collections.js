@@ -239,9 +239,6 @@ export async function findLeakingCollections (page, collectionsToCountsMap, numI
         const sizeAfter = getSize(obj)
         const delta = sizeAfter - sizeBefore
         if (delta % numIterations === 0 && delta > 0) {
-          if (debug) { // found a leaking collection
-            debugger // eslint-disable-line no-debugger
-          }
           const type = getType(obj)
           const preview = createPreview(obj)
           const details = {
