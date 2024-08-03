@@ -1,3 +1,14 @@
+## [4.0.10](https://github.com/nolanlawson/fuite/compare/v4.0.9...v4.0.10) (2024-08-03)
+
+
+### Bug Fixes
+
+* improve `debugger` statements in `--debug` mode ([#109](https://github.com/nolanlawson/fuite/issues/109)) ([a191f4f](https://github.com/nolanlawson/fuite/commit/a191f4ff37dad59df2eeceee81667f5cbf427607))
+* update dependencies including puppeteer ([#110](https://github.com/nolanlawson/fuite/issues/110)) ([9d8a71d](https://github.com/nolanlawson/fuite/commit/9d8a71d42948d283f7264f015626d4b28da68889))
+* update to latest devtools-frontend ([#111](https://github.com/nolanlawson/fuite/issues/111)) ([73c155f](https://github.com/nolanlawson/fuite/commit/73c155f91670cf29506c301326f841370a2b7c4a))
+
+
+
 ## [4.0.9](https://github.com/nolanlawson/fuite/compare/v4.0.8...v4.0.9) (2024-06-15)
 
 
