@@ -32,7 +32,7 @@
     "ora": "^8.0.1",
     "please-upgrade-node": "^3.2.0",
     "pretty-bytes": "^6.1.1",
-    "puppeteer": "^22.15.0",
+    "puppeteer": "^23.1.0",
     "quick-lru": "^7.0.0",
     "source-map": "^0.7.4",
     "stacktrace-parser": "^0.1.10",
@@ -75,5 +75,5 @@
       "thirdparty"
     ]
   },
-  "packageManager": "pnpm@9.6.0+sha512.38dc6fba8dba35b39340b9700112c2fe1e12f10b17134715a4aa98ccf7bb035e76fd981cf0bb384dfa98f8d6af5481c2bef2f4266a24bfa20c34eb7147ce0b5e"
+  "packageManager": "pnpm@9.7.1+sha512.faf344af2d6ca65c4c5c8c2224ea77a81a5e8859cbc4e06b1511ddce2f0151512431dd19e6aff31f2c6a8f5f2aced9bd2273e1fed7dd4de1868984059d2c4247"
 }
