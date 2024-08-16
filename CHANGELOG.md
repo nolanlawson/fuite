@@ -1,3 +1,17 @@
+# [5.0.0](https://github.com/nolanlawson/fuite/compare/v4.0.10...v5.0.0) (2024-08-16)
+
+
+### Bug Fixes
+
+* update puppeteer and pnpm ([#112](https://github.com/nolanlawson/fuite/issues/112)) ([474f653](https://github.com/nolanlawson/fuite/commit/474f6535e9997169855f46b394d26f35f0fdd1c2))
+
+
+### BREAKING CHANGES
+
+* Puppeteer's env vars have changed, see https://github.com/puppeteer/puppeteer/releases/tag/puppeteer-v23.0.0
+
+
+
 ## [4.0.10](https://github.com/nolanlawson/fuite/compare/v4.0.9...v4.0.10) (2024-08-03)
 
 
