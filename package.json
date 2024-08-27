@@ -29,10 +29,10 @@
     "commander": "^12.1.0",
     "exit-hook": "4.0.0",
     "ono": "^7.1.3",
-    "ora": "^8.0.1",
+    "ora": "^8.1.0",
     "please-upgrade-node": "^3.2.0",
     "pretty-bytes": "^6.1.1",
-    "puppeteer": "^23.1.0",
+    "puppeteer": "^23.2.0",
     "quick-lru": "^7.0.0",
     "source-map": "^0.7.4",
     "stacktrace-parser": "^0.1.10",
@@ -47,7 +47,7 @@
     "conventional-changelog-cli": "^5.0.0",
     "navigo": "^8.11.1",
     "npm-run-all": "^4.1.5",
-    "rollup": "^4.20.0",
+    "rollup": "^4.21.1",
     "serve": "^14.2.3",
     "standard": "^17.1.0",
     "wait-for-localhost": "^4.1.0"
@@ -75,5 +75,5 @@
       "thirdparty"
     ]
   },
-  "packageManager": "pnpm@9.7.1+sha512.faf344af2d6ca65c4c5c8c2224ea77a81a5e8859cbc4e06b1511ddce2f0151512431dd19e6aff31f2c6a8f5f2aced9bd2273e1fed7dd4de1868984059d2c4247"
+  "packageManager": "pnpm@9.9.0+sha512.60c18acd138bff695d339be6ad13f7e936eea6745660d4cc4a776d5247c540d0edee1a563695c183a66eb917ef88f2b4feb1fc25f32a7adcadc7aaf3438e99c1"
 }
