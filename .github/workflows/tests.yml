@@ -20,4 +20,5 @@ jobs:
           cache: 'pnpm'
       - run: pnpm install --frozen-lockfile
       - run: pnpm lint
+      - run: node ./src/cli.js https://example.com
       - run: pnpm test
