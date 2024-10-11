@@ -40,9 +40,13 @@ export async function analyzeHeapSnapshots (startSnapshotFilename, endSnapshotFi
   let startSnapshot = await createHeapSnapshotModel(startSnapshotFilename)
   const startSnapshotUid = startSnapshot.uid
   const startStatistics = { ...startSnapshot.getStatistics() }
-  const aggregatesForDiff = await startSnapshot.aggregatesForDiff()
+  // For reference see:
+  // https://github.com/ChromeDevTools/devtools-frontend/blob/898fd09/front_end/panels/profiler/HeapSnapshotDataGrids.ts#L999-L1016
+  let interfaceDefinitions = await startSnapshot.interfaceDefinitions()
+  const aggregatesForDiff = await startSnapshot.aggregatesForDiff(interfaceDefinitions)
   const startAggregates = startSnapshot.aggregatesWithFilter(new HeapSnapshotModel.NodeFilter())
   startSnapshot = undefined // free memory
+  interfaceDefinitions = undefined // free memory
 
   const endSnapshot = await createHeapSnapshotModel(endSnapshotFilename)
   const endStatistics = { ...endSnapshot.getStatistics() }
