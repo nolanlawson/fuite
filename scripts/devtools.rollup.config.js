@@ -49,6 +49,15 @@ export default {
           })
           return { resolve, reject, promise }
         }
+      `,
+      // Array.prototype.toSorted minimal shim
+      // TODO: remove when we set our minimum Node to v22+
+      __to_sorted__: `
+        export const toSorted = (arr) => {
+          const res = [...arr]
+          res.sort()
+          return res
+        }
       `
     }),
     typescript({
@@ -62,15 +71,28 @@ export default {
     replace({
       values: {
         'location.search': '',
-        'Promise.withResolvers': 'PromiseWithResolvers'
+        // TODO: remove when we set our minimum Node to v22+
+        'Promise.withResolvers': 'PromiseWithResolversPolyfill',
       },
       preventAssignment: true
     }),
+
+    // TODO: remove when we set our minimum Node to v22+
+    replace({
+      values: {
+        'definition.properties.toSorted()': 'toSortedPolyfill(definition.properties)'
+      },
+      delimiters: ['', '']
+    }),
     // TODO: remove when we set our minimum Node to v22+
     inject({
-      PromiseWithResolvers: [
+      PromiseWithResolversPolyfill: [
         '__promise_with_resolvers__',
         'withResolvers'
+      ],
+      toSortedPolyfill: [
+        '__to_sorted__',
+        'toSorted'
       ]
     }),
     strip({
