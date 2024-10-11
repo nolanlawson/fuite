@@ -72,7 +72,7 @@ export default {
       values: {
         'location.search': '',
         // TODO: remove when we set our minimum Node to v22+
-        'Promise.withResolvers': 'PromiseWithResolversPolyfill',
+        'Promise.withResolvers': 'PromiseWithResolversPolyfill'
       },
       preventAssignment: true
     }),
