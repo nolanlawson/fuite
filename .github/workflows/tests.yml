@@ -6,7 +6,7 @@ on:
     branches: [ master ]
 jobs:
   build:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         # The lowest one should be the minimum supported node version, per package.json "engines" field
@@ -20,4 +20,6 @@ jobs:
           cache: 'pnpm'
       - run: pnpm install --frozen-lockfile
       - run: pnpm lint
+      - run: pnpm run test:serve &
+      - run: node ./src/cli.js http://localhost:3000/test/www/basic/
       - run: pnpm test
