@@ -1,3 +1,12 @@
+## [5.0.2](https://github.com/nolanlawson/fuite/compare/v5.0.1...v5.0.2) (2024-10-11)
+
+
+### Bug Fixes
+
+* bump deps and devtools-frontend ([#117](https://github.com/nolanlawson/fuite/issues/117)) ([2d408c4](https://github.com/nolanlawson/fuite/commit/2d408c4a3d7fa88db42cfedd1684038262031fea))
+
+
+
 ## [5.0.1](https://github.com/nolanlawson/fuite/compare/v5.0.0...v5.0.1) (2024-08-27)
 
 
