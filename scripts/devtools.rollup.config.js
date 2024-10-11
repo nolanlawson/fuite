@@ -2,6 +2,7 @@ import typescript from '@rollup/plugin-typescript'
 import virtual from '@rollup/plugin-virtual'
 import replace from '@rollup/plugin-replace'
 import strip from '@rollup/plugin-strip'
+import inject from '@rollup/plugin-inject'
 
 // Stub out some modules to reduce bundle size
 const makeStub = (...names) => names
@@ -35,20 +36,42 @@ export default {
       __entry__: `
         export { HeapSnapshotLoader } from './front_end/entrypoints/heap_snapshot_worker/heap_snapshot_worker.ts'
         export { HeapSnapshotModel } from './front_end/models/heap_snapshot_model/heap_snapshot_model.ts'
+      `,
+      // Promise.withResolvers minimal shim
+      // TODO: remove when we set our minimum Node to v22+
+      __promise_with_resolvers__: `
+        export const withResolvers = () => {
+          let resolve
+          let reject
+          const promise = new Promise((_resolve, _reject) => {
+            resolve = _resolve
+            reject = _reject
+          })
+          return { resolve, reject, promise }
+        }
       `
     }),
     typescript({
       compilerOptions: {
         lib: ['esnext', 'dom', 'dom.iterable', 'webworker', 'webworker.iterable'],
-        target: 'esnext'
+        target: 'esnext',
+        outDir: '../fuite/src/thirdparty/devtools-frontend'
       },
       noEmitOnError: false
     }),
     replace({
       values: {
-        'location.search': ''
+        'location.search': '',
+        'Promise.withResolvers': 'PromiseWithResolvers'
       },
       preventAssignment: true
+    }),
+    // TODO: remove when we set our minimum Node to v22+
+    inject({
+      PromiseWithResolvers: [
+        '__promise_with_resolvers__',
+        'withResolvers'
+      ]
     }),
     strip({
       include: ['**/*.js', '**/*.ts'],

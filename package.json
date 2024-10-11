@@ -32,24 +32,25 @@
     "ora": "^8.1.0",
     "please-upgrade-node": "^3.2.0",
     "pretty-bytes": "^6.1.1",
-    "puppeteer": "^23.2.0",
+    "puppeteer": "^23.5.2",
     "quick-lru": "^7.0.0",
     "source-map": "^0.7.4",
     "stacktrace-parser": "^0.1.10",
     "table": "^6.8.2"
   },
   "devDependencies": {
-    "@rollup/plugin-replace": "^5.0.7",
+    "@rollup/plugin-inject": "^5.0.5",
+    "@rollup/plugin-replace": "^6.0.1",
     "@rollup/plugin-strip": "^3.0.4",
-    "@rollup/plugin-typescript": "^11.1.6",
+    "@rollup/plugin-typescript": "^12.1.0",
     "@rollup/plugin-virtual": "^3.0.2",
     "chai": "^5.1.1",
     "conventional-changelog-cli": "^5.0.0",
     "navigo": "^8.11.1",
     "npm-run-all": "^4.1.5",
-    "rollup": "^4.21.1",
+    "rollup": "^4.24.0",
     "serve": "^14.2.3",
-    "standard": "^17.1.0",
+    "standard": "^17.1.2",
     "wait-for-localhost": "^4.1.0"
   },
   "keywords": [
@@ -75,5 +76,5 @@
       "thirdparty"
     ]
   },
-  "packageManager": "pnpm@9.9.0+sha512.60c18acd138bff695d339be6ad13f7e936eea6745660d4cc4a776d5247c540d0edee1a563695c183a66eb917ef88f2b4feb1fc25f32a7adcadc7aaf3438e99c1"
+  "packageManager": "pnpm@9.12.1+sha512.e5a7e52a4183a02d5931057f7a0dbff9d5e9ce3161e33fa68ae392125b79282a8a8a470a51dfc8a0ed86221442eb2fb57019b0990ed24fab519bf0e1bc5ccfc4"
 }
