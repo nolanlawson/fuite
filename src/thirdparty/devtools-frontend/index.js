@@ -127,7 +127,6 @@ class Aggregate {
     distance;
     self;
     maxRet;
-    type;
     name;
     idxs;
     constructor() {
@@ -144,6 +143,7 @@ class AggregateForDiff {
     }
 }
 class Diff {
+    name;
     addedCount;
     removedCount;
     addedSize;
@@ -152,7 +152,8 @@ class Diff {
     addedIndexes;
     countDelta;
     sizeDelta;
-    constructor() {
+    constructor(name) {
+        this.name = name;
         this.addedCount = 0;
         this.removedCount = 0;
         this.addedSize = 0;
@@ -162,6 +163,7 @@ class Diff {
     }
 }
 class DiffForClass {
+    name;
     addedCount;
     removedCount;
     addedSize;
@@ -1465,6 +1467,26 @@ class HeapSnapshotNode {
     classIndex() {
         return this.#detachednessAndClassIndex() >>> SHIFT_FOR_CLASS_INDEX;
     }
+    // Returns a key which can uniquely describe both the class name for this node
+    // and its Location, if relevant. These keys are meant to be cheap to produce,
+    // so that building aggregates is fast. These keys are NOT the same as the
+    // keys exposed to the frontend by functions such as aggregatesWithFilter and
+    // aggregatesForDiff.
+    classKeyInternal() {
+        // It is common for multiple JavaScript constructors to have the same
+        // name, so the class key includes the location if available for nodes of
+        // type 'object'.
+        //
+        // JavaScript Functions (node type 'closure') also have locations, but it
+        // would not be helpful to split them into categories by location because
+        // many of those categories would have only one instance.
+        if (this.rawType() !== this.snapshot.nodeObjectType) {
+            return this.classIndex();
+        }
+        const location = this.snapshot.getLocation(this.nodeIndex);
+        return location ? `${location.scriptId},${location.lineNumber},${location.columnNumber},${this.className()}` :
+            this.classIndex();
+    }
     setClassIndex(index) {
         let value = this.#detachednessAndClassIndex();
         value &= BITMASK_FOR_DOM_LINK_STATE; // Clear previous class index.
@@ -2066,7 +2088,7 @@ class HeapSnapshot {
         const filter = this.createFilter(nodeFilter);
         // @ts-ignore key is added in createFilter
         const key = filter ? filter.key : 'allObjects';
-        return this.getAggregatesByClassName(false, key, filter);
+        return this.getAggregatesByClassKey(false, key, filter);
     }
     createNodeIdFilter(minNodeId, maxNodeId) {
         function nodeIdFilter(node) {
@@ -2172,26 +2194,36 @@ class HeapSnapshot {
         }
         throw new Error('Invalid filter name');
     }
-    getAggregatesByClassName(sortedIndexes, key, filter) {
-        const aggregates = this.buildAggregates(filter);
-        let aggregatesByClassName;
+    getAggregatesByClassKey(sortedIndexes, key, filter) {
+        let aggregates;
         if (key && this.#aggregates[key]) {
-            aggregatesByClassName = this.#aggregates[key];
+            aggregates = this.#aggregates[key];
         }
         else {
-            this.calculateClassesRetainedSize(aggregates.aggregatesByClassIndex, filter);
-            aggregatesByClassName = aggregates.aggregatesByClassName;
+            const aggregatesMap = this.buildAggregates(filter);
+            this.calculateClassesRetainedSize(aggregatesMap, filter);
+            // In the two previous steps, we used class keys that were simple and
+            // could be produced quickly. For many objects, this meant using the index
+            // of the string containing its class name. However, string indices are
+            // not consistent across snapshots, and this aggregate data might end up
+            // being used in a comparison, so here we convert to a more durable format
+            // for class keys.
+            aggregates = Object.create(null);
+            for (const [classKey, aggregate] of aggregatesMap.entries()) {
+                const newKey = typeof classKey === 'number' ? (',' + this.strings[classKey]) : classKey;
+                aggregates[newKey] = aggregate;
+            }
             if (key) {
-                this.#aggregates[key] = aggregatesByClassName;
+                this.#aggregates[key] = aggregates;
             }
         }
         if (sortedIndexes && (!key || !this.#aggregatesSortedFlags[key])) {
-            this.sortAggregateIndexes(aggregatesByClassName);
+            this.sortAggregateIndexes(aggregates);
             if (key) {
                 this.#aggregatesSortedFlags[key] = sortedIndexes;
             }
         }
-        return aggregatesByClassName;
+        return aggregates;
     }
     allocationTracesTops() {
         return this.#allocationProfile.serializeTraceTops();
@@ -2214,12 +2246,12 @@ class HeapSnapshot {
         // Temporarily apply the interface definitions from the other snapshot.
         const originalInterfaceDefinitions = this.#interfaceDefinitions;
         this.applyInterfaceDefinitions(JSON.parse(interfaceDefinitions));
-        const aggregatesByClassName = this.getAggregatesByClassName(true, 'allObjects');
+        const aggregates = this.getAggregatesByClassKey(true, 'allObjects');
         this.applyInterfaceDefinitions(originalInterfaceDefinitions ?? []);
         const result = {};
         const node = this.createNode();
-        for (const className in aggregatesByClassName) {
-            const aggregate = aggregatesByClassName[className];
+        for (const classKey in aggregates) {
+            const aggregate = aggregates[classKey];
             const indexes = aggregate.idxs;
             const ids = new Array(indexes.length);
             const selfSizes = new Array(indexes.length);
@@ -2228,7 +2260,7 @@ class HeapSnapshot {
                 ids[i] = node.id();
                 selfSizes[i] = node.selfSize();
             }
-            result[className] = { indexes, ids, selfSizes };
+            result[classKey] = { indexes, ids, selfSizes };
         }
         this.#aggregatesForDiffInternal = { interfaceDefinitions, aggregates: result };
         return result;
@@ -2317,9 +2349,7 @@ class HeapSnapshot {
         }
     }
     buildAggregates(filter) {
-        const aggregates = {};
-        const aggregatesByClassName = {};
-        const classIndexes = [];
+        const aggregates = new Map();
         const nodes = this.nodes;
         const nodesLength = nodes.length;
         const nodeFieldCount = this.nodeFieldCount;
@@ -2335,71 +2365,58 @@ class HeapSnapshot {
             if (!selfSize) {
                 continue;
             }
-            const classIndex = node.classIndex();
+            const classKey = node.classKeyInternal();
             const nodeOrdinal = nodeIndex / nodeFieldCount;
             const distance = nodeDistances[nodeOrdinal];
-            if (!(classIndex in aggregates)) {
-                const nodeType = node.type();
-                const nameMatters = nodeType === 'object' || nodeType === 'native';
-                const value = {
+            let aggregate = aggregates.get(classKey);
+            if (!aggregate) {
+                aggregate = {
                     count: 1,
                     distance,
                     self: selfSize,
                     maxRet: 0,
-                    type: nodeType,
-                    name: nameMatters ? node.className() : null,
+                    name: node.className(),
                     idxs: [nodeIndex],
                 };
-                aggregates[classIndex] = value;
-                classIndexes.push(classIndex);
-                aggregatesByClassName[node.className()] = value;
+                aggregates.set(classKey, aggregate);
             }
             else {
-                const clss = aggregates[classIndex];
-                if (!clss) {
-                    continue;
-                }
-                clss.distance = Math.min(clss.distance, distance);
-                ++clss.count;
-                clss.self += selfSize;
-                clss.idxs.push(nodeIndex);
+                aggregate.distance = Math.min(aggregate.distance, distance);
+                ++aggregate.count;
+                aggregate.self += selfSize;
+                aggregate.idxs.push(nodeIndex);
             }
         }
         // Shave off provisionally allocated space.
-        for (let i = 0, l = classIndexes.length; i < l; ++i) {
-            const classIndex = classIndexes[i];
-            const classIndexValues = aggregates[classIndex];
-            if (!classIndexValues) {
-                continue;
-            }
-            classIndexValues.idxs = classIndexValues.idxs.slice();
+        for (const aggregate of aggregates.values()) {
+            aggregate.idxs = aggregate.idxs.slice();
         }
-        return { aggregatesByClassName, aggregatesByClassIndex: aggregates };
+        return aggregates;
     }
     calculateClassesRetainedSize(aggregates, filter) {
         const rootNodeIndex = this.rootNodeIndexInternal;
         const node = this.createNode(rootNodeIndex);
         const list = [rootNodeIndex];
         const sizes = [-1];
-        const classes = [];
-        const seenClassNameIndexes = new Map();
+        const classKeys = [];
+        const seenClassKeys = new Map();
         const nodeFieldCount = this.nodeFieldCount;
         const dominatedNodes = this.dominatedNodes;
         const firstDominatedNodeIndex = this.firstDominatedNodeIndex;
         while (list.length) {
             const nodeIndex = list.pop();
             node.nodeIndex = nodeIndex;
-            let classIndex = node.classIndex();
-            const seen = Boolean(seenClassNameIndexes.get(classIndex));
+            let classKey = node.classKeyInternal();
+            const seen = Boolean(seenClassKeys.get(classKey));
             const nodeOrdinal = nodeIndex / nodeFieldCount;
             const dominatedIndexFrom = firstDominatedNodeIndex[nodeOrdinal];
             const dominatedIndexTo = firstDominatedNodeIndex[nodeOrdinal + 1];
             if (!seen && (!filter || filter(node)) && node.selfSize()) {
-                aggregates[classIndex].maxRet += node.retainedSize();
+                aggregates.get(classKey).maxRet += node.retainedSize();
                 if (dominatedIndexFrom !== dominatedIndexTo) {
-                    seenClassNameIndexes.set(classIndex, true);
+                    seenClassKeys.set(classKey, true);
                     sizes.push(list.length);
-                    classes.push(classIndex);
+                    classKeys.push(classKey);
                 }
             }
             for (let i = dominatedIndexFrom; i < dominatedIndexTo; i++) {
@@ -2408,8 +2425,8 @@ class HeapSnapshot {
             const l = list.length;
             while (sizes[sizes.length - 1] === l) {
                 sizes.pop();
-                classIndex = classes.pop();
-                seenClassNameIndexes.set(classIndex, false);
+                classKey = classKeys.pop();
+                seenClassKeys.set(classKey, false);
             }
         }
     }
@@ -3185,22 +3202,22 @@ class HeapSnapshot {
             return snapshotDiff;
         }
         snapshotDiff = {};
-        const aggregates = this.getAggregatesByClassName(true, 'allObjects');
-        for (const className in baseSnapshotAggregates) {
-            const baseAggregate = baseSnapshotAggregates[className];
-            const diff = this.calculateDiffForClass(baseAggregate, aggregates[className]);
+        const aggregates = this.getAggregatesByClassKey(true, 'allObjects');
+        for (const classKey in baseSnapshotAggregates) {
+            const baseAggregate = baseSnapshotAggregates[classKey];
+            const diff = this.calculateDiffForClass(baseAggregate, aggregates[classKey]);
             if (diff) {
-                snapshotDiff[className] = diff;
+                snapshotDiff[classKey] = diff;
             }
         }
         const emptyBaseAggregate = new AggregateForDiff();
-        for (const className in aggregates) {
-            if (className in baseSnapshotAggregates) {
+        for (const classKey in aggregates) {
+            if (classKey in baseSnapshotAggregates) {
                 continue;
             }
-            const classDiff = this.calculateDiffForClass(emptyBaseAggregate, aggregates[className]);
+            const classDiff = this.calculateDiffForClass(emptyBaseAggregate, aggregates[classKey]);
             if (classDiff) {
-                snapshotDiff[className] = classDiff;
+                snapshotDiff[classKey] = classDiff;
             }
         }
         this.#snapshotDiffs[baseSnapshotId] = snapshotDiff;
@@ -3215,7 +3232,7 @@ class HeapSnapshot {
         let j = 0;
         const l = baseIds.length;
         const m = indexes.length;
-        const diff = new Diff();
+        const diff = new Diff(aggregate.name);
         const nodeB = this.createNode(indexes[j]);
         while (i < l && j < m) {
             const nodeAId = baseIds[i];
@@ -3303,16 +3320,16 @@ class HeapSnapshot {
         const indexProvider = new HeapSnapshotRetainerEdgeIndexProvider(this);
         return new HeapSnapshotEdgesProvider(this, filter, node.retainers(), indexProvider);
     }
-    createAddedNodesProvider(baseSnapshotId, className) {
+    createAddedNodesProvider(baseSnapshotId, classKey) {
         const snapshotDiff = this.#snapshotDiffs[baseSnapshotId];
-        const diffForClass = snapshotDiff[className];
+        const diffForClass = snapshotDiff[classKey];
         return new HeapSnapshotNodesProvider(this, diffForClass.addedIndexes);
     }
     createDeletedNodesProvider(nodeIndexes) {
         return new HeapSnapshotNodesProvider(this, nodeIndexes);
     }
-    createNodesProviderForClass(className, nodeFilter) {
-        return new HeapSnapshotNodesProvider(this, this.aggregatesWithFilter(nodeFilter)[className].idxs);
+    createNodesProviderForClass(classKey, nodeFilter) {
+        return new HeapSnapshotNodesProvider(this, this.aggregatesWithFilter(nodeFilter)[classKey].idxs);
     }
     maxJsNodeId() {
         const nodeFieldCount = this.nodeFieldCount;
