@@ -29,7 +29,7 @@ describe('custom idle logic', () => {
     expect(result.deltaPerIteration).to.be.above(1000000)
     expect(result.deltaPerIteration).to.be.below(2000000)
 
-    const leak = result.leaks.objects.find(_ => _.name.includes('SomeBigObject'))
+    const leak = result.leaks.objects.find(_ => _.name === 'SomeBigObject')
     expect(leak.retainedSizeDeltaPerIteration).to.be.above(1000000)
     expect(leak.retainedSizeDeltaPerIteration).to.be.below(2000000)
   })

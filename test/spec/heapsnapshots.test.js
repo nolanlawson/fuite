@@ -22,7 +22,7 @@ describe('heapsnapshots', () => {
     expect(result.before.heapsnapshot).to.equal(undefined)
     expect(result.after.heapsnapshot).to.equal(undefined)
 
-    const leak = result.leaks.objects.find(_ => _.name.includes('SomeBigObject'))
+    const leak = result.leaks.objects.find(_ => _.name === 'SomeBigObject')
     expect(leak.retainedSizeDeltaPerIteration).to.be.above(1000000)
     expect(leak.retainedSizeDeltaPerIteration).to.be.below(2000000)
   })
