@@ -21,7 +21,7 @@ describe('cli test suite', () => {
     expect(result.deltaPerIteration).to.be.above(1000000)
     expect(result.deltaPerIteration).to.be.below(2000000)
 
-    const leak = result.leaks.objects.find(_ => _.name === 'SomeBigObject')
+    const leak = result.leaks.objects.find(_ => _.name.includes('SomeBigObject'))
     expect(leak.retainedSizeDeltaPerIteration).to.be.above(1000000)
     expect(leak.retainedSizeDeltaPerIteration).to.be.below(2000000)
   })
@@ -46,7 +46,7 @@ describe('cli test suite', () => {
     expect(result.deltaPerIteration).to.be.above(1000000)
     expect(result.deltaPerIteration).to.be.below(2000000)
 
-    const leak = result.leaks.objects.find(_ => _.name === 'SomeBigObject')
+    const leak = result.leaks.objects.find(_ => _.name.includes('SomeBigObject'))
     expect(leak.retainedSizeDeltaPerIteration).to.be.above(1000000)
     expect(leak.retainedSizeDeltaPerIteration).to.be.below(2000000)
   })
@@ -77,7 +77,7 @@ describe('cli test suite', () => {
     expect(result.deltaPerIteration).to.be.above(1000000)
     expect(result.deltaPerIteration).to.be.below(2000000)
 
-    const leak = result.leaks.objects.find(_ => _.name === 'SomeBigObject')
+    const leak = result.leaks.objects.find(_ => _.name.includes('SomeBigObject'))
     expect(leak.retainedSizeDeltaPerIteration).to.be.above(1000000)
     expect(leak.retainedSizeDeltaPerIteration).to.be.below(2000000)
   })
