@@ -49,7 +49,7 @@ describe('dom nodes', () => {
 
   it('the tool does not leak dom nodes itself', async () => {
     const results = await asyncIterableToArray(findLeaks('http://localhost:3000/test/www/recyclesDomNodes/', {
-      iterations: 3
+      iterations: 17 // avoid false positives
     }))
 
     expect(results.length).to.equal(1)
@@ -64,7 +64,7 @@ describe('dom nodes', () => {
 
   it('can handle dom nodes with changing descriptions', async () => {
     const results = await asyncIterableToArray(findLeaks('http://localhost:3000/test/www/recyclesDomNodesNewIds/', {
-      iterations: 3
+      iterations: 17 // avoid false positives
     }))
 
     expect(results.length).to.equal(1)

@@ -74,7 +74,10 @@ export async function analyzeHeapSnapshots (startSnapshotFilename, endSnapshotFi
     const countDelta = diff.countDelta
     const countDeltaPerIteration = countDelta / numIterations
     return {
-      name,
+      // The "name" here is actually a combination of the class name and the code positions to handle objects
+      // with the same name. E.g. `8,12,2,SomeBigObject` instead of `SomeBigObject`. For readability we just
+      // want the short name, which can be found in the aggregate object
+      name: startAggregatesForThisClass.name,
       diff: { ...diff },
       aggregates: {
         before: { ...startAggregatesForThisClass },
