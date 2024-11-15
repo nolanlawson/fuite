@@ -1,3 +1,12 @@
+## [5.0.4](https://github.com/nolanlawson/fuite/compare/v5.0.3...v5.0.4) (2024-11-15)
+
+
+### Bug Fixes
+
+* update to latest devtools-frontend ([#120](https://github.com/nolanlawson/fuite/issues/120)) ([6eda21b](https://github.com/nolanlawson/fuite/commit/6eda21bbfa1d60add104a514d4925a5071c8f9de))
+
+
+
 ## [5.0.3](https://github.com/nolanlawson/fuite/compare/v5.0.2...v5.0.3) (2024-10-26)
 
 
