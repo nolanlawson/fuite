@@ -133,10 +133,12 @@ class Aggregate {
     }
 }
 class AggregateForDiff {
+    name;
     indexes;
     ids;
     selfSizes;
     constructor() {
+        this.name = '';
         this.indexes = [];
         this.ids = [];
         this.selfSizes = [];
@@ -1170,55 +1172,6 @@ function serializeUIString(string, values = {}) {
     return JSON.stringify(serializedMessage);
 }
 
-// Copyright 2021 The Chromium Authors. All rights reserved.
-// Use of this source code is governed by a BSD-style license that can be
-// found in the LICENSE file.
-const UIStrings$2 = {
-    /**
-     *@description μs is the short form of micro-seconds and the placeholder is a number
-     * The shortest form or abbreviation of micro-seconds should be used, as there is
-     * limited room in this UI.
-     *@example {2} PH1
-     */
-    fmms: '{PH1} μs',
-    /**
-     *@description ms is the short form of milli-seconds and the placeholder is a decimal number
-     * The shortest form or abbreviation of milli-seconds should be used, as there is
-     * limited room in this UI.
-     *@example {2.14} PH1
-     */
-    fms: '{PH1} ms',
-    /**
-     *@description s is short for seconds and the placeholder is a decimal number
-     * The shortest form or abbreviation of seconds should be used, as there is
-     * limited room in this UI.
-     *@example {2.14} PH1
-     */
-    fs: '{PH1} s',
-    /**
-     *@description min is short for minutes and the placeholder is a decimal number
-     *@example {2.2} PH1
-     */
-    fmin: '{PH1} min',
-    /**
-     *@description hrs is short for hours and the placeholder is a decimal number
-     *@example {2.2} PH1
-     */
-    fhrs: '{PH1} hrs',
-    /**
-     *@description days formatting and the placeholder is a decimal number
-     *@example {2.2} PH1
-     */
-    fdays: '{PH1} days',
-    /**
-     *@description describes a number of milliseconds (the unit should not abbreviated)
-     *@example {2.14} PH1
-     */
-    fmsExpanded: '{PH1} milliseconds',
-};
-const str_$2 = registerUIStrings('core/i18n/time-utilities.ts', UIStrings$2);
-getLocalizedString.bind(undefined, str_$2);
-
 class HeapSnapshotEdge {
     snapshot;
     edges;
@@ -2210,7 +2163,7 @@ class HeapSnapshot {
             // for class keys.
             aggregates = Object.create(null);
             for (const [classKey, aggregate] of aggregatesMap.entries()) {
-                const newKey = typeof classKey === 'number' ? (',' + this.strings[classKey]) : classKey;
+                const newKey = this.classKeyFromClassKeyInternal(classKey);
                 aggregates[newKey] = aggregate;
             }
             if (key) {
@@ -2260,7 +2213,7 @@ class HeapSnapshot {
                 ids[i] = node.id();
                 selfSizes[i] = node.selfSize();
             }
-            result[classKey] = { indexes, ids, selfSizes };
+            result[classKey] = { name: node.className(), indexes, ids, selfSizes };
         }
         this.#aggregatesForDiffInternal = { interfaceDefinitions, aggregates: result };
         return result;
@@ -3232,7 +3185,7 @@ class HeapSnapshot {
         let j = 0;
         const l = baseIds.length;
         const m = indexes.length;
-        const diff = new Diff(aggregate.name);
+        const diff = new Diff(aggregate ? aggregate.name : baseAggregate.name);
         const nodeB = this.createNode(indexes[j]);
         while (i < l && j < m) {
             const nodeAId = baseIds[i];
@@ -3281,10 +3234,16 @@ class HeapSnapshot {
         }
         return null;
     }
-    nodeClassName(snapshotObjectId) {
+    // Converts an internal class key, suitable for categorizing within this
+    // snapshot, to a public class key, which can be used in comparisons
+    // between multiple snapshots.
+    classKeyFromClassKeyInternal(key) {
+        return typeof key === 'number' ? (',' + this.strings[key]) : key;
+    }
+    nodeClassKey(snapshotObjectId) {
         const node = this.nodeForSnapshotObjectId(snapshotObjectId);
         if (node) {
-            return node.className();
+            return this.classKeyFromClassKeyInternal(node.classKeyInternal());
         }
         return null;
     }
@@ -4517,6 +4476,10 @@ const UIStrings$1 = {
      * @description The UI destination when revealing loaded resources through the Developer Resources Panel
      */
     developerResourcesPanel: 'Developer Resources panel',
+    /**
+     * @description The UI destination when revealing loaded resources through the Animations panel
+     */
+    animationsPanel: 'Animations panel',
 };
 const str_$1 = registerUIStrings('core/common/Revealer.ts', UIStrings$1);
 const i18nLazyString = getLazilyComputedLocalizedString.bind(undefined, str_$1);
@@ -4531,6 +4494,7 @@ const i18nLazyString = getLazilyComputedLocalizedString.bind(undefined, str_$1);
     APPLICATION_PANEL: i18nLazyString(UIStrings$1.applicationPanel),
     SOURCES_PANEL: i18nLazyString(UIStrings$1.sourcesPanel),
     MEMORY_INSPECTOR_PANEL: i18nLazyString(UIStrings$1.memoryInspectorPanel),
+    ANIMATIONS_PANEL: i18nLazyString(UIStrings$1.animationsPanel),
 });
 
 // Copyright 2014 The Chromium Authors. All rights reserved.
