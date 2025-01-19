@@ -37,12 +37,10 @@ describe('basic test suite', () => {
     expect(leak.retainedSizeDeltaPerIteration).to.be.below(2000000)
 
     expect(Object.keys(results[0].result.before.statistics).sort()).to.deep.equal([
-      'code', 'jsArrays', 'native', 'strings',
-      'system', 'total', 'v8heap'
+      'native', 'total', 'v8heap'
     ])
     expect(Object.keys(results[0].result.after.statistics).sort()).to.deep.equal([
-      'code', 'jsArrays', 'native', 'strings',
-      'system', 'total', 'v8heap'
+      'native', 'total', 'v8heap'
     ])
   })
 
