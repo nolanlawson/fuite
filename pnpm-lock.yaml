@@ -47,9 +47,6 @@ importers:
       table:
         specifier: ^6.9.0
         version: 6.9.0
-      web-worker:
-        specifier: ^1.5.0
-        version: 1.5.0
     devDependencies:
       '@rollup/plugin-inject':
         specifier: ^5.0.5
@@ -2219,9 +2216,6 @@ packages:
   wait-for-localhost@4.1.0:
     resolution: {integrity: sha512-i3yX7qgAnxFXWOS6Om7SNi19HRygFvCGh0iy0nOsrYOSiIlhUqoUuzLoW4jHVYS4dzNGzRU100uwTyluOMWcjw==}
     engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
-
-  web-worker@1.5.0:
-    resolution: {integrity: sha512-RiMReJrTAiA+mBjGONMnjVDP2u3p9R1vkcGz6gDIrOMT3oGuYwX2WRMYI9ipkphSuE5XKEhydbhNEJh4NY9mlw==}
 
   which-boxed-primitive@1.0.2:
     resolution: {integrity: sha512-bwZdv0AKLpplFY2KZRX6TvyuN7ojjr7lwkg6ml0roIy9YeuSr7JS372qlNW18UQYzgYK9ziGcerWqZOmEn9VNg==}
@@ -4646,8 +4640,6 @@ snapshots:
   version-guard@1.1.2: {}
 
   wait-for-localhost@4.1.0: {}
-
-  web-worker@1.5.0: {}
 
   which-boxed-primitive@1.0.2:
     dependencies:
