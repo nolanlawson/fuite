@@ -5533,7 +5533,6 @@ class HeapSnapshotWorkerProxy extends ObjectWrapper {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     messageReceived(event) {
         const data = event.data;
-        debugger
         if (data.eventName) {
             if (this.eventHandler) {
                 this.eventHandler(data.eventName, data.data);

@@ -18,10 +18,12 @@ export class WebCompatibleWorker {
       if (this.#onMessage) {
         this.#worker.off('message', this.#onMessage)
       }
+      this.#onMessage = null
     } else {
-      this.#worker.on('message', listener)
+      const compatibleListener = data => listener({ data })
+      this.#worker.on('message', compatibleListener)
+      this.#onMessage = compatibleListener
     }
-    this.#onMessage = null
   }
 
   get onerror() {
@@ -32,14 +34,20 @@ export class WebCompatibleWorker {
       if (this.#onError) {
         this.#worker.off('error', this.#onError)
       }
+      this.#onError = null
     } else {
-      this.#worker.on('error', listener)
+      const compatibleListener = error => listener({ error })
+      this.#worker.on('error', compatibleListener)
+      this.#onError = compatibleListener
     }
-    this.#onError = null
   }
 
-  postMessage(...args) {
-    this.#worker.postMessage(...args)
+  postMessage(message, transferList) {
+    if (transferList) {
+      const ports = transferList.filter(_ => _ instanceof MessagePort)
+      message.__ports = ports
+    }
+    this.#worker.postMessage(message, transferList)
   }
 
   terminate() {
