@@ -22,6 +22,7 @@ export class WebCompatibleWorker {
       this.#onMessage = null
     } else {
       const compatibleListener = data => listener({ data })
+      console.log('setting listener on message')
       this.#worker.on('message', compatibleListener)
       this.#onMessage = compatibleListener
     }

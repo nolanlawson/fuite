@@ -5015,6 +5015,7 @@ class WorkerWrapper {
         return new WorkerWrapper(url);
     }
     postMessage(message, transfer) {
+        console.log('postMessage from parent', { message })
         void this.#workerPromise.then(worker => {
             if (!this.#disposed) {
                 worker.postMessage(message, transfer ?? []);
@@ -5289,6 +5290,7 @@ class HeapSnapshotWorkerDispatcher {
         this.#postMessage({ eventName: name, data });
     }
     async dispatchMessage({ data, ports }) {
+        console.log('dispatchMessage', { data })
         const response = { callId: data.callId, result: null, error: undefined, errorCallStack: undefined, errorMethodName: undefined };
         try {
             switch (data.disposition) {
@@ -5532,6 +5534,7 @@ class HeapSnapshotWorkerProxy extends ObjectWrapper {
     // TODO(crbug.com/1172300) Ignored during the jsdoc to ts migration)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     messageReceived(event) {
+        console.log('messageReceived', { event })
         const data = event.data;
         if (data.eventName) {
             if (this.eventHandler) {
