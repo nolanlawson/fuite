@@ -6,14 +6,15 @@ export class WebCompatibleWorker {
   #worker
   #onMessage = null
   #onError = null
-  constructor(...args) {
+  constructor (...args) {
     this.#worker = new Worker(...args)
   }
 
-  get onmessage() {
+  get onmessage () {
     return this.#onMessage
   }
-  set onmessage(listener) {
+
+  set onmessage (listener) {
     if (listener === null) {
       if (this.#onMessage) {
         this.#worker.off('message', this.#onMessage)
@@ -26,10 +27,11 @@ export class WebCompatibleWorker {
     }
   }
 
-  get onerror() {
+  get onerror () {
     return this.#onError
   }
-  set onerror(listener) {
+
+  set onerror (listener) {
     if (listener === null) {
       if (this.#onError) {
         this.#worker.off('error', this.#onError)
@@ -42,7 +44,7 @@ export class WebCompatibleWorker {
     }
   }
 
-  postMessage(message, transferList) {
+  postMessage (message, transferList) {
     if (transferList) {
       const ports = transferList.filter(_ => _ instanceof MessagePort)
       message.__ports = ports
@@ -50,7 +52,7 @@ export class WebCompatibleWorker {
     this.#worker.postMessage(message, transferList)
   }
 
-  terminate() {
+  terminate () {
     this.#worker.terminate()
   }
 }
