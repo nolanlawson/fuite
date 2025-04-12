@@ -2,7 +2,7 @@ import path from 'node:path'
 import { createReadStream, createWriteStream } from 'node:fs'
 import { realpath } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
-import { HeapSnapshotLoader } from '../../thirdparty/devtools-frontend/index.js'
+import { HeapSnapshotWorker, HeapSnapshotWorkerProxy } from '../../thirdparty/devtools-frontend/index.js'
 import { randomUUID } from 'node:crypto'
 
 // via https://github.com/sindresorhus/temp-dir/blob/437937c/index.js#L4
@@ -41,7 +41,7 @@ export async function takeHeapSnapshot (page, cdpSession) {
 export async function createHeapSnapshotModel (filename) {
   let loader
   const loaderPromise = new Promise(resolve => {
-    loader = new HeapSnapshotLoader.HeapSnapshotLoader({
+    loader = new HeapSnapshotWorker.HeapSnapshotLoader.HeapSnapshotLoader({
       sendEvent (type, message) {
         const parsedMessage = JSON.parse(message)
         if (type === 'ProgressUpdate' && parsedMessage.string === 'Parsing strings…') {
@@ -65,5 +65,10 @@ export async function createHeapSnapshotModel (filename) {
   loader.close()
   await loaderPromise
 
-  return (await loader.buildSnapshot())
+  const secondWorker = new HeapSnapshotWorkerProxy(() => { })
+  try {
+    return await loader.buildSnapshot(secondWorker)
+  } finally {
+    secondWorker.dispose()
+  }
 }

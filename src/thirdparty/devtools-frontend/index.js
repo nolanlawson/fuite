@@ -1,4 +1,7 @@
+
 /* Generated from devtools-frontend via build-devtools-frontend.sh */
+import { WebCompatibleWorker as Worker } from '../../devtools-helpers/web-compatible-worker.js'
+
 /*
  * Copyright (C) 2014 Google Inc. All rights reserved.
  *
@@ -278,7 +281,7 @@ class Location {
     }
 }
 
-var HeapSnapshotModel = /*#__PURE__*/Object.freeze({
+var HeapSnapshotModel$1 = /*#__PURE__*/Object.freeze({
     __proto__: null,
     Aggregate: Aggregate,
     AggregateForDiff: AggregateForDiff,
@@ -300,6 +303,15 @@ var HeapSnapshotModel = /*#__PURE__*/Object.freeze({
     WorkerCommand: WorkerCommand,
     baseSystemDistance: baseSystemDistance,
     baseUnreachableDistance: baseUnreachableDistance
+});
+
+// Copyright 2019 The Chromium Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+var HeapSnapshotModel = /*#__PURE__*/Object.freeze({
+    __proto__: null,
+    HeapSnapshotModel: HeapSnapshotModel$1
 });
 
 /*
@@ -593,6 +605,14 @@ class FunctionAllocationInfo {
         }
     }
 }
+
+var AllocationProfile$1 = /*#__PURE__*/Object.freeze({
+    __proto__: null,
+    AllocationProfile: AllocationProfile,
+    BottomUpAllocationNode: BottomUpAllocationNode,
+    FunctionAllocationInfo: FunctionAllocationInfo,
+    TopDownAllocationNode: TopDownAllocationNode
+});
 
 const withResolvers = () => {
           let resolve;
@@ -1693,6 +1713,75 @@ function appendToProblemReport(report, messageOrNodeIndex) {
 }
 function reportProblemToPrimaryWorker(problemReport, port) {
     port.postMessage({ problemReport });
+}
+// Initialization work is split into two threads. This class is the entry point
+// for work done by the second thread.
+class SecondaryInitManager {
+    argsStep1;
+    argsStep2;
+    argsStep3;
+    constructor(port) {
+        const { promise: argsStep1, resolve: resolveArgsStep1 } = withResolvers();
+        this.argsStep1 = argsStep1;
+        const { promise: argsStep2, resolve: resolveArgsStep2 } = withResolvers();
+        this.argsStep2 = argsStep2;
+        const { promise: argsStep3, resolve: resolveArgsStep3 } = withResolvers();
+        this.argsStep3 = argsStep3;
+        port.onmessage = e => {
+            const data = e.data;
+            switch (data.step) {
+                case 1:
+                    resolveArgsStep1(data.args);
+                    break;
+                case 2:
+                    resolveArgsStep2(data.args);
+                    break;
+                case 3:
+                    resolveArgsStep3(data.args);
+                    break;
+            }
+        };
+        void this.initialize(port);
+    }
+    async getNodeSelfSizes() {
+        return (await this.argsStep3).nodeSelfSizes;
+    }
+    async initialize(port) {
+        try {
+            const argsStep1 = await this.argsStep1;
+            const retainers = HeapSnapshot.buildRetainers(argsStep1);
+            const argsStep2 = await this.argsStep2;
+            const args = {
+                ...argsStep2,
+                ...argsStep1,
+                ...retainers,
+                essentialEdges: createBitVector(argsStep2.essentialEdgesBuffer),
+                port,
+                nodeSelfSizesPromise: this.getNodeSelfSizes()
+            };
+            const dominatorsAndRetainedSizes = await HeapSnapshot.calculateDominatorsAndRetainedSizes(args);
+            const dominatedNodesOutputs = HeapSnapshot.buildDominatedNodes({ ...args, ...dominatorsAndRetainedSizes });
+            const results = {
+                ...retainers,
+                ...dominatorsAndRetainedSizes,
+                ...dominatedNodesOutputs,
+            };
+            port.postMessage({ resultsFromSecondWorker: results }, {
+                transfer: [
+                    results.dominatorsTree.buffer,
+                    results.firstRetainerIndex.buffer,
+                    results.retainedSizes.buffer,
+                    results.retainingEdges.buffer,
+                    results.retainingNodes.buffer,
+                    results.dominatedNodes.buffer,
+                    results.firstDominatedNodeIndex.buffer,
+                ]
+            });
+        }
+        catch (e) {
+            port.postMessage({ error: e + '\n' + e?.stack });
+        }
+    }
 }
 const BITMASK_FOR_DOM_LINK_STATE = 3;
 // The class index is stored in the upper 30 bits of the detachedness field.
@@ -4094,6 +4183,14 @@ class JSHeapSnapshot extends HeapSnapshot {
         return this.#statistics;
     }
 }
+// Creates and initializes a JSHeapSnapshot using only one thread.
+async function createJSHeapSnapshotForTesting(profile) {
+    const result = new JSHeapSnapshot(profile, new HeapSnapshotProgress());
+    const channel = new MessageChannel();
+    new SecondaryInitManager(channel.port2);
+    await result.initialize(channel.port1);
+    return result;
+}
 class JSHeapSnapshotNode extends HeapSnapshotNode {
     constructor(snapshot, nodeIndex) {
         super(snapshot, nodeIndex);
@@ -4368,6 +4465,32 @@ class JSHeapSnapshotRetainerEdge extends HeapSnapshotRetainerEdge {
     }
 }
 
+var HeapSnapshot$1 = /*#__PURE__*/Object.freeze({
+    __proto__: null,
+    HeapSnapshot: HeapSnapshot,
+    HeapSnapshotEdge: HeapSnapshotEdge,
+    HeapSnapshotEdgeIndexProvider: HeapSnapshotEdgeIndexProvider,
+    HeapSnapshotEdgeIterator: HeapSnapshotEdgeIterator,
+    HeapSnapshotEdgesProvider: HeapSnapshotEdgesProvider,
+    HeapSnapshotFilteredIterator: HeapSnapshotFilteredIterator,
+    HeapSnapshotIndexRangeIterator: HeapSnapshotIndexRangeIterator,
+    HeapSnapshotItemProvider: HeapSnapshotItemProvider,
+    HeapSnapshotNode: HeapSnapshotNode,
+    HeapSnapshotNodeIndexProvider: HeapSnapshotNodeIndexProvider,
+    HeapSnapshotNodeIterator: HeapSnapshotNodeIterator,
+    HeapSnapshotNodesProvider: HeapSnapshotNodesProvider,
+    HeapSnapshotProgress: HeapSnapshotProgress,
+    HeapSnapshotRetainerEdge: HeapSnapshotRetainerEdge,
+    HeapSnapshotRetainerEdgeIndexProvider: HeapSnapshotRetainerEdgeIndexProvider,
+    HeapSnapshotRetainerEdgeIterator: HeapSnapshotRetainerEdgeIterator,
+    JSHeapSnapshot: JSHeapSnapshot,
+    JSHeapSnapshotEdge: JSHeapSnapshotEdge,
+    JSHeapSnapshotNode: JSHeapSnapshotNode,
+    JSHeapSnapshotRetainerEdge: JSHeapSnapshotRetainerEdge,
+    SecondaryInitManager: SecondaryInitManager,
+    createJSHeapSnapshotForTesting: createJSHeapSnapshotForTesting
+});
+
 /*
  * Copyright (C) 2013 Google Inc. All rights reserved.
  *
@@ -4475,10 +4598,75 @@ for (let index = 0; index < BASE64_CHARS.length; ++index) {
     BASE64_CODES[BASE64_CHARS.charCodeAt(index)] = index;
 }
 
+// Copyright 2021 The Chromium Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+class ObjectWrapper {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    listeners;
+    addEventListener(eventType, listener, thisObject) {
+        if (!this.listeners) {
+            this.listeners = new Map();
+        }
+        let listenersForEventType = this.listeners.get(eventType);
+        if (!listenersForEventType) {
+            listenersForEventType = new Set();
+            this.listeners.set(eventType, listenersForEventType);
+        }
+        listenersForEventType.add({ thisObject, listener });
+        return { eventTarget: this, eventType, thisObject, listener };
+    }
+    once(eventType) {
+        return new Promise(resolve => {
+            const descriptor = this.addEventListener(eventType, event => {
+                this.removeEventListener(eventType, descriptor.listener);
+                resolve(event.data);
+            });
+        });
+    }
+    removeEventListener(eventType, listener, thisObject) {
+        const listeners = this.listeners?.get(eventType);
+        if (!listeners) {
+            return;
+        }
+        for (const listenerTuple of listeners) {
+            if (listenerTuple.listener === listener && listenerTuple.thisObject === thisObject) {
+                listenerTuple.disposed = true;
+                listeners.delete(listenerTuple);
+            }
+        }
+        if (!listeners.size) {
+            this.listeners?.delete(eventType);
+        }
+    }
+    hasEventListeners(eventType) {
+        return Boolean(this.listeners?.has(eventType));
+    }
+    dispatchEventToListeners(eventType, ...[eventData]) {
+        const listeners = this.listeners?.get(eventType);
+        if (!listeners) {
+            return;
+        }
+        // `eventData` is typed as `Events[T] | undefined`:
+        //   - `undefined` when `Events[T]` is void.
+        //   - `Events[T]` otherwise.
+        // We cast it to `Events[T]` which is the correct type in all instances, as
+        // `void` will be cast and used as `undefined`.
+        const event = { data: eventData, source: this };
+        // Work on a snapshot of the current listeners, callbacks might remove/add
+        // new listeners.
+        for (const listener of [...listeners]) {
+            if (!listener.disposed) {
+                listener.listener.call(listener.thisObject, event);
+            }
+        }
+    }
+}
+
 // Copyright 2014 The Chromium Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
-const UIStrings$1 = {
+const UIStrings$2 = {
     /**
      *@description The UI destination when right clicking an item that can be revealed
      */
@@ -4528,26 +4716,154 @@ const UIStrings$1 = {
      */
     animationsPanel: 'Animations panel',
 };
-const str_$1 = registerUIStrings('core/common/Revealer.ts', UIStrings$1);
-const i18nLazyString = getLazilyComputedLocalizedString.bind(undefined, str_$1);
+const str_$2 = registerUIStrings('core/common/Revealer.ts', UIStrings$2);
+const i18nLazyString = getLazilyComputedLocalizedString.bind(undefined, str_$2);
+let revealerRegistry;
+/**
+ * Registration for revealers, which deals with keeping a list of all possible
+ * revealers, lazily instantiating them as necessary and invoking their `reveal`
+ * methods depending on the _context types_ they were registered for.
+ *
+ * @see Revealer
+ */
+class RevealerRegistry {
+    registeredRevealers = [];
+    /**
+     * Yields the singleton instance, creating it on-demand when necessary.
+     *
+     * @returns the singleton instance.
+     */
+    static instance() {
+        if (revealerRegistry === undefined) {
+            revealerRegistry = new RevealerRegistry();
+        }
+        return revealerRegistry;
+    }
+    /**
+     * Clears the singleton instance (if any).
+     */
+    static removeInstance() {
+        revealerRegistry = undefined;
+    }
+    /**
+     * Register a new `Revealer` as described by the `registration`.
+     *
+     * @param registration the description.
+     */
+    register(registration) {
+        this.registeredRevealers.push(registration);
+    }
+    /**
+     * Reveals the `revealable`.
+     *
+     * @param revealable the object to reveal.
+     * @param omitFocus whether to omit focusing on the presentation of `revealable` afterwards.
+     */
+    async reveal(revealable, omitFocus) {
+        const revealers = await Promise.all(this.getApplicableRegisteredRevealers(revealable).map(registration => registration.loadRevealer()));
+        if (revealers.length < 1) {
+            throw new Error(`No revealers found for ${revealable}`);
+        }
+        if (revealers.length > 1) {
+            throw new Error(`Conflicting reveals found for ${revealable}`);
+        }
+        return await revealers[0].reveal(revealable, omitFocus);
+    }
+    getApplicableRegisteredRevealers(revealable) {
+        return this.registeredRevealers.filter(registration => {
+            for (const contextType of registration.contextTypes()) {
+                if (revealable instanceof contextType) {
+                    return true;
+                }
+            }
+            return false;
+        });
+    }
+}
+/**
+ * Reveals the `revealable` via the singleton {@link RevealerRegistry} instance.
+ *
+ * @param revealable the object to reveal.
+ * @param omitFocus whether to omit focusing on the presentation of `revealable` afterwards.
+ */
+async function reveal(revealable, omitFocus = false) {
+    await RevealerRegistry.instance().reveal(revealable, omitFocus);
+}
 ({
-    DEVELOPER_RESOURCES_PANEL: i18nLazyString(UIStrings$1.developerResourcesPanel),
-    ELEMENTS_PANEL: i18nLazyString(UIStrings$1.elementsPanel),
-    STYLES_SIDEBAR: i18nLazyString(UIStrings$1.stylesSidebar),
-    CHANGES_DRAWER: i18nLazyString(UIStrings$1.changesDrawer),
-    ISSUES_VIEW: i18nLazyString(UIStrings$1.issuesView),
-    NETWORK_PANEL: i18nLazyString(UIStrings$1.networkPanel),
-    TIMELINE_PANEL: i18nLazyString(UIStrings$1.timelinePanel),
-    APPLICATION_PANEL: i18nLazyString(UIStrings$1.applicationPanel),
-    SOURCES_PANEL: i18nLazyString(UIStrings$1.sourcesPanel),
-    SECURITY_PANEL: i18nLazyString(UIStrings$1.securityPanel),
-    MEMORY_INSPECTOR_PANEL: i18nLazyString(UIStrings$1.memoryInspectorPanel),
-    ANIMATIONS_PANEL: i18nLazyString(UIStrings$1.animationsPanel),
+    DEVELOPER_RESOURCES_PANEL: i18nLazyString(UIStrings$2.developerResourcesPanel),
+    ELEMENTS_PANEL: i18nLazyString(UIStrings$2.elementsPanel),
+    STYLES_SIDEBAR: i18nLazyString(UIStrings$2.stylesSidebar),
+    CHANGES_DRAWER: i18nLazyString(UIStrings$2.changesDrawer),
+    ISSUES_VIEW: i18nLazyString(UIStrings$2.issuesView),
+    NETWORK_PANEL: i18nLazyString(UIStrings$2.networkPanel),
+    TIMELINE_PANEL: i18nLazyString(UIStrings$2.timelinePanel),
+    APPLICATION_PANEL: i18nLazyString(UIStrings$2.applicationPanel),
+    SOURCES_PANEL: i18nLazyString(UIStrings$2.sourcesPanel),
+    SECURITY_PANEL: i18nLazyString(UIStrings$2.securityPanel),
+    MEMORY_INSPECTOR_PANEL: i18nLazyString(UIStrings$2.memoryInspectorPanel),
+    ANIMATIONS_PANEL: i18nLazyString(UIStrings$2.animationsPanel),
 });
 
 // Copyright 2014 The Chromium Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
+let consoleInstance;
+class Console extends ObjectWrapper {
+    #messagesInternal;
+    /**
+     * Instantiable via the instance() factory below.
+     */
+    constructor() {
+        super();
+        this.#messagesInternal = [];
+    }
+    static instance(opts) {
+        if (!consoleInstance || opts?.forceNew) {
+            consoleInstance = new Console();
+        }
+        return consoleInstance;
+    }
+    static removeInstance() {
+        consoleInstance = undefined;
+    }
+    /**
+     * Add a message to the Console panel.
+     *
+     * @param text the message text.
+     * @param level the message level.
+     * @param show whether to show the Console panel (if it's not already shown).
+     * @param source the message source.
+     */
+    addMessage(text, level = "info" /* MessageLevel.INFO */, show = false, source) {
+        const message = new Message(text, level, Date.now(), show, source);
+        this.#messagesInternal.push(message);
+        this.dispatchEventToListeners("messageAdded" /* Events.MESSAGE_ADDED */, message);
+    }
+    log(text) {
+        this.addMessage(text, "info" /* MessageLevel.INFO */);
+    }
+    warn(text, source) {
+        this.addMessage(text, "warning" /* MessageLevel.WARNING */, undefined, source);
+    }
+    /**
+     * Adds an error message to the Console panel.
+     *
+     * @param text the message text.
+     * @param show whether to show the Console panel (if it's not already shown).
+     */
+    error(text, show = true) {
+        this.addMessage(text, "error" /* MessageLevel.ERROR */, show);
+    }
+    messages() {
+        return this.#messagesInternal;
+    }
+    show() {
+        void this.showPromise();
+    }
+    showPromise() {
+        return reveal(this);
+    }
+}
 var FrontendMessageSource;
 (function (FrontendMessageSource) {
     FrontendMessageSource["CSS"] = "css";
@@ -4556,11 +4872,27 @@ var FrontendMessageSource;
     FrontendMessageSource["ISSUE_PANEL"] = "issue-panel";
     FrontendMessageSource["SELF_XSS"] = "self-xss";
 })(FrontendMessageSource || (FrontendMessageSource = {}));
+class Message {
+    text;
+    level;
+    timestamp;
+    show;
+    source;
+    constructor(text, level, timestamp, show, source) {
+        this.text = text;
+        this.level = level;
+        this.timestamp = (typeof timestamp === 'number') ? timestamp : Date.now();
+        this.show = show;
+        if (source) {
+            this.source = source;
+        }
+    }
+}
 
 // Copyright 2020 The Chromium Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
-const UIStrings = {
+const UIStrings$1 = {
     /**
      *@description Title of the Elements Panel
      */
@@ -4635,8 +4967,78 @@ const UIStrings = {
      */
     privacy: 'Privacy',
 };
-const str_ = registerUIStrings('core/common/SettingRegistration.ts', UIStrings);
-getLocalizedString.bind(undefined, str_);
+const str_$1 = registerUIStrings('core/common/SettingRegistration.ts', UIStrings$1);
+getLocalizedString.bind(undefined, str_$1);
+
+/*
+ * Copyright (C) 2014 Google Inc. All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ * notice, this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above
+ * copyright notice, this list of conditions and the following disclaimer
+ * in the documentation and/or other materials provided with the
+ * distribution.
+ *     * Neither the name of Google Inc. nor the names of its
+ * contributors may be used to endorse or promote products derived from
+ * this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+class WorkerWrapper {
+    #workerPromise;
+    #disposed;
+    constructor(workerLocation) {
+        this.#workerPromise = new Promise(fulfill => {
+            const worker = new Worker(workerLocation, { type: 'module' });
+            worker.onmessage = (event) => {
+                worker.onmessage = null;
+                fulfill(worker);
+            };
+        });
+    }
+    static fromURL(url) {
+        return new WorkerWrapper(url);
+    }
+    postMessage(message, transfer) {
+        void this.#workerPromise.then(worker => {
+            if (!this.#disposed) {
+                worker.postMessage(message, transfer ?? []);
+            }
+        });
+    }
+    dispose() {
+        this.#disposed = true;
+        void this.#workerPromise.then(worker => worker.terminate());
+    }
+    terminate() {
+        this.dispose();
+    }
+    set onmessage(listener) {
+        void this.#workerPromise.then(worker => {
+            worker.onmessage = listener;
+        });
+    }
+    set onerror(listener) {
+        void this.#workerPromise.then(worker => {
+            worker.onerror = listener;
+        });
+    }
+}
 
 class HeapSnapshotLoader {
     #progress;
@@ -4845,4 +5247,495 @@ var HeapSnapshotLoader$1 = /*#__PURE__*/Object.freeze({
     HeapSnapshotLoader: HeapSnapshotLoader
 });
 
-export { HeapSnapshotLoader$1 as HeapSnapshotLoader, HeapSnapshotModel };
+/*
+ * Copyright (C) 2011 Google Inc. All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ * notice, this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above
+ * copyright notice, this list of conditions and the following disclaimer
+ * in the documentation and/or other materials provided with the
+ * distribution.
+ *     * Neither the name of Google Inc. nor the names of its
+ * contributors may be used to endorse or promote products derived from
+ * this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+class HeapSnapshotWorkerDispatcher {
+    // TODO(crbug.com/1172300) Ignored during the jsdoc to ts migration)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    #objects;
+    #postMessage;
+    constructor(postMessage) {
+        this.#objects = [];
+        this.#postMessage = postMessage;
+    }
+    sendEvent(name, data) {
+        this.#postMessage({ eventName: name, data });
+    }
+    async dispatchMessage({ data, ports }) {
+        const response = { callId: data.callId, result: null, error: undefined, errorCallStack: undefined, errorMethodName: undefined };
+        try {
+            switch (data.disposition) {
+                case 'createLoader':
+                    this.#objects[data.objectId] = new HeapSnapshotLoader(this);
+                    break;
+                case 'dispose': {
+                    delete this.#objects[data.objectId];
+                    break;
+                }
+                case 'getter': {
+                    const object = this.#objects[data.objectId];
+                    const result = object[data.methodName];
+                    response.result = result;
+                    break;
+                }
+                case 'factory': {
+                    const object = this.#objects[data.objectId];
+                    const args = data.methodArguments.slice();
+                    args.push(...ports);
+                    const result = await object[data.methodName].apply(object, args);
+                    if (result) {
+                        this.#objects[data.newObjectId] = result;
+                    }
+                    response.result = Boolean(result);
+                    break;
+                }
+                case 'method': {
+                    const object = this.#objects[data.objectId];
+                    response.result = object[data.methodName].apply(object, data.methodArguments);
+                    break;
+                }
+                case 'evaluateForTest': {
+                    try {
+                        // Make 'HeapSnapshotWorker' and 'HeapSnapshotModel' available to web tests. 'eval' can't use 'import'.
+                        // @ts-expect-error
+                        globalThis.HeapSnapshotWorker = {
+                            AllocationProfile: AllocationProfile$1,
+                            HeapSnapshot: HeapSnapshot$1,
+                            HeapSnapshotLoader: HeapSnapshotLoader$1,
+                        };
+                        // @ts-expect-error
+                        globalThis.HeapSnapshotModel = HeapSnapshotModel;
+                        response.result = await self.eval(data.source);
+                    }
+                    catch (error) {
+                        response.result = error.toString();
+                    }
+                    break;
+                }
+                case 'setupForSecondaryInit': {
+                    this.#objects[data.objectId] = new SecondaryInitManager(ports[0]);
+                }
+            }
+        }
+        catch (error) {
+            response.error = error.toString();
+            response.errorCallStack = error.stack;
+            if (data.methodName) {
+                response.errorMethodName = data.methodName;
+            }
+        }
+        this.#postMessage(response);
+    }
+}
+
+var HeapSnapshotWorkerDispatcher$1 = /*#__PURE__*/Object.freeze({
+    __proto__: null,
+    HeapSnapshotWorkerDispatcher: HeapSnapshotWorkerDispatcher
+});
+
+// Copyright 2019 The Chromium Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+var heap_snapshot_worker = /*#__PURE__*/Object.freeze({
+    __proto__: null,
+    AllocationProfile: AllocationProfile$1,
+    HeapSnapshot: HeapSnapshot$1,
+    HeapSnapshotLoader: HeapSnapshotLoader$1,
+    HeapSnapshotWorkerDispatcher: HeapSnapshotWorkerDispatcher$1
+});
+
+/*
+ * Copyright (C) 2011 Google Inc. All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ * notice, this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above
+ * copyright notice, this list of conditions and the following disclaimer
+ * in the documentation and/or other materials provided with the
+ * distribution.
+ *     * Neither the name of Google Inc. nor the names of its
+ * contributors may be used to endorse or promote products derived from
+ * this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+const UIStrings = {
+    /**
+     *@description Text in Heap Snapshot Proxy of a profiler tool
+     *@example {functionName} PH1
+     */
+    anErrorOccurredWhenACallToMethod: 'An error occurred when a call to method \'\'{PH1}\'\' was requested',
+};
+const str_ = registerUIStrings('panels/profiler/HeapSnapshotProxy.ts', UIStrings);
+const i18nString = getLocalizedString.bind(undefined, str_);
+class HeapSnapshotWorkerProxy extends ObjectWrapper {
+    // TODO(crbug.com/1172300) Ignored during the jsdoc to ts migration)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    eventHandler;
+    nextObjectId;
+    nextCallId;
+    // TODO(crbug.com/1172300) Ignored during the jsdoc to ts migration)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    callbacks;
+    previousCallbacks;
+    worker;
+    interval;
+    // TODO(crbug.com/1172300) Ignored during the jsdoc to ts migration)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    constructor(eventHandler) {
+        super();
+        this.eventHandler = eventHandler;
+        this.nextObjectId = 1;
+        this.nextCallId = 1;
+        this.callbacks = new Map();
+        this.previousCallbacks = new Set();
+        this.worker = WorkerWrapper.fromURL(new URL('../../devtools-helpers/heap-snapshot-worker-entrypoint.js', import.meta.url));
+        this.worker.onmessage = this.messageReceived.bind(this);
+    }
+    createLoader(profileUid, snapshotReceivedCallback) {
+        const objectId = this.nextObjectId++;
+        const proxy = new HeapSnapshotLoaderProxy(this, objectId, profileUid, snapshotReceivedCallback);
+        this.postMessage({
+            callId: this.nextCallId++,
+            disposition: 'createLoader',
+            objectId,
+        });
+        return proxy;
+    }
+    dispose() {
+        this.worker.terminate();
+        if (this.interval) {
+            clearInterval(this.interval);
+        }
+    }
+    disposeObject(objectId) {
+        this.postMessage({ callId: this.nextCallId++, disposition: 'dispose', objectId });
+    }
+    evaluateForTest(script, callback) {
+        const callId = this.nextCallId++;
+        this.callbacks.set(callId, callback);
+        this.postMessage({ callId, disposition: 'evaluateForTest', source: script });
+    }
+    callFactoryMethod(callback, objectId, methodName, proxyConstructor, transfer, ...methodArguments) {
+        const callId = this.nextCallId++;
+        const newObjectId = this.nextObjectId++;
+        if (callback) {
+            this.callbacks.set(callId, remoteResult => {
+                callback(remoteResult ? new proxyConstructor(this, newObjectId) : null);
+            });
+            this.postMessage({
+                callId,
+                disposition: 'factory',
+                objectId,
+                methodName,
+                methodArguments,
+                newObjectId,
+            }, transfer);
+            return null;
+        }
+        this.postMessage({
+            callId,
+            disposition: 'factory',
+            objectId,
+            methodName,
+            methodArguments,
+            newObjectId,
+        }, transfer);
+        return new proxyConstructor(this, newObjectId);
+    }
+    callMethod(callback, objectId, methodName, ...methodArguments) {
+        const callId = this.nextCallId++;
+        if (callback) {
+            this.callbacks.set(callId, callback);
+        }
+        this.postMessage({
+            callId,
+            disposition: 'method',
+            objectId,
+            methodName,
+            methodArguments,
+        });
+    }
+    startCheckingForLongRunningCalls() {
+        if (this.interval) {
+            return;
+        }
+        this.checkLongRunningCalls();
+        this.interval = window.setInterval(this.checkLongRunningCalls.bind(this), 300);
+    }
+    checkLongRunningCalls() {
+        for (const callId of this.previousCallbacks) {
+            if (!this.callbacks.has(callId)) {
+                this.previousCallbacks.delete(callId);
+            }
+        }
+        const hasLongRunningCalls = Boolean(this.previousCallbacks.size);
+        this.dispatchEventToListeners("Wait" /* HeapSnapshotWorkerProxy.Events.WAIT */, hasLongRunningCalls);
+        for (const callId of this.callbacks.keys()) {
+            this.previousCallbacks.add(callId);
+        }
+    }
+    setupForSecondaryInit(port) {
+        const callId = this.nextCallId++;
+        const done = new Promise(resolve => {
+            this.callbacks.set(callId, resolve);
+        });
+        this.postMessage({
+            callId,
+            disposition: 'setupForSecondaryInit',
+            objectId: this.nextObjectId++,
+        }, [port]);
+        return done;
+    }
+    // TODO(crbug.com/1172300) Ignored during the jsdoc to ts migration)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    messageReceived(event) {
+        const data = event.data;
+        debugger
+        if (data.eventName) {
+            if (this.eventHandler) {
+                this.eventHandler(data.eventName, data.data);
+            }
+            return;
+        }
+        if (data.error) {
+            if (data.errorMethodName) {
+                Console.instance().error(i18nString(UIStrings.anErrorOccurredWhenACallToMethod, { PH1: data.errorMethodName }));
+            }
+            Console.instance().error(data['errorCallStack']);
+            this.callbacks.delete(data.callId);
+            return;
+        }
+        const callback = this.callbacks.get(data.callId);
+        if (!callback) {
+            return;
+        }
+        this.callbacks.delete(data.callId);
+        callback(data.result);
+    }
+    // TODO(crbug.com/1172300) Ignored during the jsdoc to ts migration)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    postMessage(message, transfer) {
+        this.worker.postMessage(message, transfer);
+    }
+}
+class HeapSnapshotProxyObject {
+    worker;
+    objectId;
+    constructor(worker, objectId) {
+        this.worker = worker;
+        this.objectId = objectId;
+    }
+    dispose() {
+        this.worker.disposeObject(this.objectId);
+    }
+    disposeWorker() {
+        this.worker.dispose();
+    }
+    callFactoryMethod(methodName, proxyConstructor, ...args) {
+        return this.worker.callFactoryMethod(null, String(this.objectId), methodName, proxyConstructor, [], ...args);
+    }
+    callFactoryMethodPromise(methodName, proxyConstructor, transfer, ...args) {
+        return new Promise(resolve => this.worker.callFactoryMethod(resolve, String(this.objectId), methodName, proxyConstructor, transfer, ...args));
+    }
+    callMethodPromise(methodName, ...args) {
+        return new Promise(resolve => this.worker.callMethod(resolve, String(this.objectId), methodName, ...args));
+    }
+}
+class HeapSnapshotLoaderProxy extends HeapSnapshotProxyObject {
+    profileUid;
+    snapshotReceivedCallback;
+    constructor(worker, objectId, profileUid, snapshotReceivedCallback) {
+        super(worker, objectId);
+        this.profileUid = profileUid;
+        this.snapshotReceivedCallback = snapshotReceivedCallback;
+    }
+    async write(chunk) {
+        await this.callMethodPromise('write', chunk);
+    }
+    async close() {
+        await this.callMethodPromise('close');
+        const secondWorker = new HeapSnapshotWorkerProxy(() => { });
+        const channel = new MessageChannel();
+        await secondWorker.setupForSecondaryInit(channel.port2);
+        const snapshotProxy = await this.callFactoryMethodPromise('buildSnapshot', HeapSnapshotProxy, [channel.port1]);
+        secondWorker.dispose();
+        this.dispose();
+        // TODO(crbug.com/1172300) Ignored during the jsdoc to ts migration)
+        // @ts-expect-error
+        snapshotProxy.setProfileUid(this.profileUid);
+        await snapshotProxy.updateStaticData();
+        this.snapshotReceivedCallback(snapshotProxy);
+    }
+}
+class HeapSnapshotProxy extends HeapSnapshotProxyObject {
+    staticData;
+    profileUid;
+    constructor(worker, objectId) {
+        super(worker, objectId);
+        this.staticData = null;
+    }
+    search(searchConfig, filter) {
+        return this.callMethodPromise('search', searchConfig, filter);
+    }
+    interfaceDefinitions() {
+        return this.callMethodPromise('interfaceDefinitions');
+    }
+    aggregatesWithFilter(filter) {
+        return this.callMethodPromise('aggregatesWithFilter', filter);
+    }
+    aggregatesForDiff(interfaceDefinitions) {
+        return this.callMethodPromise('aggregatesForDiff', interfaceDefinitions);
+    }
+    calculateSnapshotDiff(baseSnapshotId, baseSnapshotAggregates) {
+        return this.callMethodPromise('calculateSnapshotDiff', baseSnapshotId, baseSnapshotAggregates);
+    }
+    nodeClassKey(snapshotObjectId) {
+        return this.callMethodPromise('nodeClassKey', snapshotObjectId);
+    }
+    createEdgesProvider(nodeIndex) {
+        return this.callFactoryMethod('createEdgesProvider', HeapSnapshotProviderProxy, nodeIndex);
+    }
+    createRetainingEdgesProvider(nodeIndex) {
+        return this.callFactoryMethod('createRetainingEdgesProvider', HeapSnapshotProviderProxy, nodeIndex);
+    }
+    createAddedNodesProvider(baseSnapshotId, classKey) {
+        return this.callFactoryMethod('createAddedNodesProvider', HeapSnapshotProviderProxy, baseSnapshotId, classKey);
+    }
+    createDeletedNodesProvider(nodeIndexes) {
+        return this.callFactoryMethod('createDeletedNodesProvider', HeapSnapshotProviderProxy, nodeIndexes);
+    }
+    createNodesProvider(filter) {
+        return this.callFactoryMethod('createNodesProvider', HeapSnapshotProviderProxy, filter);
+    }
+    createNodesProviderForClass(classKey, nodeFilter) {
+        return this.callFactoryMethod('createNodesProviderForClass', HeapSnapshotProviderProxy, classKey, nodeFilter);
+    }
+    allocationTracesTops() {
+        return this.callMethodPromise('allocationTracesTops');
+    }
+    allocationNodeCallers(nodeId) {
+        return this.callMethodPromise('allocationNodeCallers', nodeId);
+    }
+    allocationStack(nodeIndex) {
+        return this.callMethodPromise('allocationStack', nodeIndex);
+    }
+    dispose() {
+        throw new Error('Should never be called');
+    }
+    get nodeCount() {
+        if (!this.staticData) {
+            return 0;
+        }
+        return this.staticData.nodeCount;
+    }
+    get rootNodeIndex() {
+        if (!this.staticData) {
+            return 0;
+        }
+        return this.staticData.rootNodeIndex;
+    }
+    async updateStaticData() {
+        this.staticData = await this.callMethodPromise('updateStaticData');
+    }
+    getStatistics() {
+        return this.callMethodPromise('getStatistics');
+    }
+    getLocation(nodeIndex) {
+        return this.callMethodPromise('getLocation', nodeIndex);
+    }
+    getSamples() {
+        return this.callMethodPromise('getSamples');
+    }
+    ignoreNodeInRetainersView(nodeIndex) {
+        return this.callMethodPromise('ignoreNodeInRetainersView', nodeIndex);
+    }
+    unignoreNodeInRetainersView(nodeIndex) {
+        return this.callMethodPromise('unignoreNodeInRetainersView', nodeIndex);
+    }
+    unignoreAllNodesInRetainersView() {
+        return this.callMethodPromise('unignoreAllNodesInRetainersView');
+    }
+    areNodesIgnoredInRetainersView() {
+        return this.callMethodPromise('areNodesIgnoredInRetainersView');
+    }
+    get totalSize() {
+        if (!this.staticData) {
+            return 0;
+        }
+        return this.staticData.totalSize;
+    }
+    get uid() {
+        return this.profileUid;
+    }
+    setProfileUid(profileUid) {
+        this.profileUid = profileUid;
+    }
+    maxJSObjectId() {
+        if (!this.staticData) {
+            return 0;
+        }
+        return this.staticData.maxJSObjectId;
+    }
+}
+class HeapSnapshotProviderProxy extends HeapSnapshotProxyObject {
+    constructor(worker, objectId) {
+        super(worker, objectId);
+    }
+    nodePosition(snapshotObjectId) {
+        return this.callMethodPromise('nodePosition', snapshotObjectId);
+    }
+    isEmpty() {
+        return this.callMethodPromise('isEmpty');
+    }
+    serializeItemsRange(startPosition, endPosition) {
+        return this.callMethodPromise('serializeItemsRange', startPosition, endPosition);
+    }
+    async sortAndRewind(comparator) {
+        await this.callMethodPromise('sortAndRewind', comparator);
+    }
+}
+
+export { HeapSnapshotModel$1 as HeapSnapshotModel, heap_snapshot_worker as HeapSnapshotWorker, HeapSnapshotWorkerProxy };
