@@ -36,7 +36,8 @@
     "quick-lru": "^7.0.1",
     "source-map": "^0.7.4",
     "stacktrace-parser": "^0.1.11",
-    "table": "^6.9.0"
+    "table": "^6.9.0",
+    "web-worker": "^1.5.0"
   },
   "devDependencies": {
     "@rollup/plugin-inject": "^5.0.5",
