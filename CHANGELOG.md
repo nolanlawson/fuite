@@ -1,3 +1,14 @@
+## [5.0.6](https://github.com/nolanlawson/fuite/compare/v5.0.5...v5.0.6) (2025-04-13)
+
+
+### Bug Fixes
+
+* update dependencies ([#126](https://github.com/nolanlawson/fuite/issues/126)) ([2d856ef](https://github.com/nolanlawson/fuite/commit/2d856efec5aa7c301363ced4ff005e1331374376))
+* update devtools-frontend ([#125](https://github.com/nolanlawson/fuite/issues/125)) ([2348fd1](https://github.com/nolanlawson/fuite/commit/2348fd13fe1265a36a68cbb22477732a7ec333b8))
+* update devtools-frontend to 20250317 code ([#127](https://github.com/nolanlawson/fuite/issues/127)) ([6e25c72](https://github.com/nolanlawson/fuite/commit/6e25c72ae17d0676a83329df54f8b629b9210881))
+
+
+
 ## [5.0.5](https://github.com/nolanlawson/fuite/compare/v5.0.4...v5.0.5) (2025-01-19)
 
 
