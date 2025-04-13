@@ -42,18 +42,7 @@ export async function takeHeapSnapshot (page, cdpSession) {
 }
 
 export async function createHeapSnapshotModel (filename) {
-  let loader
-  const loaderPromise = new Promise(resolve => {
-    loader = new HeapSnapshotLoader.HeapSnapshotLoader({
-      sendEvent (type, message) {
-        const parsedMessage = JSON.parse(message)
-        if (type === 'ProgressUpdate' && parsedMessage.string === 'Parsing strings…') {
-          // queue microtask to wait for data to truly be written
-          Promise.resolve().then(resolve)
-        }
-      }
-    })
-  })
+  const loader = new HeapSnapshotLoader.HeapSnapshotLoader()
   let readStream
   const readStreamPromise = new Promise((resolve, reject) => {
     readStream = createReadStream(filename, { encoding: 'utf8' })
@@ -66,7 +55,7 @@ export async function createHeapSnapshotModel (filename) {
   await readStreamPromise
 
   loader.close()
-  await loaderPromise
+  await loader.parsingComplete
 
   // Pattern borrowed from `createJSHeapSnapshotForTesting` in Chromium code.
   // https://github.com/ChromeDevTools/devtools-frontend/blob/866e7ab/front_end/entrypoints/heap_snapshot_worker/HeapSnapshot.ts#L3675-L3682
