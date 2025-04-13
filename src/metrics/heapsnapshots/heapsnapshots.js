@@ -39,18 +39,7 @@ export async function takeHeapSnapshot (page, cdpSession) {
 }
 
 export async function createHeapSnapshotModel (filename) {
-  let loader
-  const loaderPromise = new Promise(resolve => {
-    loader = new HeapSnapshotLoader.HeapSnapshotLoader({
-      sendEvent (type, message) {
-        const parsedMessage = JSON.parse(message)
-        if (type === 'ProgressUpdate' && parsedMessage.string === 'Parsing strings…') {
-          // queue microtask to wait for data to truly be written
-          Promise.resolve().then(resolve)
-        }
-      }
-    })
-  })
+  const loader = new HeapSnapshotLoader.HeapSnapshotLoader()
   let readStream
   const readStreamPromise = new Promise((resolve, reject) => {
     readStream = createReadStream(filename, { encoding: 'utf8' })
@@ -63,7 +52,7 @@ export async function createHeapSnapshotModel (filename) {
   await readStreamPromise
 
   loader.close()
-  await loaderPromise
+  await loader.parsingComplete
 
   return (await loader.buildSnapshot())
 }
