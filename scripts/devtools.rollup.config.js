@@ -1,8 +1,12 @@
+import { exec } from 'node:child_process'
+import { promisify } from 'node:util'
 import typescript from '@rollup/plugin-typescript'
 import virtual from '@rollup/plugin-virtual'
 import replace from '@rollup/plugin-replace'
 import strip from '@rollup/plugin-strip'
 import inject from '@rollup/plugin-inject'
+
+const execPromise = promisify(exec)
 
 // Stub out some modules to reduce bundle size
 const makeStub = (...names) => names
@@ -11,12 +15,15 @@ const makeStub = (...names) => names
 
 const noop = 'export default function noop() {}'
 
+const commit = (await execPromise('git rev-parse HEAD')).stdout.trim().substring(0, 7)
+const sourceUrl = `https://github.com/ChromeDevTools/devtools-frontend/commit/${commit}`
+
 export default {
   input: '__entry__',
   output: {
     format: 'esm',
     file: '../fuite/src/thirdparty/devtools-frontend/index.js',
-    banner: '/* Generated from devtools-frontend via build-devtools-frontend.sh */',
+    banner: `/* Generated from devtools-frontend@${commit} via build-devtools-frontend.sh. Source: ${sourceUrl} */`,
     sourcemap: false
   },
   plugins: [

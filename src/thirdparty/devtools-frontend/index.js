@@ -1,4 +1,4 @@
-/* Generated from devtools-frontend via build-devtools-frontend.sh */
+/* Generated from devtools-frontend@b7e5961 via build-devtools-frontend.sh. Source: https://github.com/ChromeDevTools/devtools-frontend/commit/b7e5961 */
 /*
  * Copyright (C) 2014 Google Inc. All rights reserved.
  *
@@ -1110,8 +1110,9 @@ class BitVectorImpl extends Uint8Array {
             }
         }
         // Next, iterate by bytes to skip over ranges of zeros.
-        let byteIndex;
-        for (byteIndex = (index >> 3) - 1; byteIndex >= 0 && this[byteIndex] === 0; --byteIndex) {
+        let byteIndex = (index >> 3) - 1;
+        while (byteIndex >= 0 && this[byteIndex] === 0) {
+            --byteIndex;
         }
         if (byteIndex < 0) {
             return -1;
@@ -1716,7 +1717,7 @@ class HeapSnapshot {
     #aggregatesForDiffInternal;
     #aggregates;
     #aggregatesSortedFlags;
-    #profile;
+    profile;
     nodeTypeOffset;
     nodeNameOffset;
     nodeIdOffset;
@@ -1792,7 +1793,7 @@ class HeapSnapshot {
         this.#snapshotDiffs = {};
         this.#aggregates = {};
         this.#aggregatesSortedFlags = {};
-        this.#profile = profile;
+        this.profile = profile;
         this.#ignoredNodesInRetainersView = new Set();
         this.#ignoredEdgesInRetainersView = new Set();
         this.#edgeNamesThatAreNotWeakMaps = createBitVector(this.strings.length);
@@ -1874,8 +1875,7 @@ class HeapSnapshot {
         this.buildSamples();
         this.#progress.updateStatus('Building locations…');
         this.buildLocationMap();
-        this.#progress.updateStatus('Finished processing.');
-        if (this.#profile.snapshot.trace_function_count) {
+        if (this.profile.snapshot.trace_function_count) {
             this.#progress.updateStatus('Building allocation statistics…');
             const nodes = this.nodes;
             const nodesLength = nodes.length;
@@ -1893,9 +1893,9 @@ class HeapSnapshot {
                 stats.size += node.selfSize();
                 stats.ids.push(node.id());
             }
-            this.#allocationProfile = new AllocationProfile(this.#profile, liveObjects);
-            this.#progress.updateStatus('done');
+            this.#allocationProfile = new AllocationProfile(this.profile, liveObjects);
         }
+        this.#progress.updateStatus('Finished processing.');
     }
     buildEdgeIndexes() {
         const nodes = this.nodes;
@@ -1963,13 +1963,7 @@ class HeapSnapshot {
         return this.rootNodeIndexInternal;
     }
     get totalSize() {
-        return this.rootNode().retainedSize();
-    }
-    getDominatedIndex(nodeIndex) {
-        if (nodeIndex % this.nodeFieldCount) {
-            throw new Error('Invalid nodeIndex: ' + nodeIndex);
-        }
-        return this.firstDominatedNodeIndex[nodeIndex / this.nodeFieldCount];
+        return this.rootNode().retainedSize() + (this.profile.snapshot.extra_native_bytes ?? 0);
     }
     createFilter(nodeFilter) {
         const { minNodeId, maxNodeId, allocationNodeId, filterName } = nodeFilter;
@@ -1979,17 +1973,17 @@ class HeapSnapshot {
             if (!filter) {
                 throw new Error('Unable to create filter');
             }
-            // @ts-ignore key can be added as a static property
+            // @ts-expect-error key can be added as a static property
             filter.key = 'AllocationNodeId: ' + allocationNodeId;
         }
         else if (typeof minNodeId === 'number' && typeof maxNodeId === 'number') {
             filter = this.createNodeIdFilter(minNodeId, maxNodeId);
-            // @ts-ignore key can be added as a static property
+            // @ts-expect-error key can be added as a static property
             filter.key = 'NodeIdRange: ' + minNodeId + '..' + maxNodeId;
         }
         else if (filterName !== undefined) {
             filter = this.createNamedFilter(filterName);
-            // @ts-ignore key can be added as a static property
+            // @ts-expect-error key can be added as a static property
             filter.key = 'NamedFilter: ' + filterName;
         }
         return filter;
@@ -2025,6 +2019,11 @@ class HeapSnapshot {
             if (filter && !filter(node)) {
                 continue;
             }
+            if (node.selfSize() === 0) {
+                // Nodes with size zero are omitted in the data grid, so avoid returning
+                // search results that can't be navigated to.
+                continue;
+            }
             const name = node.name();
             if (name === node.rawName()) {
                 // If the string displayed to the user matches the raw name from the
@@ -2033,20 +2032,18 @@ class HeapSnapshot {
                 if (stringIndexes.has(nodes.getValue(nodeIndex + nodeNameOffset))) {
                     nodeIds.push(nodes.getValue(nodeIndex + nodeIdOffset));
                 }
-            }
-            else {
                 // If the node is displaying a customized name, then we must perform the
                 // full string search within that name here.
-                if (useRegExp ? regexp.test(name) : (name.indexOf(query) !== -1)) {
-                    nodeIds.push(nodes.getValue(nodeIndex + nodeIdOffset));
-                }
+            }
+            else if (useRegExp ? regexp.test(name) : (name.indexOf(query) !== -1)) {
+                nodeIds.push(nodes.getValue(nodeIndex + nodeIdOffset));
             }
         }
         return nodeIds;
     }
     aggregatesWithFilter(nodeFilter) {
         const filter = this.createFilter(nodeFilter);
-        // @ts-ignore key is added in createFilter
+        // @ts-expect-error key is added in createFilter
         const key = filter ? filter.key : 'allObjects';
         return this.getAggregatesByClassKey(false, key, filter);
     }
@@ -3097,7 +3094,7 @@ class HeapSnapshot {
     }
     buildSamples() {
         const samples = this.#rawSamples;
-        if (!samples || !samples.length) {
+        if (!samples?.length) {
             return;
         }
         const sampleCount = samples.length / 2;
@@ -3732,7 +3729,7 @@ class JSHeapSnapshot extends HeapSnapshot {
         const worklist = [];
         const node = this.createNode(0);
         for (let i = 0; i < nodeCount; ++i) {
-            if (node.isHidden() || node.isArray()) {
+            if (node.isHidden() || node.isArray() || (node.isNative() && node.rawName() === 'system / ExternalStringData')) {
                 owners[i] = kUnvisited;
             }
             else {
@@ -3984,7 +3981,7 @@ class JSHeapSnapshot extends HeapSnapshot {
         const nodeSlicedStringType = this.nodeSlicedStringType;
         const nodeHiddenType = this.nodeHiddenType;
         const nodeStringType = this.nodeStringType;
-        let sizeNative = 0;
+        let sizeNative = this.profile.snapshot.extra_native_bytes ?? 0;
         let sizeTypedArrays = 0;
         let sizeCode = 0;
         let sizeStrings = 0;
@@ -4207,6 +4204,9 @@ class JSHeapSnapshotNode extends HeapSnapshotNode {
     isSynthetic() {
         return this.rawType() === this.snapshot.nodeSyntheticType;
     }
+    isNative() {
+        return this.rawType() === this.snapshot.nodeNativeType;
+    }
     isUserRoot() {
         return !this.isSynthetic();
     }
@@ -4238,7 +4238,7 @@ class JSHeapSnapshotEdge extends HeapSnapshotEdge {
         if (!this.isShortcut()) {
             return this.hasStringNameInternal();
         }
-        // @ts-ignore parseInt is successful against numbers.
+        // @ts-expect-error parseInt is successful against numbers.
         return isNaN(parseInt(this.nameInternal(), 10));
     }
     isElement() {
@@ -4264,7 +4264,7 @@ class JSHeapSnapshotEdge extends HeapSnapshotEdge {
         if (!this.isShortcut()) {
             return String(name);
         }
-        // @ts-ignore parseInt is successful against numbers.
+        // @ts-expect-error parseInt is successful against numbers.
         const numName = parseInt(name, 10);
         return String(isNaN(numName) ? name : numName);
     }
@@ -4482,6 +4482,10 @@ const UIStrings$1 = {
     /**
      *@description The UI destination when right clicking an item that can be revealed
      */
+    securityPanel: 'Security panel',
+    /**
+     *@description The UI destination when right clicking an item that can be revealed
+     */
     sourcesPanel: 'Sources panel',
     /**
      *@description The UI destination when right clicking an item that can be revealed
@@ -4512,6 +4516,7 @@ const i18nLazyString = getLazilyComputedLocalizedString.bind(undefined, str_$1);
     TIMELINE_PANEL: i18nLazyString(UIStrings$1.timelinePanel),
     APPLICATION_PANEL: i18nLazyString(UIStrings$1.applicationPanel),
     SOURCES_PANEL: i18nLazyString(UIStrings$1.sourcesPanel),
+    SECURITY_PANEL: i18nLazyString(UIStrings$1.securityPanel),
     MEMORY_INSPECTOR_PANEL: i18nLazyString(UIStrings$1.memoryInspectorPanel),
     ANIMATIONS_PANEL: i18nLazyString(UIStrings$1.animationsPanel),
 });
@@ -4536,6 +4541,10 @@ const UIStrings = {
      *@description Title of the Elements Panel
      */
     elements: 'Elements',
+    /**
+     *@description Text for DevTools AI
+     */
+    ai: 'AI',
     /**
      *@description Text for DevTools appearance
      */
@@ -4616,13 +4625,14 @@ class HeapSnapshotLoader {
     #array;
     #arrayIndex;
     #json = '';
+    parsingComplete;
     constructor(dispatcher) {
         this.#reset();
         this.#progress = new HeapSnapshotProgress(dispatcher);
         this.#buffer = [];
         this.#dataCallback = null;
         this.#done = false;
-        void this.#parseInput();
+        this.parsingComplete = this.#parseInput();
     }
     dispose() {
         this.#reset();
@@ -4798,7 +4808,7 @@ class HeapSnapshotLoader {
         const stringsTokenIndex = await this.#findToken('"strings"');
         const bracketIndex = await this.#findToken('[', stringsTokenIndex);
         this.#json = this.#json.slice(bracketIndex);
-        while (!this.#done) {
+        while (this.#buffer.length > 0 || !this.#done) {
             this.#json += await this.#fetchChunk();
         }
         this.#parseStringsArray();
