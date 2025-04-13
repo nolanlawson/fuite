@@ -63,9 +63,9 @@ export async function createHeapSnapshotModel (filename) {
   // For context see this commit splitting the work into two workers:
   // https://github.com/ChromeDevTools/devtools-frontend/commit/6a523a7
   const channel = new MessageChannel()
-  // eslint-disable-next-line no-new
-  new SecondaryInitManager(channel.port2)
   try {
+    // eslint-disable-next-line no-new
+    new SecondaryInitManager(channel.port2)
     return await loader.buildSnapshot(channel.port1)
   } finally {
     // Without this, the Node process will just hang forever
