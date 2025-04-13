@@ -69,9 +69,10 @@ export async function createHeapSnapshotModel (filename) {
   await loaderPromise
 
   // Pattern borrowed from `createJSHeapSnapshotForTesting` in Chromium code.
+  // https://github.com/ChromeDevTools/devtools-frontend/blob/866e7ab/front_end/entrypoints/heap_snapshot_worker/HeapSnapshot.ts#L3675-L3682
   // Rather than trying to make it work with two workers, we just do it all in one thread.
   // For context see this commit splitting the work into two workers:
-  // https://github.com/ChromeDevTools/devtools-frontend/commit/6a523a73524021f1d1b1649f32311adbc04dda69
+  // https://github.com/ChromeDevTools/devtools-frontend/commit/6a523a7
   const channel = new MessageChannel()
   // eslint-disable-next-line no-new
   new SecondaryInitManager(channel.port2)
