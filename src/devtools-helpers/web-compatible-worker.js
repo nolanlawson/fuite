@@ -46,6 +46,7 @@ export class WebCompatibleWorker {
   }
 
   postMessage (message, transferList) {
+    console.log('WORKER: postMessage', { message }, 'transferList', transferList)
     if (transferList) {
       const ports = transferList.filter(_ => _ instanceof MessagePort)
       message.__ports = ports

@@ -2,7 +2,11 @@ import path from 'node:path'
 import { createReadStream, createWriteStream } from 'node:fs'
 import { realpath } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
-import { HeapSnapshotWorker, HeapSnapshotWorkerProxy } from '../../thirdparty/devtools-frontend/index.js'
+import {
+  createJSHeapSnapshotForTesting,
+  HeapSnapshotWorker,
+  HeapSnapshotWorkerProxy
+} from '../../thirdparty/devtools-frontend/index.js'
 import { randomUUID } from 'node:crypto'
 
 // via https://github.com/sindresorhus/temp-dir/blob/437937c/index.js#L4
@@ -65,10 +69,17 @@ export async function createHeapSnapshotModel (filename) {
   loader.close()
   await loaderPromise
 
-  const secondWorker = new HeapSnapshotWorkerProxy(() => { })
-  try {
-    return await loader.buildSnapshot(secondWorker)
-  } finally {
-    secondWorker.dispose()
-  }
+  const snapshot = loader.getSnapshot()
+
+  return await createJSHeapSnapshotForTesting(snapshot)
+  //
+  // const secondWorker = new HeapSnapshotWorkerProxy(() => { })
+  // try {
+  //   // const channel = new MessageChannel()
+  //   // channel.port1.onmessage = () => console.log('RECEIVED MESSAGE!!!')
+  //   // await secondWorker.setupForSecondaryInit(channel.port2)
+  //   return await loader.buildSnapshot(secondWorker)
+  // } finally {
+  //   secondWorker.dispose()
+  // }
 }

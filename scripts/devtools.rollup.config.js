@@ -42,7 +42,8 @@ export default {
       __entry__: `
         export * as HeapSnapshotWorker from './front_end/entrypoints/heap_snapshot_worker/heap_snapshot_worker.ts'
         export { HeapSnapshotModel } from './front_end/models/heap_snapshot_model/heap_snapshot_model.ts'
-        export { HeapSnapshotWorkerProxy } from './front_end/panels/profiler/HeapSnapshotProxy.ts'  
+        export { HeapSnapshotWorkerProxy } from './front_end/entrypoints/heap_snapshot_worker/HeapSnapshot.ts  
+        export { HeapSnapshotProgress } from './
       `,
       // Promise.withResolvers minimal shim
       // TODO: remove when we set our minimum Node to v22+

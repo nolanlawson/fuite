@@ -1727,7 +1727,9 @@ class SecondaryInitManager {
         this.argsStep2 = argsStep2;
         const { promise: argsStep3, resolve: resolveArgsStep3 } = withResolvers();
         this.argsStep3 = argsStep3;
+        console.log('have a port, setting an onmessage')
         port.onmessage = e => {
+            console.log('port.onmessage', { data: e.data })
             const data = e.data;
             switch (data.step) {
                 case 1:
@@ -4184,7 +4186,7 @@ class JSHeapSnapshot extends HeapSnapshot {
     }
 }
 // Creates and initializes a JSHeapSnapshot using only one thread.
-async function createJSHeapSnapshotForTesting(profile) {
+export async function createJSHeapSnapshotForTesting(profile) {
     const result = new JSHeapSnapshot(profile, new HeapSnapshotProgress());
     const channel = new MessageChannel();
     new SecondaryInitManager(channel.port2);
@@ -5082,6 +5084,9 @@ class HeapSnapshotLoader {
         this.#reset();
         return result;
     }
+    getSnapshot() {
+        return this.#snapshot
+    }
     #parseUintArray() {
         let index = 0;
         const char0 = '0'.charCodeAt(0);
@@ -5342,6 +5347,7 @@ class HeapSnapshotWorkerDispatcher {
                     break;
                 }
                 case 'setupForSecondaryInit': {
+                    console.log('secondary init manager')
                     this.#objects[data.objectId] = new SecondaryInitManager(ports[0]);
                 }
             }
