@@ -11,20 +11,14 @@ const makeStub = (...names) => names
 
 const noop = 'export default function noop() {}'
 
-const stripIndent = str => str.replace(/\n\s*/g, '\n')
-
 export default {
   input: '__entry__',
   output: {
     format: 'esm',
     file: '../fuite/src/thirdparty/devtools-frontend/index.js',
-    banner: stripIndent(`
-    /* Generated from devtools-frontend via build-devtools-frontend.sh */\n
-    import { WebCompatibleWorker as Worker } from '../../devtools-helpers/web-compatible-worker.js'
-    `),
+    banner: '/* Generated from devtools-frontend via build-devtools-frontend.sh */',
     sourcemap: false
   },
-  external: ['../../devtools-helpers/web-compatible-worker.js'],
   plugins: [
     virtual({
       './Color.js': noop,
@@ -40,10 +34,9 @@ export default {
         export const LOCAL_FETCH_PATTERN = ''
       `,
       __entry__: `
-        export * as HeapSnapshotWorker from './front_end/entrypoints/heap_snapshot_worker/heap_snapshot_worker.ts'
+        export { HeapSnapshotLoader } from './front_end/entrypoints/heap_snapshot_worker/heap_snapshot_worker.ts'
         export { HeapSnapshotModel } from './front_end/models/heap_snapshot_model/heap_snapshot_model.ts'
-        export { HeapSnapshotWorkerProxy } from './front_end/entrypoints/heap_snapshot_worker/HeapSnapshot.ts  
-        export { HeapSnapshotProgress } from './
+        export { SecondaryInitManager } from './front_end/entrypoints/heap_snapshot_worker/HeapSnapshot.ts'
       `,
       // Promise.withResolvers minimal shim
       // TODO: remove when we set our minimum Node to v22+
@@ -75,15 +68,6 @@ export default {
         outDir: '../fuite/src/thirdparty/devtools-frontend'
       },
       noEmitOnError: false
-    }),
-    // Replace the `new Worker()` URL
-    replace({
-      values: {
-        '../../entrypoints/heap_snapshot_worker/heap_snapshot_worker-entrypoint.js':
-        '../../devtools-helpers/heap-snapshot-worker-entrypoint.js'
-      },
-      delimiters: ['', ''],
-      preventAssignment: true
     }),
     replace({
       values: {

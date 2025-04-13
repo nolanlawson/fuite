@@ -3,9 +3,8 @@ import { createReadStream, createWriteStream } from 'node:fs'
 import { realpath } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import {
-  createJSHeapSnapshotForTesting,
-  HeapSnapshotWorker,
-  HeapSnapshotWorkerProxy
+  HeapSnapshotLoader,
+  SecondaryInitManager
 } from '../../thirdparty/devtools-frontend/index.js'
 import { randomUUID } from 'node:crypto'
 
@@ -45,7 +44,7 @@ export async function takeHeapSnapshot (page, cdpSession) {
 export async function createHeapSnapshotModel (filename) {
   let loader
   const loaderPromise = new Promise(resolve => {
-    loader = new HeapSnapshotWorker.HeapSnapshotLoader.HeapSnapshotLoader({
+    loader = new HeapSnapshotLoader.HeapSnapshotLoader({
       sendEvent (type, message) {
         const parsedMessage = JSON.parse(message)
         if (type === 'ProgressUpdate' && parsedMessage.string === 'Parsing strings…') {
@@ -69,17 +68,12 @@ export async function createHeapSnapshotModel (filename) {
   loader.close()
   await loaderPromise
 
-  const snapshot = loader.getSnapshot()
-
-  return await createJSHeapSnapshotForTesting(snapshot)
-  //
-  // const secondWorker = new HeapSnapshotWorkerProxy(() => { })
-  // try {
-  //   // const channel = new MessageChannel()
-  //   // channel.port1.onmessage = () => console.log('RECEIVED MESSAGE!!!')
-  //   // await secondWorker.setupForSecondaryInit(channel.port2)
-  //   return await loader.buildSnapshot(secondWorker)
-  // } finally {
-  //   secondWorker.dispose()
-  // }
+  // Pattern borrowed from `createJSHeapSnapshotForTesting` in Chromium code.
+  // Rather than trying to make it work with two workers, we just do it all in one thread.
+  // For context see this commit splitting the work into two workers:
+  // https://github.com/ChromeDevTools/devtools-frontend/commit/6a523a73524021f1d1b1649f32311adbc04dda69
+  const channel = new MessageChannel()
+  // eslint-disable-next-line no-new
+  new SecondaryInitManager(channel.port2)
+  return await loader.buildSnapshot(channel.port1)
 }
