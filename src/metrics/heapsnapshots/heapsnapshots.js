@@ -65,5 +65,11 @@ export async function createHeapSnapshotModel (filename) {
   const channel = new MessageChannel()
   // eslint-disable-next-line no-new
   new SecondaryInitManager(channel.port2)
-  return await loader.buildSnapshot(channel.port1)
+  try {
+    return await loader.buildSnapshot(channel.port1)
+  } finally {
+    // Without this, the Node process will just hang forever
+    channel.port1.close()
+    channel.port2.close()
+  }
 }
