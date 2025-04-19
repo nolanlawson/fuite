@@ -1,6 +1,6 @@
-import { HeapSnapshotModel } from '../../thirdparty/devtools-frontend/index.js'
+import { createReadStream } from 'node:fs'
+import { diffFromStreams, DevToolsAPI } from 'heap-snapshot-toolkit'
 import { sortBy } from '../../util.js'
-import { createHeapSnapshotModel } from './heapsnapshots.js'
 
 // Make the simplifying assumption that certain classes, especially browser-internal
 // ones, aren't really leaks
@@ -37,27 +37,31 @@ const browserInternalClasses = new Set([
 
 export async function analyzeHeapSnapshots (startSnapshotFilename, endSnapshotFilename, numIterations) {
   // Read in snapshots serially to avoid using too much memory at once
-  let startSnapshot = await createHeapSnapshotModel(startSnapshotFilename)
-  const startSnapshotUid = startSnapshot.uid
-  const startStatistics = { ...startSnapshot.getStatistics() }
-  // For reference see:
-  // https://github.com/ChromeDevTools/devtools-frontend/blob/898fd09/front_end/panels/profiler/HeapSnapshotDataGrids.ts#L999-L1016
-  let interfaceDefinitions = await startSnapshot.interfaceDefinitions()
-  const aggregatesForDiff = await startSnapshot.aggregatesForDiff(interfaceDefinitions)
-  const startAggregates = startSnapshot.aggregatesWithFilter(new HeapSnapshotModel.NodeFilter())
-  startSnapshot = undefined // free memory
-  interfaceDefinitions = undefined // free memory
+  const iterator = diffFromStreams(createReadStream(startSnapshotFilename, 'utf-8'), createReadStream(endSnapshotFilename, 'utf-8'))
 
-  const endSnapshot = await createHeapSnapshotModel(endSnapshotFilename)
-  const endStatistics = { ...endSnapshot.getStatistics() }
+  let startStatistics
+  let endStatistics
+  let startAggregates
+  let endAggregates
+  let diffByClassName
+  for await (const item of iterator) {
+    if (item.type === 'start') {
+      const startSnapshot = item.result
+      startStatistics = { ...startSnapshot.getStatistics() }
+      startAggregates = startSnapshot.aggregatesWithFilter(new DevToolsAPI.HeapSnapshotModel.NodeFilter())
+    } else if (item.type === 'end') {
+      const endSnapshot = item.result
+      endStatistics = { ...endSnapshot.getStatistics() }
+      endAggregates = endSnapshot.aggregatesWithFilter(new DevToolsAPI.HeapSnapshotModel.NodeFilter())
+    } else if (item.type === 'diff') {
+      diffByClassName = item.result
+    }
+  }
 
-  const diffByClassName = await endSnapshot.calculateSnapshotDiff(startSnapshotUid, aggregatesForDiff)
   const suspiciousObjects = Object.entries(diffByClassName).filter(([name, diff]) => {
     // look for objects added <iteration> times and not 0 times
     return diff.countDelta % numIterations === 0 && diff.countDelta > 0
   })
-
-  const endAggregates = endSnapshot.aggregatesWithFilter(new HeapSnapshotModel.NodeFilter())
 
   let leakingObjects = suspiciousObjects
     // filter browser internals
