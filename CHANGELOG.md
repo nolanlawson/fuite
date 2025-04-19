@@ -1,3 +1,12 @@
+## [5.0.7](https://github.com/nolanlawson/fuite/compare/v5.0.6...v5.0.7) (2025-04-19)
+
+
+### Bug Fixes
+
+* switch to heap-snapshot-toolkit ([#128](https://github.com/nolanlawson/fuite/issues/128)) ([b7b3d09](https://github.com/nolanlawson/fuite/commit/b7b3d09e04e7021540de15c95daeff4cb745257d))
+
+
+
 ## [5.0.6](https://github.com/nolanlawson/fuite/compare/v5.0.5...v5.0.6) (2025-04-13)
 
 
