@@ -1,3 +1,12 @@
+## [5.0.8](https://github.com/nolanlawson/fuite/compare/v5.0.7...v5.0.8) (2025-08-03)
+
+
+### Bug Fixes
+
+* update deps ([#129](https://github.com/nolanlawson/fuite/issues/129)) ([6c1301c](https://github.com/nolanlawson/fuite/commit/6c1301c545161ec0efb074c2f8884832698b6b36))
+
+
+
 ## [5.0.7](https://github.com/nolanlawson/fuite/compare/v5.0.6...v5.0.7) (2025-04-19)
 
 
