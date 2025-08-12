@@ -11,9 +11,17 @@
   const router = makeRouter(['', 'info'])
 
   const notAMap = Object.create(new Map())
+  const nullConstructor = { constructor: null }
+  const constructorThatThrows = {
+    get constructor() {
+      throw new Error('haha!')
+    }
+  }
 
   router.addAfterHook('/info', () => {
     console.log(notAMap)
+    console.log(nullConstructor)
+    console.log(constructorThatThrows)
   })
 </script>
 </body>
