@@ -17,11 +17,17 @@
       throw new Error('haha!')
     }
   }
+  const toStringThatThrows = {
+    get [Symbol.toStringTag]() {
+      throw new Error('yolo!')
+    }
+  }
 
   router.addAfterHook('/info', () => {
     console.log(notAMap)
     console.log(nullConstructor)
     console.log(constructorThatThrows)
+    console.log(toStringThatThrows)
   })
 </script>
 </body>

@@ -22,14 +22,14 @@ export async function startTrackingCollections (page) {
 
       // Via https://github.com/jonschlinkert/is-plain-object/blob/0a47f0f/is-plain-object.js
       function isPlainObject (o) {
-        function isObject (o) {
-          return toString.call(o) === '[object Object]'
-        }
-        if (isObject(o) === false) {
-          return false
-        }
-
         try {
+          function isObject (o) {
+            return toString.call(o) === '[object Object]'
+          }
+          if (isObject(o) === false) {
+            return false
+          }
+
           // If has modified constructor
           const ctor = o.constructor
           if (ctor === undefined) {
